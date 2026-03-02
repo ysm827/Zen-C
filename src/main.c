@@ -601,6 +601,37 @@ int main(int argc, char **argv)
         ext = ".m";
     }
 
+    if (!g_config.output_file && g_config.input_file)
+    {
+        char *base = xstrdup(g_config.input_file);
+
+        // Strip directory
+        char *last_slash = strrchr(base, '/');
+        char *last_bslash = strrchr(base, '\\');
+        char *last_sep = last_slash > last_bslash ? last_slash : last_bslash;
+        if (last_sep)
+        {
+            size_t new_len = strlen(last_sep + 1);
+            memmove(base, last_sep + 1, new_len + 1);
+        }
+
+        // Strip extension
+        char *last_dot = strrchr(base, '.');
+        if (last_dot)
+        {
+            *last_dot = '\0';
+        }
+
+        if (strlen(base) > 0)
+        {
+            g_config.output_file = base;
+        }
+        else
+        {
+            free(base);
+        }
+    }
+
     if (g_config.output_file)
     {
         snprintf(temp_source_buf, sizeof(temp_source_buf), "%s%s", g_config.output_file, ext);
