@@ -1648,7 +1648,16 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                 inner_type->name = xstrdup("Self");
             }
             self_node->type_info = type_new_ptr(inner_type);
-            self_node->resolved_type = xstrdup("Self*");
+            if (ctx->current_impl_struct)
+            {
+                char *rt = xmalloc(strlen(ctx->current_impl_struct) + 2);
+                sprintf(rt, "%s*", ctx->current_impl_struct);
+                self_node->resolved_type = rt;
+            }
+            else
+            {
+                self_node->resolved_type = xstrdup("Self*");
+            }
 
             node = ast_create(NODE_EXPR_MEMBER);
             node->member.target = self_node;

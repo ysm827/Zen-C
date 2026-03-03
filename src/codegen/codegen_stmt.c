@@ -962,6 +962,33 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
         break;
     }
     case NODE_VAR_DECL:
+        if (strcmp(node->var_decl.name, "_") == 0 && node->var_decl.init_expr)
+        {
+            int is_void = 0;
+            if (node->type_info && node->type_info->kind == TYPE_VOID)
+            {
+                is_void = 1;
+            }
+            else if (node->var_decl.type_str && strcmp(node->var_decl.type_str, "void") == 0)
+            {
+                is_void = 1;
+            }
+            else if (!node->type_info && !node->var_decl.type_str)
+            {
+                char *ret_type = infer_type(ctx, node->var_decl.init_expr);
+                if (!ret_type || strcmp(ret_type, "void") == 0)
+                {
+                    is_void = 1;
+                }
+            }
+            if (is_void)
+            {
+                fprintf(out, "    ");
+                codegen_expression(ctx, node->var_decl.init_expr, out);
+                fprintf(out, ";\n");
+                break;
+            }
+        }
         fprintf(out, "    ");
         if (node->var_decl.is_static)
         {
