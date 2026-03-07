@@ -3538,6 +3538,8 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
             ZenSymbol *sym = find_symbol_entry(ctx, acc);
             if (sym && sym->is_def && sym->is_const_value)
             {
+                sym->is_used = 1;
+
                 // Constant Folding for 'def', emits literal
                 node = ast_create(NODE_EXPR_LITERAL);
                 node->token = t;
