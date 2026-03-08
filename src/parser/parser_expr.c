@@ -1512,10 +1512,32 @@ static ASTNode *parse_sizeof_expr(ParserContext *ctx, Lexer *l)
     int pos = l->pos;
     int col = l->col;
     int line = l->line;
+    TypeUsage *old_pending = ctx->pending_type_validations;
+    SliceType *old_slices = ctx->used_slices;
+    TupleType *old_tuples = ctx->used_tuples;
+
     Type *ty = parse_type_formal(ctx, l);
 
+    int is_actually_var = 0;
+    if (ty->kind != TYPE_UNKNOWN)
+    {
+        Type *base = ty;
+        while (base->inner)
+        {
+            base = base->inner;
+        }
+        if (base->kind == TYPE_STRUCT && base->name)
+        {
+            if (!is_primitive_type_name(base->name) && !find_struct_def(ctx, base->name) &&
+                !find_type_alias_node(ctx, base->name) && find_symbol_entry(ctx, base->name))
+            {
+                is_actually_var = 1;
+            }
+        }
+    }
+
     ASTNode *node;
-    if (ty->kind != TYPE_UNKNOWN && lexer_peek(l).type == TOK_RPAREN)
+    if (ty->kind != TYPE_UNKNOWN && !is_actually_var && lexer_peek(l).type == TOK_RPAREN)
     {
         lexer_next(l);
         char *ts = type_to_string(ty);
@@ -1526,6 +1548,10 @@ static ASTNode *parse_sizeof_expr(ParserContext *ctx, Lexer *l)
     }
     else
     {
+        ctx->pending_type_validations = old_pending;
+        ctx->used_slices = old_slices;
+        ctx->used_tuples = old_tuples;
+
         l->pos = pos;
         l->col = col;
         l->line = line;
@@ -1554,10 +1580,32 @@ static ASTNode *parse_typeof_expr(ParserContext *ctx, Lexer *l)
     int pos = l->pos;
     int col = l->col;
     int line = l->line;
+    TypeUsage *old_pending = ctx->pending_type_validations;
+    SliceType *old_slices = ctx->used_slices;
+    TupleType *old_tuples = ctx->used_tuples;
+
     Type *ty = parse_type_formal(ctx, l);
 
+    int is_actually_var = 0;
+    if (ty->kind != TYPE_UNKNOWN)
+    {
+        Type *base = ty;
+        while (base->inner)
+        {
+            base = base->inner;
+        }
+        if (base->kind == TYPE_STRUCT && base->name)
+        {
+            if (!is_primitive_type_name(base->name) && !find_struct_def(ctx, base->name) &&
+                !find_type_alias_node(ctx, base->name) && find_symbol_entry(ctx, base->name))
+            {
+                is_actually_var = 1;
+            }
+        }
+    }
+
     ASTNode *node;
-    if (ty->kind != TYPE_UNKNOWN && lexer_peek(l).type == TOK_RPAREN)
+    if (ty->kind != TYPE_UNKNOWN && !is_actually_var && lexer_peek(l).type == TOK_RPAREN)
     {
         lexer_next(l);
         char *ts = type_to_string(ty);
@@ -1567,6 +1615,10 @@ static ASTNode *parse_typeof_expr(ParserContext *ctx, Lexer *l)
     }
     else
     {
+        ctx->pending_type_validations = old_pending;
+        ctx->used_slices = old_slices;
+        ctx->used_tuples = old_tuples;
+
         l->pos = pos;
         l->col = col;
         l->line = line;

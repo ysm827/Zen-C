@@ -176,13 +176,14 @@ impl Vec<T> {
     }
 
     // Appends all elements from another vector.
-    // Takes a pointer to avoid moving/consuming the other vector.
-    fn append(self, other: Vec<T>*) {
-        let new_len = self.len + (*other).len;
+    // Consumes the other vector (move semantics).
+    fn append(self, other: Vec<T>) {
+        let new_len = self.len + other.len;
         self.grow_to_fit(new_len);
 
-        memcpy(self.data + self.len, (*other).data, (*other).len * sizeof(T));
+        memcpy(self.data + self.len, other.data, other.len * sizeof(T));
         self.len = new_len;
+        other.forget();
     }
 
     fn get(self, idx: usize) -> T {
@@ -296,13 +297,13 @@ impl Vec<T> {
     // Usage: let v3 = v1 + &v2;
     fn add(self, other: Vec<T>*) -> Vec<T> {
         let result = self.clone();
-        result.append(other);
+        result.append(other.clone());
         return result;
     }
 
     // Operator overload for `+=` (In-place concatenation)
     fn add_assign(self, other: Vec<T>*) {
-        self.append(other);
+        self.append(other.clone());
     }
     // Operator overload for `!=` (Inequality)
     fn neq(self, other: Vec<T>*) -> bool {
@@ -331,7 +332,7 @@ impl Vec<T> {
         let result = Vec<T>::with_capacity(self.len * count);
         let c: usize = 0;
         while c < count {
-            result.append(self);
+            result.append(self.clone());
             c += 1;
         }
         return result;
