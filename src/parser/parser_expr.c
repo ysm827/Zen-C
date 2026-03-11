@@ -3991,6 +3991,8 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                 lexer_next(&cast_look);
                 Token next = lexer_peek(&cast_look);
                 if (next.type == TOK_STRING || next.type == TOK_INT || next.type == TOK_FLOAT ||
+                    next.type == TOK_CHAR || next.type == TOK_FSTRING ||
+                    next.type == TOK_RAW_STRING ||
                     (next.type == TOK_OP && (is_token(next, "&") || is_token(next, "*") ||
                                              is_token(next, "**") || is_token(next, "!"))) ||
                     next.type == TOK_IDENT || next.type == TOK_LPAREN)
