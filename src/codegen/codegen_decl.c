@@ -1301,6 +1301,10 @@ int emit_tests_and_runner(ParserContext *ctx, ASTNode *node, FILE *out)
     {
         if (cur->type == NODE_TEST)
         {
+            if (cur->cfg_condition)
+            {
+                fprintf(out, "#if %s\n", cur->cfg_condition);
+            }
             fprintf(out, "static void _z_test_%d() {\n", test_count);
             int saved = defer_count;
             codegen_walker(ctx, cur->test_stmt.body, out);
@@ -1311,6 +1315,10 @@ int emit_tests_and_runner(ParserContext *ctx, ASTNode *node, FILE *out)
             }
             defer_count = saved;
             fprintf(out, "}\n");
+            if (cur->cfg_condition)
+            {
+                fprintf(out, "#endif\n");
+            }
             test_count++;
         }
         cur = cur->next;
@@ -1318,9 +1326,24 @@ int emit_tests_and_runner(ParserContext *ctx, ASTNode *node, FILE *out)
     if (test_count > 0)
     {
         fprintf(out, "\nvoid _z_run_tests() {\n");
-        for (int i = 0; i < test_count; i++)
+        cur = node;
+        int i = 0;
+        while (cur)
         {
-            fprintf(out, "    _z_test_%d();\n", i);
+            if (cur->type == NODE_TEST)
+            {
+                if (cur->cfg_condition)
+                {
+                    fprintf(out, "#if %s\n", cur->cfg_condition);
+                }
+                fprintf(out, "    _z_test_%d();\n", i);
+                if (cur->cfg_condition)
+                {
+                    fprintf(out, "#endif\n");
+                }
+                i++;
+            }
+            cur = cur->next;
         }
         fprintf(out, "}\n\n");
     }
