@@ -2365,24 +2365,33 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
 
                         ASTNode *def = find_struct_def(ctx, acc);
 
-                        // If not found as a struct, check if it's an alias
+                        int is_opaque_alias = 0;
                         if (!def)
                         {
-                            const char *aliased = find_type_alias(ctx, acc);
-                            if (aliased)
+                            TypeAlias *ta = find_type_alias_node(ctx, acc);
+                            if (ta)
                             {
-                                // Found an alias: replace acc with the aliased name
-                                free(acc);
-                                acc = xstrdup(aliased);
-                                // Try finding the struct definition again with the resolved name
-                                def = find_struct_def(ctx, acc);
+                                if (!ta->is_opaque)
+                                {
+                                    const char *aliased = find_type_alias(ctx, acc);
+                                    if (aliased)
+                                    {
+                                        free(acc);
+                                        acc = xstrdup(aliased);
+                                        def = find_struct_def(ctx, acc);
+                                    }
+                                }
+                                else
+                                {
+                                    is_opaque_alias = 1;
+                                }
                             }
                         }
 
-                        if (def)
+                        if (def || is_opaque_alias)
                         {
                             int is_variant = 0;
-                            if (def->type == NODE_ENUM)
+                            if (def && def->type == NODE_ENUM)
                             {
                                 ASTNode *v = def->enm.variants;
                                 char sbuf[128];
@@ -2448,6 +2457,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                             sprintf(inherent_name, "%s__%.*s", acc, suffix.len,
                                                     suffix.start);
 
+                                            printf("FIND FUNC: %s\n", inherent_name);
                                             if (find_func(ctx, inherent_name))
                                             {
                                                 strcpy(tmp, inherent_name);
@@ -4682,6 +4692,21 @@ char *resolve_struct_name_from_type(ParserContext *ctx, Type *t, int *is_ptr_out
     char *struct_name = NULL;
     *allocated_out = NULL;
     *is_ptr_out = 0;
+
+    if (t->kind == TYPE_ALIAS && t->alias.is_opaque_alias)
+    {
+        struct_name = t->name;
+        *is_ptr_out = 0;
+        return struct_name;
+    }
+
+    if (t->kind == TYPE_POINTER && t->inner && t->inner->kind == TYPE_ALIAS &&
+        t->inner->alias.is_opaque_alias)
+    {
+        struct_name = t->inner->name;
+        *is_ptr_out = 1;
+        return struct_name;
+    }
 
     const char *alias_target = NULL;
     if (t->kind == TYPE_STRUCT)
