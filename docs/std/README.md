@@ -1,4 +1,4 @@
-# Zen C's Standard Library
+# Standard Library
 
 ## Modules
 

@@ -30,6 +30,19 @@ jobs:
           if [ -f "website/docs.zenc-lang.org/content/std/README.md" ]; then
             mv website/docs.zenc-lang.org/content/std/README.md website/docs.zenc-lang.org/content/std/_index.md
           fi
+          
+          for file in website/docs.zenc-lang.org/content/std/*.md; do
+            if ! head -n 1 "$file" | grep -q "^+++"; then
+              TITLE=$(grep -m 1 "^# " "$file" | sed 's/^# //; s/"/\\"/g' || echo "Documentation")
+              TEMP=$(mktemp)
+              echo "+++" > "$TEMP"
+              echo "title = \"$TITLE\"" >> "$TEMP"
+              echo "+++" >> "$TEMP"
+              echo "" >> "$TEMP"
+              cat "$file" >> "$TEMP"
+              mv "$TEMP" "$file"
+            fi
+          done
 
       - name: Commit and Push to Website Repo
         run: |
