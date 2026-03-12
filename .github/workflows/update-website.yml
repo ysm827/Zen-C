@@ -1,0 +1,36 @@
+name: Update Website Version
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  update-website:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏷️ Get the new version tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Checkout Website Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'z-libs/zenc-lang.org'
+          token: ${{ secrets.WEBSITE_REPO_TOKEN }}
+          path: 'website-repo'
+
+      - name: Update Version in HTML and TOML
+        run: |
+          cd website-repo
+          
+          sed -i -E 's/<span class="version">v[0-9]+\.[0-9]+\.[0-9]+<\/span>/<span class="version">'"${{ env.VERSION }}"'<\/span>/g' zenc/index.html
+          sed -i -E 's/version = "v[0-9]+\.[0-9]+\.[0-9]+"/version = "'"${{ env.VERSION }}"'"/g' docs.zenc-lang.org/config.toml
+
+      - name: Commit and Push to Website Repo
+        run: |
+          cd website-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add zenc/index.html docs.zenc-lang.org/config.toml
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: bump website version to ${{ env.VERSION }}" && git push)
