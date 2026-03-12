@@ -594,6 +594,8 @@ struct ASTNode
         {
             char *target_type;
             ASTNode *expr;
+            Type *target_type_info;
+            int is_type;
         } size_of;
 
         struct
@@ -685,5 +687,6 @@ int is_integer_type(Type *t);
 int is_float_type(Type *t);
 char *type_to_string(Type *t);
 char *type_to_c_string(Type *t);
+Type *get_inner_type(Type *t);
 
 #endif

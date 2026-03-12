@@ -648,56 +648,58 @@ static void check_expr_call(TypeChecker *tc, ASTNode *node)
     int arg_idx = 0;
     while (arg)
     {
+        Type *expected = NULL;
+        if (sig && arg_idx < sig->total_args && sig->arg_types && sig->arg_types[arg_idx])
+        {
+            expected = sig->arg_types[arg_idx];
+        }
+        else if (!sig && node->call.callee->type_info)
+        {
+            Type *callee_t = get_inner_type(node->call.callee->type_info);
+            if (callee_t->kind == TYPE_FUNCTION && arg_idx < callee_t->arg_count && callee_t->args)
+            {
+                expected = callee_t->args[arg_idx];
+            }
+        }
+
+        // Propagate expected type to lambda for inference
+        if (arg->type == NODE_LAMBDA && expected)
+        {
+            arg->type_info = expected;
+        }
+
         check_node(tc, arg);
 
         // Validate type against signature
-        if (sig && arg_idx < sig->total_args && sig->arg_types && sig->arg_types[arg_idx])
+        Type *actual = arg->type_info;
+        if (expected && actual)
         {
-            Type *expected = sig->arg_types[arg_idx];
-            Type *actual = arg->type_info;
+            Type *e_resolved = get_inner_type(expected);
+            Type *a_resolved = get_inner_type(actual);
 
-            if (expected && actual)
+            if (e_resolved->kind == TYPE_UNKNOWN && a_resolved->kind != TYPE_UNKNOWN)
             {
-                if (expected->kind == TYPE_FUNCTION && actual->kind == TYPE_FUNCTION)
+                // Backward type inference: we passed an actual type to a lambda taking unknown
+                *e_resolved = *a_resolved;
+            }
+            else if (e_resolved->kind == TYPE_FUNCTION && a_resolved->kind == TYPE_FUNCTION)
+            {
+                for (int j = 0; j < e_resolved->arg_count && j < a_resolved->arg_count; j++)
                 {
-                    for (int j = 0; j < expected->arg_count && j < actual->arg_count; j++)
+                    if (a_resolved->args && a_resolved->args[j] &&
+                        a_resolved->args[j]->kind == TYPE_UNKNOWN && e_resolved->args &&
+                        e_resolved->args[j] && e_resolved->args[j]->kind != TYPE_UNKNOWN)
                     {
-                        if (actual->args && actual->args[j] &&
-                            actual->args[j]->kind == TYPE_UNKNOWN && expected->args &&
-                            expected->args[j] && expected->args[j]->kind != TYPE_UNKNOWN)
-                        {
-                            *actual->args[j] = *expected->args[j];
-                        }
-                    }
-                    if (actual->inner && actual->inner->kind == TYPE_UNKNOWN && expected->inner)
-                    {
-                        *actual->inner = *expected->inner;
+                        *a_resolved->args[j] = *e_resolved->args[j];
                     }
                 }
-                check_type_compatibility(tc, expected, actual, arg->token);
-            }
-        }
-        else if (!sig && node->call.callee->type_info &&
-                 node->call.callee->type_info->kind == TYPE_FUNCTION)
-        {
-            Type *callee_t = node->call.callee->type_info;
-            if (arg_idx < callee_t->arg_count && callee_t->args && callee_t->args[arg_idx])
-            {
-                Type *expected = callee_t->args[arg_idx];
-                Type *actual = arg->type_info;
-
-                if (expected && actual)
+                if (a_resolved->inner && a_resolved->inner->kind == TYPE_UNKNOWN &&
+                    e_resolved->inner)
                 {
-                    if (expected->kind == TYPE_UNKNOWN && actual->kind != TYPE_UNKNOWN)
-                    {
-                        *expected = *actual;
-                    }
-                    else
-                    {
-                        check_type_compatibility(tc, expected, actual, arg->token);
-                    }
+                    *a_resolved->inner = *e_resolved->inner;
                 }
             }
+            check_type_compatibility(tc, expected, actual, arg->token);
         }
 
         // If argument is passed by VALUE, check if it can be moved.
@@ -2045,11 +2047,12 @@ static void check_expr_lambda(TypeChecker *tc, ASTNode *node)
     {
         char *pname = node->lambda.param_names[i];
         Type *ptype = NULL;
-        if (node->type_info && node->type_info->kind == TYPE_FUNCTION && node->type_info->args)
+        Type *node_ti = get_inner_type(node->type_info);
+        if (node_ti && node_ti->kind == TYPE_FUNCTION && node_ti->args)
         {
-            if (i < node->type_info->arg_count)
+            if (i < node_ti->arg_count)
             {
-                ptype = node->type_info->args[i];
+                ptype = node_ti->args[i];
             }
         }
         tc_add_symbol(tc, pname, ptype, node->token);

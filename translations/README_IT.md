@@ -371,8 +371,10 @@ Gli operatori aritmetici (`+`, `-`, `*`, `/`) e bitwise (`&`, `|`, `^`) funziona
 Crea un alias per un tipo già esistente.
 ```zc
 alias ID = int;
-alias PuntoDellaMappa = Mappa<string, Punto>;
+alias PuntoDellaMappa = Mappa<string, Punto>
+alias OpFunc = fn(int, int) -> int
 ```
+> **Nota:** Il punto e virgola finale è opzionale per gli alias di tipo.
 
 #### Alias del tipo opachi
 Puoi definire un alias del tipo come `opaque` (lett. _opaco_) per creare un nuovo tipo che si distingue dal suo tipo sottostante al di fuori del modulo che l'ha definito. Questo permette una forte incapsulamento e sicurezza dei tipi senza overhead extra durante l'esecuzione di un wrapper struct.

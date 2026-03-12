@@ -78,7 +78,7 @@ static int struct_depends_on(ParserContext *ctx, ASTNode *s1, const char *target
         {
             if (variant->type == NODE_ENUM_VARIANT && variant->variant.payload)
             {
-                char *type_str = type_to_string(variant->variant.payload);
+                char *type_str = codegen_type_to_string(variant->variant.payload);
                 if (type_str)
                 {
                     if (strchr(type_str, '*'))

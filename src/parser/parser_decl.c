@@ -945,19 +945,24 @@ ASTNode *parse_type_alias(ParserContext *ctx, Lexer *l, int is_opaque)
 
     lexer_next(l); // consume '='
 
-    char *o = parse_type(ctx, l);
+    Type *t = parse_type_formal(ctx, l);
+    char *o = type_to_string(t);
 
-    lexer_next(l);
+    if (lexer_peek(l).type == TOK_SEMICOLON)
+    {
+        lexer_next(l);
+    }
 
     ASTNode *node = ast_create(NODE_TYPE_ALIAS);
     node->type_alias.alias = xmalloc(n.len + 1);
     strncpy(node->type_alias.alias, n.start, n.len);
     node->type_alias.alias[n.len] = 0;
     node->type_alias.original_type = o;
+    node->type_info = t;
     node->type_alias.is_opaque = is_opaque;
     node->type_alias.defined_in_file = g_current_filename ? xstrdup(g_current_filename) : NULL;
 
-    register_type_alias(ctx, node->type_alias.alias, o, is_opaque,
+    register_type_alias(ctx, node->type_alias.alias, o, t, is_opaque,
                         node->type_alias.defined_in_file);
 
     return node;

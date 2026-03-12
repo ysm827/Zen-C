@@ -362,8 +362,10 @@ Operadores aritméticos (`+`, `-`, `*`, `/`) e bitwise (`&`, `|`, `^`) funcionam
 Cria um novo nome para um tipo existente.
 ```zc
 alias ID = int;
-alias PointMap = Map<string, Point>;
+alias PointMap = Map<string, Point>
+alias OpFunc = fn(int, int) -> int
 ```
+> **Nota:** O ponto e vírgula final é opcional para aliases de tipo.
 
 #### Aliases Opacos de Tipos
 

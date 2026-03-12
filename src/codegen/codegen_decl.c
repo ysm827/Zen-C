@@ -293,8 +293,31 @@ void emit_type_aliases(ASTNode *node, FILE *out)
             {
                 fprintf(out, "#if %s\n", node->cfg_condition);
             }
-            fprintf(out, "typedef %s %s;\n", node->type_alias.original_type,
-                    node->type_alias.alias);
+            char *c_type_str = codegen_type_to_string(node->type_info);
+            // Quick fix for raw function pointers and arrays in typedefs:
+            // Since codegen_type_to_string returns `int (*)(int)`, simple replacement isn't valid
+            // C. But Zen C doesn't officially support raw function pointer aliases. We'll just
+            // print it.
+            if (c_type_str)
+            {
+                if (strstr(c_type_str, "(*)"))
+                {
+                    char *ptr = strstr(c_type_str, "(*)");
+                    int prefix_len = ptr - c_type_str;
+                    fprintf(out, "typedef %.*s (*%s)%s;\n", prefix_len, c_type_str,
+                            node->type_alias.alias, ptr + 3);
+                }
+                else
+                {
+                    fprintf(out, "typedef %s %s;\n", c_type_str, node->type_alias.alias);
+                }
+                free(c_type_str);
+            }
+            else
+            {
+                fprintf(out, "typedef %s %s;\n", node->type_alias.original_type,
+                        node->type_alias.alias);
+            }
             if (node->cfg_condition)
             {
                 fprintf(out, "#endif\n");
@@ -309,7 +332,33 @@ void emit_global_aliases(ParserContext *ctx, FILE *out)
     TypeAlias *ta = ctx->type_aliases;
     while (ta)
     {
-        fprintf(out, "typedef %s %s;\n", ta->original_type, ta->alias);
+        if (ta->type_info)
+        {
+            char *c_type_str = codegen_type_to_string(ta->type_info);
+            if (c_type_str)
+            {
+                if (strstr(c_type_str, "(*)"))
+                {
+                    char *ptr = strstr(c_type_str, "(*)");
+                    int prefix_len = ptr - c_type_str;
+                    fprintf(out, "typedef %.*s (*%s)%s;\n", prefix_len, c_type_str, ta->alias,
+                            ptr + 3);
+                }
+                else
+                {
+                    fprintf(out, "typedef %s %s;\n", c_type_str, ta->alias);
+                }
+                free(c_type_str);
+            }
+            else
+            {
+                fprintf(out, "typedef %s %s;\n", ta->original_type, ta->alias);
+            }
+        }
+        else
+        {
+            fprintf(out, "typedef %s %s;\n", ta->original_type, ta->alias);
+        }
         ta = ta->next;
     }
 }
@@ -425,7 +474,7 @@ void emit_lambda_defs(ParserContext *ctx, FILE *out)
         if (node->type_info && node->type_info->inner &&
             node->type_info->inner->kind != TYPE_UNKNOWN)
         {
-            ret_type_str = type_to_string(node->type_info->inner);
+            ret_type_str = codegen_type_to_string(node->type_info->inner);
         }
 
         if (strcmp(ret_type_str, "unknown") == 0)
@@ -449,7 +498,7 @@ void emit_lambda_defs(ParserContext *ctx, FILE *out)
             if (node->type_info && node->type_info->args && node->type_info->args[i] &&
                 node->type_info->args[i]->kind != TYPE_UNKNOWN)
             {
-                param_type_str = type_to_string(node->type_info->args[i]);
+                param_type_str = codegen_type_to_string(node->type_info->args[i]);
             }
             if (strcmp(param_type_str, "unknown") == 0)
             {

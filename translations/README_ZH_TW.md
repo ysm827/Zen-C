@@ -369,8 +369,10 @@ fn main() {
 為現有類型創建新名稱。
 ```zc
 alias ID = int;
-alias PointMap = Map<string, Point>;
+alias PointMap = Map<string, Point>
+alias OpFunc = fn(int, int) -> int
 ```
+> **注意：** 型別別名結尾的分號是可選項的。
 
 #### 不透明類型別名
 你可以將類型別名定義為 `opaque`，從而在定義模塊之外創建一個與基礎類型不同的新類型。這提供了強大的封裝和類型安全性，而沒有包裝結構體的運行時開銷。

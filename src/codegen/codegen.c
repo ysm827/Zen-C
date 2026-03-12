@@ -904,14 +904,14 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
             }
         }
 
-        if (node->call.callee->type_info && node->call.callee->type_info->kind == TYPE_FUNCTION &&
-            !node->call.callee->type_info->is_raw)
+        Type *callee_ti = get_inner_type(node->call.callee->type_info);
+        if (callee_ti && callee_ti->kind == TYPE_FUNCTION && !callee_ti->is_raw)
         {
             fprintf(out, "({ z_closure_T _c = ");
             codegen_expression(ctx, node->call.callee, out);
             fprintf(out, "; ");
 
-            Type *ft = node->call.callee->type_info;
+            Type *ft = callee_ti;
             char *ret = codegen_type_to_string(ft->inner);
             if (strcmp(ret, "string") == 0)
             {
@@ -1063,7 +1063,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                     if (param_t && param_t->kind == TYPE_ARRAY && param_t->array_size == 0 &&
                         arg_t && arg_t->kind == TYPE_ARRAY && arg_t->array_size > 0)
                     {
-                        char *inner = type_to_string(param_t->inner);
+                        char *inner = codegen_type_to_string(param_t->inner);
                         fprintf(out, "(Slice_%s){.data = ", inner);
                         codegen_expression(ctx, arg, out);
                         fprintf(out, ", .len = %d, .cap = %d}", arg_t->array_size,
@@ -1713,7 +1713,13 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
         break;
     }
     case NODE_EXPR_SIZEOF:
-        if (node->size_of.target_type)
+        if (node->size_of.target_type_info)
+        {
+            char *mapped = codegen_type_to_string(node->size_of.target_type_info);
+            fprintf(out, "sizeof(%s)", mapped);
+            free(mapped);
+        }
+        else if (node->size_of.target_type)
         {
             const char *t = node->size_of.target_type;
             const char *mapped = t;
@@ -1780,7 +1786,13 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
         }
         break;
     case NODE_TYPEOF:
-        if (node->size_of.target_type)
+        if (node->size_of.target_type_info)
+        {
+            char *mapped = codegen_type_to_string(node->size_of.target_type_info);
+            fprintf(out, "typeof(%s)", mapped);
+            free(mapped);
+        }
+        else if (node->size_of.target_type)
         {
             fprintf(out, "typeof(%s)", node->size_of.target_type);
         }

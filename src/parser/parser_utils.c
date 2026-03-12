@@ -793,12 +793,13 @@ void add_to_struct_list(ParserContext *ctx, ASTNode *node)
     ctx->parsed_structs_list = r;
 }
 
-void register_type_alias(ParserContext *ctx, const char *alias, const char *original, int is_opaque,
-                         const char *defined_in_file)
+void register_type_alias(ParserContext *ctx, const char *alias, const char *original,
+                         Type *type_info, int is_opaque, const char *defined_in_file)
 {
     TypeAlias *ta = xmalloc(sizeof(TypeAlias));
     ta->alias = xstrdup(alias);
     ta->original_type = xstrdup(original);
+    ta->type_info = type_info;
     ta->is_opaque = is_opaque;
     ta->defined_in_file = defined_in_file ? xstrdup(defined_in_file) : NULL;
     ta->next = ctx->type_aliases;
@@ -2258,6 +2259,7 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
             replace_type_str(n->impl_trait.target_type, p, c, os, ns);
         new_node->impl_trait.methods = copy_ast_replacing(n->impl_trait.methods, p, c, os, ns);
         break;
+    case NODE_TYPEOF:
     case NODE_EXPR_SIZEOF:
         if (n->size_of.target_type)
         {
@@ -2269,7 +2271,20 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
                 replaced = mangled;
             }
             new_node->size_of.target_type = replaced;
+            if (replaced && strcmp(replaced, n->size_of.target_type) != 0)
+            {
+                new_node->size_of.target_type_info = NULL;
+            }
+            else
+            {
+                new_node->size_of.target_type_info = n->size_of.target_type_info;
+            }
         }
+        else
+        {
+            new_node->size_of.target_type_info = n->size_of.target_type_info;
+        }
+        new_node->size_of.is_type = n->size_of.is_type;
         new_node->size_of.expr = copy_ast_replacing(n->size_of.expr, p, c, os, ns);
         break;
     default:
@@ -4224,7 +4239,7 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
                 }
 
                 char *fn_ptr = strstr(type_str, "(*)");
-                if (arg_type->kind == TYPE_FUNCTION)
+                if (get_inner_type(arg_type)->kind == TYPE_FUNCTION)
                 {
                     strcat(buf, "z_closure_T ");
                     strcat(buf, name);

@@ -415,6 +415,7 @@ static char *type_to_string_impl(Type *t)
     }
 
     case TYPE_FUNCTION:
+    {
         if (t->is_raw)
         {
             // fn*(Args)->Ret
@@ -445,12 +446,35 @@ static char *type_to_string_impl(Type *t)
             free(ret);
             return res;
         }
-        if (t->inner)
-        {
-            free(type_to_string(t->inner));
-        }
 
-        return xstrdup("z_closure_T");
+        // fn(Args) -> Ret
+        char *ret = type_to_string(t->inner);
+        char *res = xmalloc(strlen(ret) + 64);
+        snprintf(res, strlen(ret) + 64, "fn(");
+
+        for (int i = 0; i < t->arg_count; i++)
+        {
+            if (i > 0)
+            {
+                char *tmp = xmalloc(strlen(res) + 3);
+                snprintf(tmp, strlen(res) + 3, "%s, ", res);
+                free(res);
+                res = tmp;
+            }
+            char *arg = type_to_string(t->args[i]);
+            char *tmp = xmalloc(strlen(res) + strlen(arg) + 1);
+            sprintf(tmp, "%s%s", res, arg);
+            free(res);
+            res = tmp;
+            free(arg);
+        }
+        char *tmp = xmalloc(strlen(res) + strlen(ret) + 6); // ) -> Ret
+        sprintf(tmp, "%s) -> %s", res, ret);
+        free(res);
+        res = tmp;
+        free(ret);
+        return res;
+    }
 
     case TYPE_STRUCT:
     case TYPE_GENERIC:
@@ -756,4 +780,13 @@ static char *type_to_c_string_impl(Type *t)
     default:
         return xstrdup("unknown");
     }
+}
+
+Type *get_inner_type(Type *t)
+{
+    while (t && t->kind == TYPE_ALIAS && !t->alias.is_opaque_alias)
+    {
+        t = t->inner;
+    }
+    return t;
 }

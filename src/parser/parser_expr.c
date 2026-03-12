@@ -1768,6 +1768,8 @@ static ASTNode *parse_sizeof_expr(ParserContext *ctx, Lexer *l)
         char *ts = type_to_string(ty);
         node = ast_create(NODE_EXPR_SIZEOF);
         node->size_of.target_type = ts;
+        node->size_of.target_type_info = ty;
+        node->size_of.is_type = 1;
         node->size_of.expr = NULL;
         node->type_info = type_new(TYPE_USIZE);
     }
@@ -1787,6 +1789,8 @@ static ASTNode *parse_sizeof_expr(ParserContext *ctx, Lexer *l)
         }
         node = ast_create(NODE_EXPR_SIZEOF);
         node->size_of.target_type = NULL;
+        node->size_of.target_type_info = NULL;
+        node->size_of.is_type = 0;
         node->size_of.expr = ex;
         node->type_info = type_new(TYPE_USIZE);
     }
@@ -1836,6 +1840,8 @@ static ASTNode *parse_typeof_expr(ParserContext *ctx, Lexer *l)
         char *ts = type_to_string(ty);
         node = ast_create(NODE_TYPEOF);
         node->size_of.target_type = ts;
+        node->size_of.target_type_info = ty;
+        node->size_of.is_type = 1;
         node->size_of.expr = NULL;
     }
     else
@@ -1854,6 +1860,8 @@ static ASTNode *parse_typeof_expr(ParserContext *ctx, Lexer *l)
         }
         node = ast_create(NODE_TYPEOF);
         node->size_of.target_type = NULL;
+        node->size_of.target_type_info = NULL;
+        node->size_of.is_type = 0;
         node->size_of.expr = ex;
     }
     return node;

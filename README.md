@@ -370,7 +370,8 @@ Arithmetic (`+`, `-`, `*`, `/`) and bitwise (`&`, `|`, `^`) operators work eleme
 Create a new name for an existing type.
 ```zc
 alias ID = int;
-alias PointMap = Map<string, Point>;
+alias PointMap = Map<string, Point>
+alias OpFunc = fn(int, int) -> int
 ```
 
 #### Opaque Type Aliases

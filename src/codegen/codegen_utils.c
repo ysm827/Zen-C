@@ -258,7 +258,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
     {
         if (node->type_info)
         {
-            return type_to_string(node->type_info);
+            return codegen_type_to_string(node->type_info);
         }
         return NULL;
     }
@@ -356,7 +356,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
             if (sym && sym->type_info && sym->type_info->kind == TYPE_FUNCTION &&
                 sym->type_info->inner)
             {
-                return type_to_string(sym->type_info->inner);
+                return codegen_type_to_string(sym->type_info->inner);
             }
         }
     }
@@ -544,7 +544,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
             if (def && def->type_info && def->type_info->kind == TYPE_VECTOR &&
                 def->type_info->inner)
             {
-                return type_to_string(def->type_info->inner);
+                return codegen_type_to_string(def->type_info->inner);
             }
         }
         return "int";
@@ -638,7 +638,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
     {
         if (node->type_info)
         {
-            return type_to_string(node->type_info);
+            return codegen_type_to_string(node->type_info);
         }
         return NULL;
     }

@@ -284,6 +284,7 @@ typedef struct TypeAlias
 {
     char *alias;         ///< New type name.
     char *original_type; ///< Original type.
+    Type *type_info;     ///< Parsed original type.
     struct TypeAlias *next;
     int is_opaque;
     char *defined_in_file;
@@ -602,8 +603,8 @@ char *sanitize_mangled_name(const char *name);
  * @brief Registers a type alias.
  */
 TypeAlias *find_type_alias_node(ParserContext *ctx, const char *name);
-void register_type_alias(ParserContext *ctx, const char *alias, const char *original, int is_opaque,
-                         const char *defined_in_file);
+void register_type_alias(ParserContext *ctx, const char *alias, const char *original,
+                         Type *type_info, int is_opaque, const char *defined_in_file);
 
 /**
  * @brief Registers an implementation.

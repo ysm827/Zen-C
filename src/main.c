@@ -20,7 +20,6 @@ int lsp_main(int argc, char **argv);
 static void main_append_flag(char *dest, size_t max_size, const char *prefix, const char *val)
 {
     size_t cur_len = strlen(dest);
-    int has_space = val && strchr(val, ' ') != NULL;
 
     if (cur_len > 0 && dest[cur_len - 1] != ' ')
     {

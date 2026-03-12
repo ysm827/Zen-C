@@ -370,8 +370,10 @@ Los operadores aritméticos (`+`, `-`, `*`, `/`) y bit a bit (`&`, `|`, `^`) fun
 Crea un nuevo nombre para un tipo existente.
 ```zc
 alias ID = int;
-alias PointMap = Map<string, Point>;
+alias PointMap = Map<string, Point>
+alias OpFunc = fn(int, int) -> int
 ```
+> **Nota:** El punto y coma final es opcional para los alias de tipo.
 
 #### Alias de Tipos Opacos
 Puedes definir un alias de tipo como `opaque` para crear un nuevo tipo que sea distinto de su tipo subyacente fuera del módulo que lo define. Esto proporciona una fuerte encapsulación y seguridad de tipos sin la sobrecarga en tiempo de ejecución de un struct envoltorio.
