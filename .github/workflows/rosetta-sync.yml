@@ -43,8 +43,8 @@ jobs:
         run: |
           mkdir -p website/docs.zenc-lang.org/content/examples/rosetta/
           
-          rsync -avz --delete zen-c/website_out/ website/docs.zenc-lang.org/content/examples/rosetta/
-          
+          rsync -avz --delete --exclude='_index.md' zen-c/website_out/ website/docs.zenc-lang.org/content/examples/rosetta/
+
           cd website
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
