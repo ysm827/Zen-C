@@ -1532,8 +1532,11 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
                 // if (__opt.is_none()) break;
                 ASTNode *if_break = ast_create(NODE_IF);
                 if_break->if_stmt.condition = call_is_none;
-                ASTNode *break_stmt = ast_create(NODE_BREAK);
-                if_break->if_stmt.then_body = break_stmt;
+
+                ASTNode *break_blk = ast_create(NODE_BLOCK);
+                break_blk->block.statements = ast_create(NODE_BREAK);
+
+                if_break->if_stmt.then_body = break_blk;
                 if_break->if_stmt.else_body = NULL;
                 APPEND_STMT(if_break);
 
