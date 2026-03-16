@@ -47,6 +47,7 @@
 加入官方 Zen C Discord 服务器，参与讨论、展示 Demo、提问或报告 Bug！
 
 - Discord: [点击加入](https://discord.com/invite/q6wEsCmkJP)
+- RFC: [功能提案](https://github.com/zenc-lang/rfcs)
 
 ## 展示
 
@@ -70,6 +71,7 @@
       <ul>
         <li><a href="#概述">概述</a></li>
         <li><a href="#社区">社区</a></li>
+        <li><a href="https://github.com/zenc-lang/rfcs">RFC</a></li>
         <li><a href="#快速入门">快速入门</a></li>
         <li><a href="#标准库">标准库</a></li>
         <li><a href="#工具链">工具链</a>
@@ -1774,6 +1776,7 @@ fn main() {
   <p>
     <a href="https://discord.com/invite/q6wEsCmkJP">Discord</a> •
     <a href="https://github.com/zenc-lang/zenc">GitHub</a> •
+    <a href="https://github.com/zenc-lang/rfcs">RFC</a> •
     <a href="CONTRIBUTING_ZH_CN.md">贡献</a>
   </p>
 </div>

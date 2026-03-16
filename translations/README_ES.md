@@ -47,6 +47,7 @@
 ¡Únete a la discusión, comparte demos, haz preguntas o reporta errores en el servidor oficial de Discord de Zen C!
 
 - Discord: [Únete aquí](https://discord.com/invite/q6wEsCmkJP)
+- RFCs: [Proponer características](https://github.com/zenc-lang/rfcs)
 
 ## Proyectos Destacados
 
@@ -70,6 +71,7 @@ Echa un vistazo a estos proyectos construidos con Zen C:
       <ul>
         <li><a href="#descripción-general">Descripción General</a></li>
         <li><a href="#comunidad">Comunidad</a></li>
+        <li><a href="https://github.com/zenc-lang/rfcs">RFCs</a></li>
         <li><a href="#inicio-rápido">Inicio Rápido</a></li>
         <li><a href="#biblioteca-estándar">Biblioteca Estándar</a></li>
         <li><a href="#herramientas">Herramientas</a>
@@ -1811,6 +1813,7 @@ Este proyecto utiliza bibliotecas de terceros. Los textos completos de las licen
   <p>
     <a href="https://discord.com/invite/q6wEsCmkJP">Discord</a> •
     <a href="https://github.com/zenc-lang/zenc">GitHub</a> •
+    <a href="https://github.com/zenc-lang/rfcs">RFCs</a> •
     <a href="CONTRIBUTING_ES.md">Contribuir</a>
   </p>
 </div>

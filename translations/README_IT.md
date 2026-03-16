@@ -47,6 +47,7 @@
 Unisciti alla conversazione, condividi delle demo, fai domande o segnala dei bug nel server ufficiale Discord Zen C
 
 - Discord: [Unisciti qui](https://discord.com/invite/q6wEsCmkJP)
+- RFC: [Proponi funzionalità](https://github.com/zenc-lang/rfcs)
 
 ## Vetrina
 
@@ -70,6 +71,7 @@ Dai un'occhiata a questi progetti creati con Zen C:
       <ul>
         <li><a href="#panoramica">Panoramica</a></li>
         <li><a href="#comunità">Community</a></li>
+        <li><a href="https://github.com/zenc-lang/rfcs">RFC</a></li>
         <li><a href="#strumenti">Strumenti</a>
           <ul>
             <li><a href="#protocollo-server-di-linguaggio-lsp">LSP</a></li>
@@ -1805,6 +1807,7 @@ Questo progetto utilizza librerie esterne. I testi di licenza completi possono e
   <p>
     <a href="https://discord.com/invite/q6wEsCmkJP">Discord</a> •
     <a href="https://github.com/zenc-lang/zenc">GitHub</a> •
+    <a href="https://github.com/zenc-lang/rfcs">RFC</a> •
     <a href="CONTRIBUTING_IT.md">Contribuisci</a>
   </p>
 </div>

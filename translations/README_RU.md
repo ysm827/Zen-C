@@ -47,6 +47,7 @@
 Приглашаем вас присоединиться к нам на официальном Discord-сервере Zen C! Здесь можно обсуждать проект, делиться примерами, задавать вопросы и сообщать об ошибках.
 
 - Discord: [Присоединиться](https://discord.com/invite/q6wEsCmkJP)
+- RFC: [Предложить функции](https://github.com/zenc-lang/rfcs)
 
 ## Галерея
 
@@ -69,6 +70,7 @@
       <ul>
         <li><a href="#обзор">Обзор</a></li>
         <li><a href="#сообщество">Сообщество</a></li>
+        <li><a href="https://github.com/zenc-lang/rfcs">RFC</a></li>
         <li><a href="#быстрый-старт">Быстрый старт</a></li>
         <li><a href="#стандартная-библиотека">Стандартная библиотека</a></li>
         <li><a href="#инструменты">Инструменты</a>
@@ -1750,6 +1752,7 @@ fn main() {
   <p>
     <a href="https://discord.com/invite/q6wEsCmkJP">Discord</a> •
     <a href="https://github.com/zenc-lang/zenc">GitHub</a> •
+    <a href="https://github.com/zenc-lang/rfcs">RFC</a> •
     <a href="CONTRIBUTING_RU.md">Внести вклад</a>
   </p>
 </div>
