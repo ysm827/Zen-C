@@ -125,15 +125,15 @@ sudo make install
 
 ### Windows
 
-Zen C has full native support for Windows (x86_64). You can build using the provided batch script with GCC (MinGW):
+Zen C ha il pieno supporto nativo per Windows (x86_64). È possibile compilare utilizzando lo script batch fornito con GCC (MinGW):
 
 ```cmd
 build.bat
 ```
 
-This will build the compiler (`zc.exe`). Networking, Filesystem, and Process operations are fully supported via the Platform Abstraction Layer (PAL).
+Questo costruirà il compilatore (`zc.exe`). Le operazioni di Rete, File System e Processo sono completamente supportate tramite il Platform Abstraction Layer (PAL).
 
-Alternatively, you can use `make` if you have a Unix-like environment (MSYS2, Cygwin, git-bash).
+In alternativa, è possibile utilizzare `make` se si dispone di un ambiente Unix-like (MSYS2, Cygwin, git-bash).
 
 ### Build Portatile (APE)
 

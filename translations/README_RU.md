@@ -121,15 +121,15 @@ sudo make install
 
 ### Windows
 
-Zen C has full native support for Windows (x86_64). You can build using the provided batch script with GCC (MinGW):
+Zen C имеет полную нативную поддержку Windows (x86_64). Вы можете выполнить сборку, используя прилагаемый пакетный скрипт с GCC (MinGW):
 
 ```cmd
 build.bat
 ```
 
-This will build the compiler (`zc.exe`). Networking, Filesystem, and Process operations are fully supported via the Platform Abstraction Layer (PAL).
+Это соберет компилятор (`zc.exe`). Сетевые операции, операции с файловой системой и процессами полностью поддерживаются через уровень абстракции платформы (PAL).
 
-Alternatively, you can use `make` if you have a Unix-like environment (MSYS2, Cygwin, git-bash).
+Кроме того, вы можете использовать `make`, если у вас есть Unix-подобная среда (MSYS2, Cygwin, git-bash).
 
 ### Портативная сборка (APE)
 Zen C можно скомпилировать как **Actually Portable Executable (APE)** с помощью [Cosmopolitan Libc](https://github.com/jart/cosmopolitan). Это создаёт один исполняемый файл (`.com`), работающий нативно на Linux, macOS, Windows, FreeBSD, OpenBSD и NetBSD на архитектурах x86_64 и aarch64.
