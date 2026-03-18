@@ -7,9 +7,9 @@ include <stdarg.h>
 
 extern fn exit(code: int);
 
-fn _zen_panic(file: const char*, line: int, func: const char*, msg: const char*) {
+fn __zenc_panic_impl(file: const char*, line: int, func: const char*, msg: const char*) {
     fprintf(stderr, "%s:%d (%s): Panic: %s\n", file, line, func, msg);
     exit(1);
 }
 
-#define panic(msg) _zen_panic(__FILE__, __LINE__, __func__, msg)
+#define __zenc_panic(msg) __zenc_panic_impl(__FILE__, __LINE__, __func__, msg)

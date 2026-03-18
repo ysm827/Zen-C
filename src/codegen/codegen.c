@@ -966,7 +966,15 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
             break;
         }
 
-        codegen_expression(ctx, node->call.callee, out);
+        if (node->call.callee->type == NODE_EXPR_VAR &&
+            strcmp(node->call.callee->var_ref.name, "panic") == 0)
+        {
+            fprintf(out, "__zenc_panic");
+        }
+        else
+        {
+            codegen_expression(ctx, node->call.callee, out);
+        }
         fprintf(out, "(");
 
         if (node->call.arg_names && node->call.callee->type == NODE_EXPR_VAR)
