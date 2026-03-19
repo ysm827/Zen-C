@@ -2596,6 +2596,33 @@ ASTNode *parse_statement(ParserContext *ctx, Lexer *l)
     }
 
     // Keywords / Special
+    if (tk.type == TOK_DO)
+    {
+        Token do_tok = lexer_next(l); // eat 'do'
+        ASTNode *body = parse_block(ctx, l);
+
+        // Expect 'while'
+        Token while_tok = lexer_peek(l);
+        if (while_tok.type != TOK_IDENT || strncmp(while_tok.start, "while", 5) != 0 ||
+            while_tok.len != 5)
+        {
+            zpanic_at(while_tok, "Expected 'while' after do block");
+        }
+        lexer_next(l); // eat 'while'
+
+        ASTNode *cond = parse_expression(ctx, l);
+        if (lexer_peek(l).type == TOK_SEMICOLON)
+        {
+            lexer_next(l);
+        }
+
+        ASTNode *n = ast_create(NODE_DO_WHILE);
+        n->token = do_tok;
+        n->do_while_stmt.body = body;
+        n->do_while_stmt.condition = cond;
+        n->do_while_stmt.loop_label = NULL;
+        return n;
+    }
     if (tk.type == TOK_TRAIT)
     {
         return parse_trait(ctx, l);
@@ -3003,33 +3030,7 @@ ASTNode *parse_statement(ParserContext *ctx, Lexer *l)
             return n;
         }
 
-        // Do-while loop: do { body } while condition;
-        if (strncmp(tk.start, "do", 2) == 0 && tk.len == 2)
-        {
-            lexer_next(l); // eat 'do'
-            ASTNode *body = parse_block(ctx, l);
-
-            // Expect 'while'
-            Token while_tok = lexer_peek(l);
-            if (while_tok.type != TOK_IDENT || strncmp(while_tok.start, "while", 5) != 0 ||
-                while_tok.len != 5)
-            {
-                zpanic_at(while_tok, "Expected 'while' after do block");
-            }
-            lexer_next(l); // eat 'while'
-
-            ASTNode *cond = parse_expression(ctx, l);
-            if (lexer_peek(l).type == TOK_SEMICOLON)
-            {
-                lexer_next(l);
-            }
-
-            ASTNode *n = ast_create(NODE_DO_WHILE);
-            n->do_while_stmt.body = body;
-            n->do_while_stmt.condition = cond;
-            n->do_while_stmt.loop_label = NULL;
-            return n;
-        }
+        // Do-while logic was moved.
 
         if (strncmp(tk.start, "defer", 5) == 0 && tk.len == 5)
         {

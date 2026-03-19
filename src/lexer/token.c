@@ -233,6 +233,10 @@ Token lexer_next(Lexer *l)
         {
             return (Token){TOK_OPAQUE, s, 6, start_line, start_col, g_current_filename};
         }
+        if (len == 2 && strncmp(s, "do", 2) == 0)
+        {
+            return (Token){TOK_DO, s, 2, start_line, start_col, g_current_filename};
+        }
 
         // F-Strings
         if (len == 1 && s[0] == 'f' && s[1] == '"')
