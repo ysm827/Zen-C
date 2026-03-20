@@ -3333,9 +3333,11 @@ void instantiate_generic(ParserContext *ctx, const char *tpl, const char *arg,
             const char *subst_arg = unmangled_arg ? unmangled_arg : arg;
             nv->variant.payload = replace_type_formal(
                 v->variant.payload, t->struct_node->enm.generic_param, subst_arg, NULL, NULL);
-            char mangled_var[512];
-            sprintf(mangled_var, "%s_%s", m, nv->variant.name);
+            size_t mangled_var_sz = strlen(m) + strlen(nv->variant.name) + 2;
+            char *mangled_var = xmalloc(mangled_var_sz);
+            snprintf(mangled_var, mangled_var_sz, "%s_%s", m, nv->variant.name);
             register_enum_variant(ctx, m, mangled_var, nv->variant.tag_id);
+            free(mangled_var);
             if (!h)
             {
                 h = nv;
@@ -4069,7 +4071,8 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
         zpanic_at(t, "Expected '(' in function args");
     }
 
-    char *buf = xmalloc(1024);
+    size_t buf_size = 8192;
+    char *buf = xmalloc(buf_size);
     buf[0] = 0;
     int count = 0;
     char **defaults = xmalloc(sizeof(char *) * 16);
@@ -4227,10 +4230,12 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
                     }
                     Type *pt = type_new_ptr(st);
 
-                    char buf_type[256];
+                    size_t bt_len = strlen(ctx->current_impl_struct) + 2;
+                    char *buf_type = xmalloc(bt_len);
                     sprintf(buf_type, "%s*", ctx->current_impl_struct);
                     // Register 'self' with actual type in symbol table
                     add_symbol(ctx, "self", buf_type, pt);
+                    free(buf_type);
 
                     types[count] = pt;
 

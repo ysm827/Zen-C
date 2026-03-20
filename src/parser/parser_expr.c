@@ -2540,9 +2540,10 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                             if (def && def->type == NODE_ENUM)
                             {
                                 ASTNode *v = def->enm.variants;
-                                char sbuf[128];
-                                strncpy(sbuf, suffix.start, suffix.len);
-                                sbuf[suffix.len] = 0;
+                                size_t slen = suffix.len;
+                                char *sbuf = xmalloc(slen + 1);
+                                strncpy(sbuf, suffix.start, slen);
+                                sbuf[slen] = 0;
                                 while (v)
                                 {
                                     if (strcmp(v->variant.name, sbuf) == 0)
@@ -2552,6 +2553,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                     }
                                     v = v->next;
                                 }
+                                free(sbuf);
                             }
                             if (is_variant)
                             {
@@ -2578,9 +2580,10 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                         if (tpl_def->type == NODE_ENUM)
                                         {
                                             ASTNode *v = tpl_def->enm.variants;
-                                            char sbuf[128];
-                                            strncpy(sbuf, suffix.start, suffix.len);
-                                            sbuf[suffix.len] = 0;
+                                            size_t slen = suffix.len;
+                                            char *sbuf = xmalloc(slen + 1);
+                                            strncpy(sbuf, suffix.start, slen);
+                                            sbuf[slen] = 0;
                                             while (v)
                                             {
                                                 if (strcmp(v->variant.name, sbuf) == 0)
@@ -2590,6 +2593,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                                 }
                                                 v = v->next;
                                             }
+                                            free(sbuf);
                                         }
                                         int resolved = 0;
                                         if (is_variant)
@@ -2599,18 +2603,20 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                         }
                                         else
                                         {
-                                            char inherent_name[256];
-                                            sprintf(inherent_name, "%s__%.*s", acc, suffix.len,
-                                                    suffix.start);
+                                            size_t ih_len = strlen(acc) + suffix.len + 3;
+                                            char *inherent_name = xmalloc(ih_len);
+                                            snprintf(inherent_name, ih_len, "%s__%.*s", acc,
+                                                     suffix.len, suffix.start);
 
-                                            printf("FIND FUNC: %s\n", inherent_name);
                                             if (find_func(ctx, inherent_name))
                                             {
-                                                strcpy(tmp, inherent_name);
+                                                free(tmp);
+                                                tmp = inherent_name;
                                                 resolved = 1;
                                             }
                                             else
                                             {
+                                                free(inherent_name);
                                                 GenericImplTemplate *it = ctx->impl_templates;
                                                 while (it)
                                                 {
@@ -2625,16 +2631,22 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                                         }
                                                         if (tname)
                                                         {
-                                                            char cand[512];
-                                                            sprintf(cand, "%s__%s_%.*s", acc, tname,
-                                                                    suffix.len, suffix.start);
+                                                            size_t cand_len = strlen(acc) +
+                                                                              strlen(tname) +
+                                                                              suffix.len + 5;
+                                                            char *cand = xmalloc(cand_len);
+                                                            snprintf(cand, cand_len, "%s__%s_%.*s",
+                                                                     acc, tname, suffix.len,
+                                                                     suffix.start);
 
                                                             if (find_func(ctx, cand))
                                                             {
-                                                                strcpy(tmp, cand);
+                                                                free(tmp);
+                                                                tmp = cand;
                                                                 resolved = 1;
                                                                 break;
                                                             }
+                                                            free(cand);
                                                         }
                                                     }
                                                     it = it->next;
@@ -2786,8 +2798,24 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
 
                     if (is_struct)
                     {
-                        char mangled[256];
+                        // Calculate mangled length
+                        size_t mangled_len = strlen(acc) + 1;
+                        for (int i = 0; i < arg_count; ++i)
+                        {
+                            char *clean = sanitize_mangled_name(concrete_types[i]);
+                            mangled_len += 1 + strlen(clean);
+                            free(clean);
+                        }
+                        char *mangled = xmalloc(mangled_len);
                         strcpy(mangled, acc);
+                        for (int i = 0; i < arg_count; ++i)
+                        {
+                            char *clean = sanitize_mangled_name(concrete_types[i]);
+                            strcat(mangled, "_");
+                            strcat(mangled, clean);
+                            free(clean);
+                        }
+
                         int is_generic_dep = 0;
                         for (int i = 0; i < arg_count; ++i)
                         {
@@ -2799,10 +2827,6 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                     break;
                                 }
                             }
-                            char *clean = sanitize_mangled_name(concrete_types[i]);
-                            strcat(mangled, "_");
-                            strcat(mangled, clean);
-                            free(clean);
                         }
 
                         if (arg_count == 1)
@@ -2814,7 +2838,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                                     t);
                             }
                             free(acc);
-                            acc = xstrdup(mangled);
+                            acc = mangled;
                         }
                         else
                         {
@@ -2824,7 +2848,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                 instantiate_generic_multi(ctx, acc, concrete_types, arg_count, t);
                             }
                             free(acc);
-                            acc = xstrdup(mangled);
+                            acc = mangled;
                         }
                     }
                     else
@@ -4541,9 +4565,15 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                 char *struct_name = (st->kind == TYPE_STRUCT) ? st->name : st->inner->name;
                 int is_ptr = (st->kind == TYPE_POINTER);
 
-                char mangled[256];
-                sprintf(mangled, "%s__get", struct_name);
+                size_t mangled_len = strlen(struct_name) + 8; // Max "____get" + null
+                char *mangled = xmalloc(mangled_len);
+                snprintf(mangled, mangled_len, "%s____get", struct_name);
                 FuncSig *sig = find_func(ctx, mangled);
+                if (!sig)
+                {
+                    snprintf(mangled, mangled_len, "%s__get", struct_name);
+                    sig = find_func(ctx, mangled);
+                }
                 if (sig)
                 {
                     // Rewrite to Call: node.get(index, ...)
@@ -4592,6 +4622,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                     node = call;
                     overloaded_get = 1;
                 }
+                free(mangled);
             }
 
             if (!overloaded_get)
@@ -5503,8 +5534,9 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
             if (struct_name)
             {
-                char mangled[256];
-                sprintf(mangled, "%s__%s", struct_name, method);
+                size_t mangled_sz = strlen(struct_name) + strlen(method) + 3;
+                char *mangled = xmalloc(mangled_sz);
+                snprintf(mangled, mangled_sz, "%s__%s", struct_name, method);
 
                 if (find_func(ctx, mangled))
                 {
@@ -5943,8 +5975,9 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                 if (struct_name)
                 {
-                    char mangled[256];
-                    sprintf(mangled, "%s__%s", struct_name, lhs->member.field);
+                    size_t mangled_sz = strlen(struct_name) + strlen(lhs->member.field) + 3;
+                    char *mangled = xmalloc(mangled_sz);
+                    snprintf(mangled, mangled_sz, "%s__%s", struct_name, lhs->member.field);
                     FuncSig *sig = find_func(ctx, mangled);
 
                     if (!sig)
@@ -5958,15 +5991,20 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                                 if (ref->node->impl_trait.target_type &&
                                     strcmp(ref->node->impl_trait.target_type, struct_name) == 0)
                                 {
-                                    char trait_mangled[512];
-                                    snprintf(trait_mangled, 512, "%s__%s_%s", struct_name,
+                                    size_t tm_sz = strlen(struct_name) +
+                                                   strlen(ref->node->impl_trait.trait_name) +
+                                                   strlen(lhs->member.field) + 4;
+                                    char *trait_mangled = xmalloc(tm_sz);
+                                    snprintf(trait_mangled, tm_sz, "%s__%s_%s", struct_name,
                                              ref->node->impl_trait.trait_name, lhs->member.field);
                                     if (find_func(ctx, trait_mangled))
                                     {
                                         sig = find_func(ctx, trait_mangled);
-                                        strcpy(mangled, trait_mangled);
+                                        free(mangled);
+                                        mangled = trait_mangled;
                                         break;
                                     }
+                                    free(trait_mangled);
                                 }
                             }
                             ref = ref->next;
@@ -6384,11 +6422,13 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                 if (struct_name)
                 {
-                    char mangled_index[256];
-                    sprintf(mangled_index, "%s__index", struct_name);
+                    size_t sname_len = strlen(struct_name);
+                    char *mangled_index = xmalloc(sname_len + sizeof("__index"));
+                    snprintf(mangled_index, sname_len + sizeof("__index"), "%s__index",
+                             struct_name);
 
-                    char mangled_get[256];
-                    sprintf(mangled_get, "%s__get", struct_name);
+                    char *mangled_get = xmalloc(sname_len + sizeof("__get"));
+                    snprintf(mangled_get, sname_len + sizeof("__get"), "%s__get", struct_name);
 
                     FuncSig *sig = find_func(ctx, mangled_index);
                     char *resolved_name = NULL;
@@ -6412,64 +6452,62 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                     int is_generic_template = 0;
                     if (!sig && strchr(struct_name, '<'))
                     {
-                        char base[256];
                         size_t len = strcspn(struct_name, "<");
-                        if (len < 255)
+                        char *base = xmalloc(len + 1);
+                        strncpy(base, struct_name, len);
+                        base[len] = 0;
+
+                        GenericImplTemplate *it = ctx->impl_templates;
+                        while (it)
                         {
-                            strncpy(base, struct_name, len);
-                            base[len] = 0;
-
-                            GenericImplTemplate *it = ctx->impl_templates;
-                            while (it)
+                            if (strcmp(it->struct_name, base) == 0)
                             {
-                                if (strcmp(it->struct_name, base) == 0)
-                                {
-                                    ASTNode *m = it->impl_node->impl.methods;
-                                    size_t base_len = strlen(base);
-                                    char *mangled_idx = xmalloc(base_len + 8);
-                                    sprintf(mangled_idx, "%s__index", base);
-                                    char *mangled_g = xmalloc(base_len + 6);
-                                    sprintf(mangled_g, "%s__get", base);
+                                ASTNode *m = it->impl_node->impl.methods;
+                                size_t base_len = strlen(base);
+                                char *mangled_idx = xmalloc(base_len + 8);
+                                sprintf(mangled_idx, "%s__index", base);
+                                char *mangled_g = xmalloc(base_len + 6);
+                                sprintf(mangled_g, "%s__get", base);
 
-                                    while (m)
+                                while (m)
+                                {
+                                    int found_idx =
+                                        m->func.name && strcmp(m->func.name, mangled_idx) == 0;
+                                    int found_get =
+                                        m->func.name && strcmp(m->func.name, mangled_g) == 0;
+
+                                    if (found_idx || found_get)
                                     {
-                                        int found_idx =
-                                            m->func.name && strcmp(m->func.name, mangled_idx) == 0;
-                                        int found_get =
-                                            m->func.name && strcmp(m->func.name, mangled_g) == 0;
-
-                                        if (found_idx || found_get)
+                                        if (found_idx)
                                         {
-                                            if (found_idx)
-                                            {
-                                                method_name = "index";
-                                            }
-                                            else
-                                            {
-                                                method_name = "get";
-                                            }
-
-                                            is_generic_template = 1;
-
-                                            // Construct temporary signature for checking
-                                            sig = xmalloc(sizeof(FuncSig));
-                                            memset(sig, 0, sizeof(FuncSig));
-                                            sig->ret_type = m->func.ret_type_info;
-                                            sig->arg_types = m->func.arg_types;
-                                            sig->total_args = m->func.arg_count;
-
-                                            break;
+                                            method_name = "index";
                                         }
-                                        m = m->next;
+                                        else
+                                        {
+                                            method_name = "get";
+                                        }
+
+                                        is_generic_template = 1;
+
+                                        // Construct temporary signature for checking
+                                        sig = xmalloc(sizeof(FuncSig));
+                                        memset(sig, 0, sizeof(FuncSig));
+                                        sig->ret_type = m->func.ret_type_info;
+                                        sig->arg_types = m->func.arg_types;
+                                        sig->total_args = m->func.arg_count;
+
+                                        break;
                                     }
+                                    m = m->next;
                                 }
-                                if (is_generic_template)
-                                {
-                                    break;
-                                }
-                                it = it->next;
                             }
+                            if (is_generic_template)
+                            {
+                                break;
+                            }
+                            it = it->next;
                         }
+                        free(base);
                     }
 
                     if (sig)
@@ -6555,8 +6593,12 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                         }
 
                         lhs = call;
+                        free(mangled_index);
+                        free(mangled_get);
                         continue;
                     }
+                    free(mangled_index);
+                    free(mangled_get);
                 }
 
                 // Static Array Bounds Check
@@ -6703,8 +6745,9 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                 if (struct_name)
                 {
-                    char mangled[256];
-                    sprintf(mangled, "%s__%s", struct_name, node->member.field);
+                    size_t mangled_sz = strlen(struct_name) + strlen(node->member.field) + 3;
+                    char *mangled = xmalloc(mangled_sz);
+                    snprintf(mangled, mangled_sz, "%s__%s", struct_name, node->member.field);
 
                     FuncSig *sig = find_func(ctx, mangled);
 
@@ -6719,15 +6762,20 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                                 const char *t_struct = ref->node->impl_trait.target_type;
                                 if (t_struct && strcmp(t_struct, struct_name) == 0)
                                 {
-                                    char trait_mangled[512];
-                                    snprintf(trait_mangled, 512, "%s__%s_%s", struct_name,
+                                    size_t tm_sz = strlen(struct_name) +
+                                                   strlen(ref->node->impl_trait.trait_name) +
+                                                   strlen(node->member.field) + 4;
+                                    char *trait_mangled = xmalloc(tm_sz);
+                                    snprintf(trait_mangled, tm_sz, "%s__%s_%s", struct_name,
                                              ref->node->impl_trait.trait_name, node->member.field);
                                     if (find_func(ctx, trait_mangled))
                                     {
-                                        strcpy(mangled, trait_mangled); // Update mangled name
-                                        sig = find_func(ctx, trait_mangled);
+                                        free(mangled);
+                                        mangled = trait_mangled;
+                                        sig = find_func(ctx, mangled);
                                         break;
                                     }
+                                    free(trait_mangled);
                                 }
                             }
                             ref = ref->next;
@@ -6811,7 +6859,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                     // Locate the generic template
                     char *mn = NULL; // method name
-                    char full_name[1024];
+                    char *full_name = NULL;
 
                     // If logic above found a sig, we have a mangled name in node->type_info->name
                     // But for templates, find_func might have failed.
@@ -6832,17 +6880,42 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                     if (struct_name)
                     {
-                        sprintf(full_name, "%s__%s", struct_name, node->member.field);
+                        size_t fn_sz = strlen(struct_name) + strlen(node->member.field) + 3;
+                        full_name = xmalloc(fn_sz);
+                        snprintf(full_name, fn_sz, "%s__%s", struct_name, node->member.field);
 
                         // Join types
-                        char all_concrete[1024] = {0};
-                        char all_unmangled[1024] = {0};
+                        size_t ac_sz = 1024, au_sz = 1024;
+                        char *all_concrete = xmalloc(ac_sz);
+                        char *all_unmangled = xmalloc(au_sz);
+                        all_concrete[0] = 0;
+                        all_unmangled[0] = 0;
                         for (int i = 0; i < argc; i++)
                         {
                             if (i > 0)
                             {
+                                if (strlen(all_concrete) + 2 >= ac_sz)
+                                {
+                                    ac_sz *= 2;
+                                    all_concrete = xrealloc(all_concrete, ac_sz);
+                                }
+                                if (strlen(all_unmangled) + 2 >= au_sz)
+                                {
+                                    au_sz *= 2;
+                                    all_unmangled = xrealloc(all_unmangled, au_sz);
+                                }
                                 strcat(all_concrete, ",");
                                 strcat(all_unmangled, ",");
+                            }
+                            if (strlen(all_concrete) + strlen(concrete[i]) + 1 >= ac_sz)
+                            {
+                                ac_sz += strlen(concrete[i]) + 1;
+                                all_concrete = xrealloc(all_concrete, ac_sz);
+                            }
+                            if (strlen(all_unmangled) + strlen(unmangled[i]) + 1 >= au_sz)
+                            {
+                                au_sz += strlen(unmangled[i]) + 1;
+                                all_unmangled = xrealloc(all_unmangled, au_sz);
                             }
                             strcat(all_concrete, concrete[i]);
                             strcat(all_unmangled, unmangled[i]);
@@ -6871,6 +6944,18 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                                 ft->inner = isig->ret_type;
                             }
                             node->type_info = ft;
+                        }
+                        if (full_name)
+                        {
+                            free(full_name);
+                        }
+                        if (all_concrete)
+                        {
+                            free(all_concrete);
+                        }
+                        if (all_unmangled)
+                        {
+                            free(all_unmangled);
                         }
                     }
                 }
@@ -7221,8 +7306,9 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                 if (struct_name)
                 {
-                    char mangled[256];
-                    sprintf(mangled, "%s__%s", struct_name, inner_method);
+                    size_t mangled_sz = strlen(struct_name) + strlen(inner_method) + 3;
+                    char *mangled = xmalloc(mangled_sz);
+                    snprintf(mangled, mangled_sz, "%s__%s", struct_name, inner_method);
                     FuncSig *sig = find_func(ctx, mangled);
                     if (sig)
                     {
@@ -7387,8 +7473,9 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
             if (struct_name)
             {
-                char mangled[256];
-                sprintf(mangled, "%s__%s", struct_name, method);
+                size_t mangled_sz = strlen(struct_name) + strlen(method) + 3;
+                char *mangled = xmalloc(mangled_sz);
+                snprintf(mangled, mangled_sz, "%s__%s", struct_name, method);
 
                 FuncSig *sig = find_func(ctx, mangled);
 
@@ -7403,15 +7490,21 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                             const char *t_struct = ref->node->impl_trait.target_type;
                             if (t_struct && strcmp(t_struct, struct_name) == 0)
                             {
-                                char trait_mangled[512];
-                                snprintf(trait_mangled, 512, "%s__%s_%s", struct_name,
+                                char *trait_mangled;
+                                size_t tm_sz = strlen(struct_name) +
+                                               strlen(ref->node->impl_trait.trait_name) +
+                                               strlen(method) + 4;
+                                trait_mangled = xmalloc(tm_sz);
+                                snprintf(trait_mangled, tm_sz, "%s__%s_%s", struct_name,
                                          ref->node->impl_trait.trait_name, method);
                                 if (find_func(ctx, trait_mangled))
                                 {
-                                    strcpy(mangled, trait_mangled); // Update mangled name
+                                    free(mangled);
+                                    mangled = trait_mangled;
                                     sig = find_func(ctx, mangled);
                                     break;
                                 }
+                                free(trait_mangled);
                             }
                         }
                         ref = ref->next;

@@ -619,8 +619,15 @@ Type *parse_type_base(ParserContext *ctx, Lexer *l)
                     instantiate_generic_multi(ctx, name, args, arg_count, t);
                 }
 
-                // Build mangled name
-                char mangled[256];
+                // Build mangled name dynamically
+                size_t mangled_len = strlen(name) + 1;
+                for (int i = 0; i < arg_count; i++)
+                {
+                    char *clean = sanitize_mangled_name(args[i]);
+                    mangled_len += 1 + strlen(clean);
+                    free(clean);
+                }
+                char *mangled = xmalloc(mangled_len);
                 strcpy(mangled, name);
                 for (int i = 0; i < arg_count; i++)
                 {
@@ -633,7 +640,7 @@ Type *parse_type_base(ParserContext *ctx, Lexer *l)
                 free(args);
 
                 free(ty->name);
-                ty->name = xstrdup(mangled);
+                ty->name = mangled;
             }
             else
             {
@@ -673,12 +680,13 @@ Type *parse_type_base(ParserContext *ctx, Lexer *l)
                 free(unmangled_arg);
 
                 char *clean_arg = sanitize_mangled_name(first_arg_str);
-                char mangled[256];
-                sprintf(mangled, "%s_%s", name, clean_arg);
+                size_t mangled_sz = strlen(name) + strlen(clean_arg) + 2;
+                char *mangled = xmalloc(mangled_sz);
+                snprintf(mangled, mangled_sz, "%s_%s", name, clean_arg);
                 free(clean_arg);
 
                 free(ty->name);
-                ty->name = xstrdup(mangled);
+                ty->name = mangled;
             }
 
             free(first_arg_str);

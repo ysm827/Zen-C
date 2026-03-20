@@ -1663,10 +1663,11 @@ static void check_node(TypeChecker *tc, ASTNode *node)
 
             if (t->kind == TYPE_STRUCT && t->name)
             {
-                char mangled_idx[256];
-                sprintf(mangled_idx, "%s__index", t->name);
-                char mangled_get[256];
-                sprintf(mangled_get, "%s__get", t->name);
+                size_t tname_len = strlen(t->name);
+                char *mangled_idx = xmalloc(tname_len + sizeof("__index"));
+                snprintf(mangled_idx, tname_len + sizeof("__index"), "%s__index", t->name);
+                char *mangled_get = xmalloc(tname_len + sizeof("__get"));
+                snprintf(mangled_get, tname_len + sizeof("__get"), "%s__get", t->name);
 
                 FuncSig *sig = find_func(tc->pctx, mangled_idx);
                 char *method_name = NULL;
@@ -1701,8 +1702,12 @@ static void check_node(TypeChecker *tc, ASTNode *node)
                     node->call.args = idx;
 
                     check_expr_call(tc, node);
+                    free(mangled_idx);
+                    free(mangled_get);
                     break;
                 }
+                free(mangled_idx);
+                free(mangled_get);
             }
             if (t->kind == TYPE_ARRAY || t->kind == TYPE_POINTER || t->kind == TYPE_VECTOR)
             {

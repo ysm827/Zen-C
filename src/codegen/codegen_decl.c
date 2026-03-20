@@ -1391,8 +1391,9 @@ void emit_impl_vtables(ParserContext *ctx, FILE *out)
             while (m)
             {
                 // Calculate expected prefix: Struct__Trait_
-                char prefix[256];
-                sprintf(prefix, "%s__%s_", strct, trait);
+                size_t pre_sz = strlen(strct) + strlen(trait) + 4;
+                char *prefix = xmalloc(pre_sz);
+                snprintf(prefix, pre_sz, "%s__%s_", strct, trait);
                 const char *orig = m->func.name;
                 if (strncmp(orig, prefix, strlen(prefix)) == 0)
                 {
@@ -1406,6 +1407,7 @@ void emit_impl_vtables(ParserContext *ctx, FILE *out)
 
                 fprintf(out, ".%s = (__typeof__(((%s_VTable*)0)->%s))%s__%s_%s", orig, trait, orig,
                         strct, trait, orig);
+                free(prefix);
                 if (m->next)
                 {
                     fprintf(out, ", ");

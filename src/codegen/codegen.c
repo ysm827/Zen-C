@@ -69,30 +69,6 @@ static const char *get_missing_function_hint(ParserContext *ctx, const char *nam
     return NULL;
 }
 
-static const char *get_closest_symbol_hint(ParserContext *ctx, const char *name)
-{
-    int best_dist = 4;
-    const char *best = NULL;
-
-    Scope *s = ctx->current_scope;
-    while (s)
-    {
-        ZenSymbol *sym = s->symbols;
-        while (sym)
-        {
-            int dist = levenshtein(name, sym->name);
-            if (dist < best_dist)
-            {
-                best_dist = dist;
-                best = sym->name;
-            }
-            sym = sym->next;
-        }
-        s = s->parent;
-    }
-    return best;
-}
-
 // Emit literal expression (int, float, string, char)
 static void codegen_literal_expr(ASTNode *node, FILE *out)
 {
@@ -196,7 +172,7 @@ static void codegen_var_expr(ParserContext *ctx, ASTNode *node, FILE *out)
         char *method_name = double_colon + 2; // Skip ::
 
         // Handle generic types: Slice<int> -> Slice_int
-        char mangled_type[256];
+        char *mangled_type;
         if (strchr(type_name, '<'))
         {
             // Generic type - need to mangle it
@@ -210,16 +186,18 @@ static void codegen_var_expr(ParserContext *ctx, ASTNode *node, FILE *out)
                 char *type_arg = lt + 1;
                 *gt = 0;
 
-                sprintf(mangled_type, "%s_%s", type_name, type_arg);
+                size_t mt_sz = strlen(type_name) + strlen(type_arg) + 2;
+                mangled_type = xmalloc(mt_sz);
+                snprintf(mangled_type, mt_sz, "%s_%s", type_name, type_arg);
             }
             else
             {
-                strcpy(mangled_type, type_name);
+                mangled_type = xstrdup(type_name);
             }
         }
         else
         {
-            strcpy(mangled_type, type_name);
+            mangled_type = xstrdup(type_name);
         }
 
         // Output as Type__method
@@ -231,12 +209,14 @@ static void codegen_var_expr(ParserContext *ctx, ASTNode *node, FILE *out)
             {
                 fprintf(out, "%s__%s", alias, method_name);
                 free(type_name);
+                free(mangled_type);
                 return;
             }
         }
 
         fprintf(out, "%s__%s", mangled_type, method_name);
         free(type_name);
+        free(mangled_type);
         return;
     }
 

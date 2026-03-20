@@ -1990,8 +1990,9 @@ char *process_printf_sugar(ParserContext *ctx, Token srctoken, const char *conte
 
                 if (struct_name)
                 {
-                    char mangled[256];
-                    sprintf(mangled, "%s__to_string", struct_name);
+                    size_t mangled_sz = strlen(struct_name) + sizeof("__to_string");
+                    char *mangled = xmalloc(mangled_sz);
+                    snprintf(mangled, mangled_sz, "%s__to_string", struct_name);
                     if (find_func(ctx, mangled))
                     {
                         char *inner_c = NULL;
@@ -2024,6 +2025,7 @@ char *process_printf_sugar(ParserContext *ctx, Token srctoken, const char *conte
                             free(inner_c);
                         }
                     }
+                    free(mangled);
                 }
             }
 

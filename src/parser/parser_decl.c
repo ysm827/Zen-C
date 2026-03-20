@@ -37,7 +37,8 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async)
     {
         lexer_next(l);
 
-        char buf[1024];
+        size_t buf_size = 1024;
+        char *buf = xmalloc(buf_size);
         buf[0] = 0;
 
         while (1)
@@ -49,9 +50,10 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async)
             }
             char *s = token_strdup(gt);
 
-            if (strlen(buf) + strlen(s) + 2 >= sizeof(buf))
+            if (strlen(buf) + strlen(s) + 2 >= buf_size)
             {
-                zpanic_at(gt, "Too many generic parameters");
+                buf_size *= 2;
+                buf = xrealloc(buf, buf_size);
             }
 
             if (buf[0])
@@ -81,6 +83,7 @@ ASTNode *parse_function(ParserContext *ctx, Lexer *l, int is_async)
             zpanic_at(lexer_peek(l), "Expected >");
         }
         gen_param = xstrdup(buf);
+        free(buf);
     }
 
     // Register generic parameters so type parsing recognizes them

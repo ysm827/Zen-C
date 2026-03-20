@@ -1259,8 +1259,9 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l)
             va->variant.payload = payload; // Store Type*
 
             // Register Variant (Mangled name to avoid collisions: Result_Ok)
-            char mangled[256];
-            sprintf(mangled, "%s_%s", ename, vname);
+            size_t mangled_sz = strlen(ename) + strlen(vname) + 2;
+            char *mangled = xmalloc(mangled_sz);
+            snprintf(mangled, mangled_sz, "%s_%s", ename, vname);
             register_enum_variant(ctx, ename, mangled, va->variant.tag_id);
 
             // Register Constructor Function Signature
@@ -1280,6 +1281,7 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l)
                 ret_t->name = xstrdup(ename);
                 register_func(ctx, mangled, 0, NULL, NULL, ret_t, 0, 0, vt);
             }
+            free(mangled);
 
             // Handle explicit assignment: Ok = 5
             if (lexer_peek(l).type == TOK_OP && *lexer_peek(l).start == '=')
