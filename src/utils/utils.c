@@ -111,30 +111,118 @@ char *sanitize_path_for_c_string(const char *path)
     return sanitized;
 }
 
-char *load_file(const char *fn)
+char *z_resolve_path(const char *fn, const char *relative_to)
 {
-    FILE *f = fopen(fn, "rb");
-    if (!f)
+    if (!fn)
     {
-        char *root = getenv("ZC_ROOT");
-        if (root)
+        return NULL;
+    }
+
+    // 1. Absolute path
+    if (z_is_abs_path(fn))
+    {
+        if (access(fn, R_OK) == 0)
         {
-            char path[1024];
-            snprintf(path, sizeof(path), "%s/%s", root, fn);
-            f = fopen(path, "rb");
+            char *real = realpath(fn, NULL);
+            return real ? real : xstrdup(fn);
+        }
+        return NULL;
+    }
+
+    char path[1024];
+
+    // 2. Relative to current file
+    if (relative_to)
+    {
+        char *dir = xstrdup(relative_to);
+        char *last_slash = z_path_last_sep(dir);
+        if (last_slash)
+        {
+            *last_slash = 0;
+            snprintf(path, sizeof(path), "%s/%s", dir, fn);
+            if (access(path, R_OK) == 0)
+            {
+                free(dir);
+                char *real = realpath(path, NULL);
+                return real ? real : xstrdup(path);
+            }
+        }
+        free(dir);
+    }
+
+    // 3. Current directory
+    if (access(fn, R_OK) == 0)
+    {
+        char *real = realpath(fn, NULL);
+        return real ? real : xstrdup(fn);
+    }
+
+    // 4. Include paths (-I)
+    for (int i = 0; i < g_config.include_path_count; i++)
+    {
+        snprintf(path, sizeof(path), "%s/%s", g_config.include_paths[i], fn);
+        if (access(path, R_OK) == 0)
+        {
+            char *real = realpath(path, NULL);
+            return real ? real : xstrdup(path);
         }
     }
-    if (!f)
+
+    // 5. Root path (ZC_ROOT)
+    if (g_config.root_path)
     {
-        char path[1024];
-        snprintf(path, sizeof(path), "/usr/local/share/zenc/%s", fn);
-        f = fopen(path, "rb");
+        // Try with std/ prefix (for stdlib modules like "slice.zc")
+        snprintf(path, sizeof(path), "%s/std/%s", g_config.root_path, fn);
+        if (access(path, R_OK) == 0)
+        {
+            char *real = realpath(path, NULL);
+            return real ? real : xstrdup(path);
+        }
+
+        // Try as-is relative to root_path
+        snprintf(path, sizeof(path), "%s/%s", g_config.root_path, fn);
+        if (access(path, R_OK) == 0)
+        {
+            char *real = realpath(path, NULL);
+            return real ? real : xstrdup(path);
+        }
     }
+
+    // 6. System paths
+    const char *system_paths[] = {"/usr/local/share/zenc", "/usr/share/zenc"};
+    for (int i = 0; i < 2; i++)
+    {
+        snprintf(path, sizeof(path), "%s/%s", system_paths[i], fn);
+        if (access(path, R_OK) == 0)
+        {
+            char *real = realpath(path, NULL);
+            return real ? real : xstrdup(path);
+        }
+
+        // Also try with std/ prefix in system paths
+        snprintf(path, sizeof(path), "%s/std/%s", system_paths[i], fn);
+        if (access(path, R_OK) == 0)
+        {
+            char *real = realpath(path, NULL);
+            return real ? real : xstrdup(path);
+        }
+    }
+
+    return NULL;
+}
+
+char *load_file(const char *fn)
+{
+    char *resolved = z_resolve_path(fn, g_current_filename);
+    if (!resolved)
+    {
+        return NULL;
+    }
+
+    FILE *f = fopen(resolved, "rb");
     if (!f)
     {
-        char path[1024];
-        snprintf(path, sizeof(path), "/usr/share/zenc/%s", fn);
-        f = fopen(path, "rb");
+        return NULL;
     }
 
     if (!f)

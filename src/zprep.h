@@ -163,6 +163,11 @@ void *xcalloc(size_t n, size_t size) __attribute__((returns_nonnull));
 char *xstrdup(const char *s) __attribute__((returns_nonnull));
 
 /**
+ * @brief Resolve a source file path using include paths and root path.
+ */
+char *z_resolve_path(const char *filename, const char *relative_to);
+
+/**
  * @brief Load a file.
  */
 char *load_file(const char *filename);

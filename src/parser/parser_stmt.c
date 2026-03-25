@@ -36,83 +36,27 @@ static void auto_import_std_slice(ParserContext *ctx)
         t = t->next;
     }
 
-    // Try to find and import std/slice.zc
-    static const char *std_paths[] = {"std/slice.zc", "./std/slice.zc", NULL};
-    static const char *system_paths[] = {"/usr/local/share/zenc", "/usr/share/zenc", NULL};
-
-    char resolved_path[1024];
-    int found = 0;
-
-    // First, try relative to current file
-    if (g_current_filename)
+    // Resolve path to std/slice.zc
+    char *resolved = z_resolve_path("std/slice.zc", g_current_filename);
+    if (!resolved)
     {
-        char *current_dir = xstrdup(g_current_filename);
-        char *last_slash = z_path_last_sep(current_dir);
-        if (last_slash)
-        {
-            *last_slash = 0;
-            snprintf(resolved_path, sizeof(resolved_path), "%s/std/slice.zc", current_dir);
-            if (access(resolved_path, R_OK) == 0)
-            {
-                found = 1;
-            }
-        }
-        free(current_dir);
+        return; // Could not find slice.zc
     }
 
-    // Try relative paths
-    if (!found)
+    // Check if already imported by path
+    if (is_file_imported(ctx, resolved))
     {
-        for (int i = 0; std_paths[i] && !found; i++)
-        {
-            if (access(std_paths[i], R_OK) == 0)
-            {
-                strncpy(resolved_path, std_paths[i], sizeof(resolved_path) - 1);
-                resolved_path[sizeof(resolved_path) - 1] = '\0';
-                found = 1;
-            }
-        }
-    }
-
-    // Try system paths
-    if (!found)
-    {
-        for (int i = 0; system_paths[i] && !found; i++)
-        {
-            snprintf(resolved_path, sizeof(resolved_path), "%s/std/slice.zc", system_paths[i]);
-            if (access(resolved_path, R_OK) == 0)
-            {
-                found = 1;
-            }
-        }
-    }
-
-    if (!found)
-    {
-        return; // Could not find std/slice.zc, instantiate_generic will error
-    }
-
-    // Canonicalize path
-    char *real_fn = realpath(resolved_path, NULL);
-    if (real_fn)
-    {
-        strncpy(resolved_path, real_fn, sizeof(resolved_path) - 1);
-        resolved_path[sizeof(resolved_path) - 1] = '\0';
-        free(real_fn);
-    }
-
-    // Check if already imported
-    if (is_file_imported(ctx, resolved_path))
-    {
+        free(resolved);
         return;
     }
-    mark_file_imported(ctx, resolved_path);
+    mark_file_imported(ctx, resolved);
 
     // Load and parse the file
-    char *src = load_file(resolved_path);
+    char *src = load_file(resolved);
     if (!src)
     {
-        return; // Could not load file
+        free(resolved);
+        return;
     }
 
     Lexer i;
@@ -120,12 +64,13 @@ static void auto_import_std_slice(ParserContext *ctx)
 
     // Save and restore filename context
     char *saved_fn = g_current_filename;
-    g_current_filename = xstrdup(resolved_path);
+    g_current_filename = resolved;
 
     // Parse the slice module contents
     parse_program_nodes(ctx, &i);
 
     g_current_filename = saved_fn;
+    free(resolved);
 }
 
 static void check_assignment_condition(ASTNode *cond)
@@ -3993,95 +3938,23 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l)
     strncpy(fn, t.start + 1, ln);
     fn[ln] = 0;
 
-    // Resolve paths relative to current file
-    char resolved_path[1024];
-    int is_explicit_relative = (fn[0] == '.' && (fn[1] == '/' || (fn[1] == '.' && fn[2] == '/')));
-
-    // Try to resolve relative to current file if not absolute
-    // On Windows, absolute paths can start with drive letter (C:\) or backslash
-    int is_abs = z_is_abs_path(fn);
-
-    if (!is_abs)
+    // Resolve paths
+    char *resolved = z_resolve_path(fn, g_current_filename);
+    if (!resolved)
     {
-        char *current_dir = xstrdup(g_current_filename);
-        char *last_slash = z_path_last_sep(current_dir);
-
-        if (last_slash)
+        // Fallback for C headers: allow them to be "not found" locally (they might be system
+        // headers)
+        if (strlen(fn) > 2 && strcmp(fn + strlen(fn) - 2, ".h") == 0)
         {
-            *last_slash = 0; // Truncate to directory
-
-            // Handles explicit relative AND implicit relative lookups
-            snprintf(resolved_path, sizeof(resolved_path), "%s/%s", current_dir, fn);
-
-            // If it's an explicit relative path, OR if the file exists at this relative location
-            if (is_explicit_relative || access(resolved_path, R_OK) == 0)
-            {
-                free(fn);
-                fn = xstrdup(resolved_path);
-            }
+            resolved = xstrdup(fn);
         }
-        free(current_dir);
-    }
-
-    if (access(fn, R_OK) != 0)
-    {
-        char search_path[1024];
-        int found = 0;
-
-        for (int i = 0; i < g_config.include_path_count && !found; i++)
+        else
         {
-            int w =
-                snprintf(search_path, sizeof(search_path), "%s/%s", g_config.include_paths[i], fn);
-            if (w < 0 || (size_t)w >= sizeof(search_path))
-            {
-                zwarn("Include path too long: %s/%s", g_config.include_paths[i], fn);
-                continue;
-            }
-            if (access(search_path, R_OK) == 0)
-            {
-                free(fn);
-                fn = xstrdup(search_path);
-                found = 1;
-            }
-        }
-
-        if (!found)
-        {
-            const char *system_paths[] = {g_config.root_path, "/usr/local/share/zenc",
-                                          "/usr/share/zenc"};
-            size_t system_paths_count = sizeof(system_paths) / sizeof(*system_paths);
-
-            for (size_t i = 0; i < system_paths_count && !found; i++)
-            {
-                if (!system_paths[i])
-                {
-                    continue;
-                }
-                int w = snprintf(search_path, sizeof(search_path), "%s/%s", system_paths[i], fn);
-                if (w < 0 || (size_t)w >= sizeof(search_path))
-                {
-                    zwarn("Include path too long: %s/%s", system_paths[i], fn);
-                    continue;
-                }
-                if (access(search_path, R_OK) == 0)
-                {
-                    free(fn);
-                    fn = xstrdup(search_path);
-                    found = 1;
-                }
-            }
+            zpanic_at(t, "Could not find module: %s", fn);
         }
     }
-
-    if (access(fn, R_OK) == 0)
-    {
-        char *real_fn = realpath(fn, NULL);
-        if (real_fn)
-        {
-            free(fn);
-            fn = real_fn;
-        }
-    }
+    free(fn);
+    fn = resolved;
 
     if (is_file_imported(ctx, fn))
     {

@@ -28,83 +28,27 @@ static void auto_import_std_mem(ParserContext *ctx)
         // Let's check if we can find any indicator that mem.zc was loaded
     }
 
-    // Try to find and import std/mem.zc
-    static const char *std_paths[] = {"std/mem.zc", "./std/mem.zc", NULL};
-    static const char *system_paths[] = {"/usr/local/share/zenc", "/usr/share/zenc", NULL};
-
-    char resolved_path[1024];
-    int found = 0;
-
-    // First, try relative to current file
-    if (g_current_filename)
+    // Resolve path to std/mem.zc
+    char *resolved = z_resolve_path("std/mem.zc", g_current_filename);
+    if (!resolved)
     {
-        char *current_dir = xstrdup(g_current_filename);
-        char *last_slash = strrchr(current_dir, '/');
-        if (last_slash)
-        {
-            *last_slash = 0;
-            snprintf(resolved_path, sizeof(resolved_path), "%s/std/mem.zc", current_dir);
-            if (access(resolved_path, R_OK) == 0)
-            {
-                found = 1;
-            }
-        }
-        free(current_dir);
+        return; // Could not find mem.zc
     }
 
-    // Try relative paths
-    if (!found)
+    // Check if already imported by path
+    if (is_file_imported(ctx, resolved))
     {
-        for (int i = 0; std_paths[i] && !found; i++)
-        {
-            if (access(std_paths[i], R_OK) == 0)
-            {
-                strncpy(resolved_path, std_paths[i], sizeof(resolved_path) - 1);
-                resolved_path[sizeof(resolved_path) - 1] = '\0';
-                found = 1;
-            }
-        }
-    }
-
-    // Try system paths
-    if (!found)
-    {
-        for (int i = 0; system_paths[i] && !found; i++)
-        {
-            snprintf(resolved_path, sizeof(resolved_path), "%s/std/mem.zc", system_paths[i]);
-            if (access(resolved_path, R_OK) == 0)
-            {
-                found = 1;
-            }
-        }
-    }
-
-    if (!found)
-    {
-        return; // Could not find std/mem.zc
-    }
-
-    // Canonicalize path
-    char *real_fn = realpath(resolved_path, NULL);
-    if (real_fn)
-    {
-        strncpy(resolved_path, real_fn, sizeof(resolved_path) - 1);
-        resolved_path[sizeof(resolved_path) - 1] = '\0';
-        free(real_fn);
-    }
-
-    // Check if already imported
-    if (is_file_imported(ctx, resolved_path))
-    {
+        free(resolved);
         return;
     }
-    mark_file_imported(ctx, resolved_path);
+    mark_file_imported(ctx, resolved);
 
     // Load and parse the file
-    char *src = load_file(resolved_path);
+    char *src = load_file(resolved);
     if (!src)
     {
-        return; // Could not load file
+        free(resolved);
+        return;
     }
 
     Lexer i;
@@ -112,12 +56,13 @@ static void auto_import_std_mem(ParserContext *ctx)
 
     // Save and restore filename context
     char *saved_fn = g_current_filename;
-    g_current_filename = xstrdup(resolved_path);
+    g_current_filename = resolved;
 
     // Parse the mem module contents
     parse_program_nodes(ctx, &i);
 
     g_current_filename = saved_fn;
+    free(resolved);
 }
 
 // Trait Parsing
