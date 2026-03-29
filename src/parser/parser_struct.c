@@ -390,9 +390,9 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 }
                 else
                 {
-                    register_func(ctx, ctx->current_scope, mangled, f->func.arg_count, f->func.defaults,
-                                  f->func.arg_types, f->func.ret_type_info, f->func.is_varargs,
-                                  f->func.is_async, f->func.pure, f->token);
+                    register_func(ctx, ctx->current_scope, mangled, f->func.arg_count,
+                                  f->func.defaults, f->func.arg_types, f->func.ret_type_info,
+                                  f->func.is_varargs, f->func.is_async, f->func.pure, f->token);
                 }
 
                 if (!h)
@@ -430,9 +430,9 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     }
                     else
                     {
-                        register_func(ctx, ctx->current_scope, mangled, f->func.arg_count, f->func.defaults,
-                                      f->func.arg_types, f->func.ret_type_info, f->func.is_varargs,
-                                      f->func.is_async, f->func.pure, f->token);
+                        register_func(ctx, ctx->current_scope, mangled, f->func.arg_count,
+                                      f->func.defaults, f->func.arg_types, f->func.ret_type_info,
+                                      f->func.is_varargs, f->func.is_async, f->func.pure, f->token);
                     }
 
                     if (!h)
@@ -703,9 +703,10 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                         }
                         else
                         {
-                            register_func(ctx, ctx->current_scope, mangled, f->func.arg_count, f->func.defaults,
-                                          f->func.arg_types, f->func.ret_type_info,
-                                          f->func.is_varargs, 0, f->func.pure, f->token);
+                            register_func(ctx, ctx->current_scope, mangled, f->func.arg_count,
+                                          f->func.defaults, f->func.arg_types,
+                                          f->func.ret_type_info, f->func.is_varargs, 0,
+                                          f->func.pure, f->token);
                         }
 
                         if (!h)
@@ -740,9 +741,9 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     }
                     else
                     {
-                        register_func(ctx, ctx->current_scope, mangled, f->func.arg_count, f->func.defaults,
-                                      f->func.arg_types, f->func.ret_type_info, f->func.is_varargs,
-                                      0, f->func.pure, f->token);
+                        register_func(ctx, ctx->current_scope, mangled, f->func.arg_count,
+                                      f->func.defaults, f->func.arg_types, f->func.ret_type_info,
+                                      f->func.is_varargs, 0, f->func.pure, f->token);
                     }
 
                     if (!h)
@@ -776,9 +777,10 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                         }
                         else
                         {
-                            register_func(ctx, ctx->current_scope, mangled, f->func.arg_count, f->func.defaults,
-                                          f->func.arg_types, f->func.ret_type_info,
-                                          f->func.is_varargs, 1, f->func.pure, f->token);
+                            register_func(ctx, ctx->current_scope, mangled, f->func.arg_count,
+                                          f->func.defaults, f->func.arg_types,
+                                          f->func.ret_type_info, f->func.is_varargs, 1,
+                                          f->func.pure, f->token);
                         }
                         if (!h)
                         {
@@ -1249,7 +1251,8 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l)
                         }
                         Type *ret_t = type_new(TYPE_ENUM);
                         ret_t->name = xstrdup(ename);
-                        register_func(ctx, ctx->current_scope, mangled, ac, NULL, at, ret_t, 0, 0, 0, vt);
+                        register_func(ctx, ctx->current_scope, mangled, ac, NULL, at, ret_t, 0, 0,
+                                      0, vt);
                     }
                 }
                 else
@@ -1258,7 +1261,8 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l)
                     at[0] = payload;
                     Type *ret_t = type_new(TYPE_ENUM);
                     ret_t->name = xstrdup(ename);
-                    register_func(ctx, ctx->current_scope, mangled, 1, NULL, at, ret_t, 0, 0, 0, vt);
+                    register_func(ctx, ctx->current_scope, mangled, 1, NULL, at, ret_t, 0, 0, 0,
+                                  vt);
                 }
             }
             else if (!gp)

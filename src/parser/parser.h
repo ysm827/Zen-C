@@ -272,7 +272,8 @@ struct ParserContext
 {
     Scope *global_scope;    ///< Root of the unified symbol table.
     Scope *current_scope;   ///< Current lexical scope for variable lookup.
-    FuncSig *func_registry; ///< Registry of declared function signatures (DEPRECATED: moved to global_scope).
+    FuncSig *func_registry; ///< Registry of declared function signatures (DEPRECATED: moved to
+                            ///< global_scope).
 
     // Lambdas
     LambdaRef *global_lambdas; ///< List of all lambdas generated during parsing.
@@ -486,8 +487,8 @@ const char *normalize_type_name(const char *name);
  * @brief Registers a function.
  */
 void register_func(ParserContext *ctx, Scope *scope, const char *name, int count, char **defaults,
-                   Type **arg_types, Type *ret_type, int is_varargs, int is_async,
-                   int is_pure, Token decl_token);
+                   Type **arg_types, Type *ret_type, int is_varargs, int is_async, int is_pure,
+                   Token decl_token);
 
 /**
  * @brief Registers a function template.

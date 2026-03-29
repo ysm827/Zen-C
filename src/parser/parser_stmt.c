@@ -4144,7 +4144,8 @@ char *run_comptime_block(ParserContext *ctx, Lexer *l)
     lexer_init(&cl, wrapped_code);
     ParserContext cctx;
     memset(&cctx, 0, sizeof(cctx));
-    enter_scope(&cctx); // Global scope
+    cctx.global_scope = symbol_scope_create(NULL, "Global");
+    cctx.current_scope = cctx.global_scope;
     register_builtins(&cctx);
     register_comptime_builtins(&cctx);
     cctx.has_external_includes = 1; // Suppress undefined warnings for comptime helpers

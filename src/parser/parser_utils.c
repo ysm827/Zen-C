@@ -449,6 +449,29 @@ void exit_scope(ParserContext *ctx)
     ctx->current_scope = ctx->current_scope->parent;
 }
 
+// Helper to register a symbol for LSP persistent queries
+void register_symbol_to_lsp(ParserContext *ctx, ZenSymbol *s)
+{
+    if (!ctx || !s)
+    {
+        return;
+    }
+
+    ZenSymbol *lsp_copy = xmalloc(sizeof(ZenSymbol));
+    memcpy(lsp_copy, s, sizeof(ZenSymbol));
+    if (s->name)
+    {
+        lsp_copy->name = xstrdup(s->name);
+    }
+    if (s->cfg_condition)
+    {
+        lsp_copy->cfg_condition = xstrdup(s->cfg_condition);
+    }
+
+    lsp_copy->next = ctx->all_symbols;
+    ctx->all_symbols = lsp_copy;
+}
+
 void add_symbol(ParserContext *ctx, const char *n, const char *t, Type *type_info)
 {
     add_symbol_with_token(ctx, n, t, type_info, (Token){0});
@@ -494,11 +517,7 @@ void add_symbol_with_token(ParserContext *ctx, const char *n, const char *t, Typ
     s->type_info = type_info;
     s->decl_token = tok;
 
-    // LSP: Also add to flat list (for persistent access after scope exit)
-    ZenSymbol *lsp_copy = xmalloc(sizeof(ZenSymbol));
-    *lsp_copy = *s;
-    lsp_copy->next = ctx->all_symbols;
-    ctx->all_symbols = lsp_copy;
+    register_symbol_to_lsp(ctx, s);
 }
 
 Type *find_symbol_type_info(ParserContext *ctx, const char *n)
@@ -544,14 +563,14 @@ void init_builtins()
 }
 
 void register_func(ParserContext *ctx, Scope *scope, const char *name, int count, char **defaults,
-                   Type **arg_types, Type *ret_type, int is_varargs, int is_async,
-                   int is_pure, Token decl_token)
+                   Type **arg_types, Type *ret_type, int is_varargs, int is_async, int is_pure,
+                   Token decl_token)
 {
     FuncSig *f = xmalloc(sizeof(FuncSig));
     f->name = xstrdup(name);
     f->decl_token = decl_token;
     f->total_args = count;
-    f->defaults = defaults; 
+    f->defaults = defaults;
     f->arg_types = arg_types;
     f->ret_type = ret_type;
     f->is_varargs = is_varargs;
@@ -565,6 +584,8 @@ void register_func(ParserContext *ctx, Scope *scope, const char *name, int count
     ZenSymbol *sym = symbol_add(scope ? scope : ctx->current_scope, name, SYM_FUNCTION);
     sym->data.sig = f;
     sym->decl_token = decl_token;
+
+    register_symbol_to_lsp(ctx, sym);
 
     // Create formal type for the function pointer
     Type *ft = type_new(TYPE_FUNCTION);
@@ -738,7 +759,10 @@ void register_type_alias(ParserContext *ctx, const char *alias, const char *orig
 const char *find_type_alias(ParserContext *ctx, const char *alias)
 {
     ZenSymbol *sym = symbol_lookup_kind(ctx->current_scope, alias, SYM_ALIAS);
-    if (sym) return sym->data.alias.original_type;
+    if (sym)
+    {
+        return sym->data.alias.original_type;
+    }
 
     TypeAlias *ta = find_type_alias_node(ctx, alias);
     return ta ? ta->original_type : NULL;
@@ -1099,17 +1123,28 @@ void register_struct_def(ParserContext *ctx, const char *name, ASTNode *node)
     ctx->struct_defs = d;
 
     // Unified logic
-    ZenSymbol *sym = symbol_add(ctx->current_scope, name, node->type == NODE_ENUM ? SYM_ENUM : SYM_STRUCT);
+    ZenSymbol *sym = symbol_add(ctx->global_scope, name,
+                                (node && node->type == NODE_ENUM) ? SYM_ENUM : SYM_STRUCT);
     sym->data.node = node;
-    sym->type_info = node->type_info;
-    sym->decl_token = node->token;
+    if (node)
+    {
+        sym->decl_token = node->token;
+    }
+    sym->type_info = node ? node->type_info : NULL;
+    register_symbol_to_lsp(ctx, sym);
 }
 
 ASTNode *find_struct_def(ParserContext *ctx, const char *name)
 {
     ZenSymbol *sym = symbol_lookup_kind(ctx->current_scope, name, SYM_STRUCT);
-    if (!sym) sym = symbol_lookup_kind(ctx->current_scope, name, SYM_ENUM);
-    if (sym) return sym->data.node;
+    if (!sym)
+    {
+        sym = symbol_lookup_kind(ctx->current_scope, name, SYM_ENUM);
+    }
+    if (sym)
+    {
+        return sym->data.node;
+    }
 
     extern ASTNode *global_user_structs;
     if (global_user_structs)
@@ -2554,7 +2589,10 @@ char *unmangle_ptr_suffix(const char *s)
 FuncSig *find_func(ParserContext *ctx, const char *name)
 {
     ZenSymbol *sym = symbol_lookup_kind(ctx->current_scope, name, SYM_FUNCTION);
-    if (sym) return sym->data.sig;
+    if (sym)
+    {
+        return sym->data.sig;
+    }
 
     FuncSig *c = ctx->func_registry;
     while (c)
@@ -3288,9 +3326,9 @@ void instantiate_methods(ParserContext *ctx, GenericImplTemplate *it,
             sprintf(new_name, "%s%s", mangled_struct_name, suffix);
             free(meth->func.name);
             meth->func.name = new_name;
-            register_func(ctx, ctx->global_scope, new_name, meth->func.arg_count, meth->func.defaults,
-                          meth->func.arg_types, meth->func.ret_type_info, meth->func.is_varargs, 0,
-                          meth->func.pure, meth->token);
+            register_func(ctx, ctx->global_scope, new_name, meth->func.arg_count,
+                          meth->func.defaults, meth->func.arg_types, meth->func.ret_type_info,
+                          meth->func.is_varargs, 0, meth->func.pure, meth->token);
         }
 
         // Handle generic return types in methods (e.g., Option<T> -> Option_int)
@@ -3491,7 +3529,8 @@ void instantiate_generic(ParserContext *ctx, const char *tpl, const char *arg,
                 Type *ret_t = type_new(TYPE_ENUM);
                 ret_t->name = xstrdup(m);
 
-                register_func(ctx, ctx->global_scope, mangled_var, 1, NULL, at, ret_t, 0, 0, 0, token);
+                register_func(ctx, ctx->global_scope, mangled_var, 1, NULL, at, ret_t, 0, 0, 0,
+                              token);
             }
             else
             {
@@ -3499,7 +3538,8 @@ void instantiate_generic(ParserContext *ctx, const char *tpl, const char *arg,
                 // so that MyOption::None() works and is consistent.
                 Type *ret_t = type_new(TYPE_ENUM);
                 ret_t->name = xstrdup(m);
-                register_func(ctx, ctx->global_scope, mangled_var, 0, NULL, NULL, ret_t, 0, 0, 0, token);
+                register_func(ctx, ctx->global_scope, mangled_var, 0, NULL, NULL, ret_t, 0, 0, 0,
+                              token);
             }
 
             free(mangled_var);
@@ -3712,13 +3752,15 @@ void instantiate_generic_multi(ParserContext *ctx, const char *tpl, char **args,
                 Type *ret_t = type_new(TYPE_ENUM);
                 ret_t->name = xstrdup(m);
 
-                register_func(ctx, ctx->global_scope, mangled_var, 1, NULL, at, ret_t, 0, 0, 0, token);
+                register_func(ctx, ctx->global_scope, mangled_var, 1, NULL, at, ret_t, 0, 0, 0,
+                              token);
             }
             else
             {
                 Type *ret_t = type_new(TYPE_ENUM);
                 ret_t->name = xstrdup(m);
-                register_func(ctx, ctx->global_scope, mangled_var, 0, NULL, NULL, ret_t, 0, 0, 0, token);
+                register_func(ctx, ctx->global_scope, mangled_var, 0, NULL, NULL, ret_t, 0, 0, 0,
+                              token);
             }
 
             free(mangled_var);
