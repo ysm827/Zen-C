@@ -828,21 +828,35 @@ void register_builtins(ParserContext *ctx)
     // Register 'free'
     Type *void_t = type_new(TYPE_VOID);
     add_symbol(ctx, "free", "void", void_t);
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
 
     // Register common libc functions to avoid warnings
     add_symbol(ctx, "strdup", "string", type_new(TYPE_STRING));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "malloc", "void*", type_new_ptr(void_t));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "realloc", "void*", type_new_ptr(void_t));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "calloc", "void*", type_new_ptr(void_t));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "puts", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "printf", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "strcmp", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "strlen", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "strcpy", "string", type_new(TYPE_STRING));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "strcat", "string", type_new(TYPE_STRING));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "memset", "void*", type_new_ptr(void_t));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "memcpy", "void*", type_new_ptr(void_t));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "exit", "void", void_t);
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
 
     // Stdio Globals
     add_symbol(ctx, "stdin", "void*", type_new_ptr(void_t));
@@ -851,28 +865,51 @@ void register_builtins(ParserContext *ctx)
 
     // File I/O
     add_symbol(ctx, "fopen", "void*", type_new_ptr(void_t));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "fclose", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "fread", "usize", type_new(TYPE_USIZE));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "fwrite", "usize", type_new(TYPE_USIZE));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "fseek", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "ftell", "long", type_new(TYPE_I64));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "rewind", "void", void_t);
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "fprintf", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "vprintf", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "vfprintf", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "sprintf", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "vsnprintf", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "snprintf", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "feof", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "ferror", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "mkdir", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "rmdir", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "chdir", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "getcwd", "string", type_new(TYPE_STRING));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "system", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "getenv", "string", type_new(TYPE_STRING));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "fgets", "string", type_new(TYPE_STRING));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
     add_symbol(ctx, "usleep", "int", type_new(TYPE_INT));
+    ctx->current_scope->symbols->kind = SYM_FUNCTION;
 
     ASTNode *va_def = ast_create(NODE_STRUCT);
     va_def->strct.name = xstrdup("va_list");

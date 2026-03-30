@@ -6,7 +6,8 @@
 static void emit_json(const char *level, Token t, const char *msg, const char *suggestion)
 {
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "file", g_current_filename ? g_current_filename : "unknown");
+    cJSON_AddStringToObject(
+        root, "file", t.file ? t.file : (g_current_filename ? g_current_filename : "unknown"));
     cJSON_AddNumberToObject(root, "line", t.line);
     cJSON_AddNumberToObject(root, "col", t.col);
     cJSON_AddStringToObject(root, "level", level);
@@ -106,8 +107,8 @@ void zwarn_at(Token t, const char *fmt, ...)
     va_end(a);
 
     // Location.
-    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n", g_current_filename, t.line,
-            t.col);
+    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
+            (t.file ? t.file : g_current_filename), t.line, t.col);
 
     // Context. Only if token has valid data.
     if (t.start)
@@ -152,8 +153,8 @@ void zwarn_with_suggestion(Token t, const char *msg, const char *suggestion)
     fprintf(stderr, COLOR_YELLOW "warning: " COLOR_RESET COLOR_BOLD "%s" COLOR_RESET "\n", msg);
 
     // Location.
-    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n", g_current_filename, t.line,
-            t.col);
+    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
+            (t.file ? t.file : g_current_filename), t.line, t.col);
 
     // Context.
     if (t.start)
@@ -211,8 +212,8 @@ void zpanic_at(Token t, const char *fmt, ...)
     va_end(a);
 
     // Location: '--> file:line:col'.
-    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n", g_current_filename, t.line,
-            t.col);
+    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
+            (t.file ? t.file : g_current_filename), t.line, t.col);
 
     // Context line.
     const char *line_start = t.start - (t.col - 1);
@@ -272,8 +273,8 @@ void zpanic_with_suggestion(Token t, const char *msg, const char *suggestion)
     fprintf(stderr, COLOR_RED "error: " COLOR_RESET COLOR_BOLD "%s" COLOR_RESET "\n", msg);
 
     // Location.
-    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n", g_current_filename, t.line,
-            t.col);
+    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
+            (t.file ? t.file : g_current_filename), t.line, t.col);
 
     // Context.
     const char *line_start = t.start - (t.col - 1);
@@ -347,8 +348,8 @@ void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
     fprintf(stderr, COLOR_RED "error: " COLOR_RESET COLOR_BOLD "%s" COLOR_RESET "\n", msg);
 
     // Location.
-    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n", g_current_filename, t.line,
-            t.col);
+    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
+            (t.file ? t.file : g_current_filename), t.line, t.col);
 
     // Context.
     const char *line_start = t.start - (t.col - 1);
@@ -434,8 +435,8 @@ void zerror_at(Token t, const char *fmt, ...)
     va_end(a);
 
     // Location: '--> file:line:col'.
-    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n", g_current_filename, t.line,
-            t.col);
+    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
+            (t.file ? t.file : g_current_filename), t.line, t.col);
 
     // Context line.
     if (t.start)
@@ -493,8 +494,8 @@ void zerror_with_suggestion(Token t, const char *msg, const char *suggestion)
     fprintf(stderr, COLOR_RED "error: " COLOR_RESET COLOR_BOLD "%s" COLOR_RESET "\n", msg);
 
     // Location.
-    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n", g_current_filename, t.line,
-            t.col);
+    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
+            (t.file ? t.file : g_current_filename), t.line, t.col);
 
     // Context.
     if (t.start)
@@ -570,8 +571,8 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
     fprintf(stderr, COLOR_RED "error: " COLOR_RESET COLOR_BOLD "%s" COLOR_RESET "\n", msg);
 
     // Location.
-    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n", g_current_filename, t.line,
-            t.col);
+    fprintf(stderr, COLOR_BLUE "  --> " COLOR_RESET "%s:%d:%d\n",
+            (t.file ? t.file : g_current_filename), t.line, t.col);
 
     // Context.
     if (t.start)

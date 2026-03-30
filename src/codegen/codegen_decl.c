@@ -188,7 +188,7 @@ void emit_preamble(ParserContext *ctx, FILE *out)
             fputs("#define z_malloc malloc\n#define z_realloc realloc\n", out);
         }
         fputs("#define z_free free\n#define z_print printf\n", out);
-        fputs("void z_panic(const char* msg) { fprintf(stderr, \"Panic: %s\\n\", "
+        fputs("void __zenc_panic(const char* msg) { fprintf(stderr, \"Panic: %s\\n\", "
               "msg); exit(1); }\n",
               out);
         fputs("#if defined(__APPLE__)\n"

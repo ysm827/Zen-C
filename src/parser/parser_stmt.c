@@ -1400,14 +1400,14 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
 
                 it_decl->var_decl.init_expr = call_iter;
 
-                ASTNode *while_loop = ast_create(NODE_WHILE);
+                ASTNode *while_loop = ast_create(NODE_FOR);
                 ASTNode *true_lit = ast_create(NODE_EXPR_LITERAL);
                 true_lit->literal.type_kind = LITERAL_INT;
                 true_lit->literal.int_val = 1;
                 true_lit->literal.string_val = xstrdup("1");
                 true_lit->token = tk;
                 while_loop->token = tk;
-                while_loop->while_stmt.condition = true_lit;
+                while_loop->for_stmt.condition = true_lit;
 
                 ASTNode *loop_body = ast_create(NODE_BLOCK);
                 loop_body->token = tk;
@@ -1571,7 +1571,7 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
                 // Append user body statements to our loop body
                 APPEND_STMT(user_body_node);
 
-                // If enumerated, append __zc_enum_idx++
+                // If enumerated, set __zc_enum_idx++ as the for-loop step
                 if (enum_idx_name)
                 {
                     ASTNode *idx_inc = ast_create(NODE_EXPR_UNARY);
@@ -1579,11 +1579,11 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
                     ASTNode *idx_ref3 = ast_create(NODE_EXPR_VAR);
                     idx_ref3->var_ref.name = xstrdup("__zc_enum_idx");
                     idx_inc->unary.operand = idx_ref3;
-                    APPEND_STMT(idx_inc);
+                    while_loop->for_stmt.step = idx_inc;
                 }
 
                 loop_body->block.statements = stmts_head;
-                while_loop->while_stmt.body = loop_body;
+                while_loop->for_stmt.body = loop_body;
 
                 // Wrap entire thing in a block to scope __it (and __zc_arr_slice if present)
                 ASTNode *outer_block = ast_create(NODE_BLOCK);
@@ -3321,9 +3321,9 @@ ASTNode *parse_block(ParserContext *ctx, Lexer *l)
         ZenSymbol *sym = ctx->current_scope->symbols;
         while (sym)
         {
-            // Skip special names and already warned
-            if (!sym->is_used && sym->name[0] != '_' && strcmp(sym->name, "it") != 0 &&
-                strcmp(sym->name, "self") != 0)
+            // Skip special names, non-variables, and already warned
+            if (!sym->is_used && (sym->kind == SYM_VARIABLE) && sym->name[0] != '_' &&
+                strcmp(sym->name, "it") != 0 && strcmp(sym->name, "self") != 0)
             {
                 // Skip autofree variables (used implicitly for cleanup)
                 if (sym->is_autofree)
