@@ -1,4 +1,5 @@
 #include "zprep.h"
+#include "constants.h"
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,7 +93,7 @@ void load_all_configs(void)
     char *root = getenv("ZC_ROOT");
     if (root)
     {
-        char path[1024];
+        char path[MAX_PATH_LEN];
         snprintf(path, sizeof(path), "%s/zenc.json", root);
         if (load_config_file(path))
         {
@@ -103,7 +104,7 @@ void load_all_configs(void)
 #ifdef ZEN_SHARE_DIR
     if (!loaded_system)
     {
-        char system_path[1024];
+        char system_path[MAX_PATH_LEN];
         snprintf(system_path, sizeof(system_path), "%s/zenc.json", ZEN_SHARE_DIR);
         load_config_file(system_path);
     }

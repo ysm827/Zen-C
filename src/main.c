@@ -1,5 +1,6 @@
 #include "codegen/codegen.h"
 #include "parser/parser.h"
+#include "constants.h"
 #include "plugins/plugin_manager.h"
 #include "repl/repl.h"
 #include "zen/zen_facts.h"
@@ -7,7 +8,6 @@
 #include "analysis/typecheck.h"
 #include "codegen/compat.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -675,7 +675,7 @@ int main(int argc, char **argv)
     }
 
     // Determine temporary filename based on mode
-    char temp_source_buf[1024];
+    char temp_source_buf[MAX_PATH_LEN];
     const char *ext = ".c";
     if (g_config.use_cuda)
     {
@@ -840,7 +840,7 @@ int main(int argc, char **argv)
 
         if (z_is_windows())
         {
-            char exe_out[1024];
+            char exe_out[MAX_PATH_LEN];
             const char *dot = strrchr(outfile, '.');
             const char *slash = strrchr(outfile, '/');
             const char *bslash = strrchr(outfile, '\\');
@@ -858,7 +858,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            char exe_out[1024];
+            char exe_out[MAX_PATH_LEN];
             snprintf(exe_out, sizeof(exe_out), "./%s", outfile);
             arg_list_add(&run_args, exe_out);
         }
@@ -881,7 +881,7 @@ int main(int argc, char **argv)
             const char *last_sep = slash > bslash ? slash : bslash;
             if (!(dot && dot > last_sep))
             {
-                char exe_out[1024];
+                char exe_out[MAX_PATH_LEN];
                 snprintf(exe_out, sizeof(exe_out), "%s.exe", outfile);
                 remove(exe_out);
             }

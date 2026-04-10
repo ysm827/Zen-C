@@ -1,3 +1,4 @@
+#include "../constants.h"
 
 #include "lsp_index.h"
 #include <stdio.h>
@@ -124,7 +125,7 @@ void lsp_walk_node(LSPIndex *idx, ASTNode *node)
     // Definition logic.
     if (node->type == NODE_FUNCTION)
     {
-        char hover[256];
+        char hover[MAX_SHORT_MSG_LEN];
         sprintf(hover, "fn %s(...) -> %s", node->func.name,
                 node->func.ret_type ? node->func.ret_type : "void");
         lsp_index_add_def(idx, node->token, hover, node);
@@ -134,7 +135,7 @@ void lsp_walk_node(LSPIndex *idx, ASTNode *node)
     }
     else if (node->type == NODE_VAR_DECL)
     {
-        char hover[256];
+        char hover[MAX_SHORT_MSG_LEN];
         sprintf(hover, "var %s", node->var_decl.name);
         lsp_index_add_def(idx, node->token, hover, node);
 
@@ -142,7 +143,7 @@ void lsp_walk_node(LSPIndex *idx, ASTNode *node)
     }
     else if (node->type == NODE_CONST)
     {
-        char hover[256];
+        char hover[MAX_SHORT_MSG_LEN];
         sprintf(hover, "const %s", node->var_decl.name);
         lsp_index_add_def(idx, node->token, hover, node);
 
@@ -150,7 +151,7 @@ void lsp_walk_node(LSPIndex *idx, ASTNode *node)
     }
     else if (node->type == NODE_STRUCT)
     {
-        char hover[256];
+        char hover[MAX_SHORT_MSG_LEN];
         if (node->strct.is_opaque)
         {
             sprintf(hover, "opaque struct %s", node->strct.name);
@@ -167,7 +168,7 @@ void lsp_walk_node(LSPIndex *idx, ASTNode *node)
         {
             if (field->type == NODE_FIELD)
             {
-                char fh[256];
+                char fh[MAX_SHORT_MSG_LEN];
                 sprintf(fh, "field %s: %s", field->field.name, field->field.type);
                 lsp_index_add_def(idx, field->token, fh, field);
             }
@@ -176,7 +177,7 @@ void lsp_walk_node(LSPIndex *idx, ASTNode *node)
     }
     else if (node->type == NODE_ENUM)
     {
-        char hover[256];
+        char hover[MAX_SHORT_MSG_LEN];
         sprintf(hover, "enum %s", node->enm.name);
         lsp_index_add_def(idx, node->token, hover, node);
 
@@ -186,7 +187,7 @@ void lsp_walk_node(LSPIndex *idx, ASTNode *node)
         {
             if (variant->type == NODE_ENUM_VARIANT)
             {
-                char vh[256];
+                char vh[MAX_SHORT_MSG_LEN];
                 sprintf(vh, "variant %s", variant->variant.name);
                 lsp_index_add_def(idx, variant->token, vh, variant);
             }
@@ -195,13 +196,13 @@ void lsp_walk_node(LSPIndex *idx, ASTNode *node)
     }
     else if (node->type == NODE_TYPE_ALIAS)
     {
-        char hover[256];
+        char hover[MAX_SHORT_MSG_LEN];
         sprintf(hover, "alias %s = %s", node->type_alias.alias, node->type_alias.original_type);
         lsp_index_add_def(idx, node->token, hover, node);
     }
     else if (node->type == NODE_TRAIT)
     {
-        char hover[256];
+        char hover[MAX_SHORT_MSG_LEN];
         sprintf(hover, "trait %s", node->trait.name);
         lsp_index_add_def(idx, node->token, hover, node);
     }

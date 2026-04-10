@@ -1,4 +1,5 @@
 #include "../ast/ast.h"
+#include "../constants.h"
 #include "analysis/const_fold.h"
 #include "parser.h"
 #include "../ast/primitives.h"
@@ -427,7 +428,7 @@ Type *parse_type_base(ParserContext *ctx, Lexer *l)
     if (t.type == TOK_LPAREN)
     {
         lexer_next(l); // eat (
-        char sig[256];
+        char sig[MAX_SHORT_MSG_LEN];
         sig[0] = 0;
 
         while (1)
@@ -833,7 +834,7 @@ ASTNode *parse_embed(ParserContext *ctx, Lexer *l)
     {
         zpanic_at(t, "String required");
     }
-    char fn[256];
+    char fn[MAX_PATH_LEN];
     strncpy(fn, t.start + 1, t.len - 2);
     fn[t.len - 2] = 0;
 
@@ -891,7 +892,7 @@ ASTNode *parse_embed(ParserContext *ctx, Lexer *l)
             {
                 // Slice -> Slice__T struct
                 register_slice(ctx, inner_ts);
-                char slice_name[256];
+                char slice_name[MAX_TYPE_NAME_LEN];
                 sprintf(slice_name, "Slice__%s", inner_ts);
                 Type *slice_t = type_new(TYPE_STRUCT);
                 slice_t->name = xstrdup(slice_name);

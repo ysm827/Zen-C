@@ -1,5 +1,6 @@
 
 #include "parser.h"
+#include "../constants.h"
 #include <ctype.h>
 #include "analysis/const_fold.h"
 #include <stdio.h>
@@ -606,10 +607,10 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l)
             if (rhs_type && strchr(type, '*') && strchr(rhs_type, '*'))
             {
                 // Strip stars to get struct names
-                char target_struct[256];
+                char target_struct[MAX_TYPE_NAME_LEN];
                 strcpy(target_struct, type);
                 target_struct[strlen(target_struct) - 1] = 0;
-                char source_struct[256];
+                char source_struct[MAX_TYPE_NAME_LEN];
                 strcpy(source_struct, rhs_type);
                 source_struct[strlen(source_struct) - 1] = 0;
 

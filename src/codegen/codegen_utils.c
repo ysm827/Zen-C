@@ -1,5 +1,6 @@
 
 #include "../ast/ast.h"
+#include "../constants.h"
 #include "../parser/parser.h"
 #include "../zprep.h"
 #include "codegen.h"
@@ -62,7 +63,7 @@ void emit_mangled_name(FILE *out, const char *base, const char *method)
     {
         return;
     }
-    char buf[1024];
+    char buf[MAX_ERROR_MSG_LEN];
     snprintf(buf, sizeof(buf), "%s__%s", base, method);
     char *merged = merge_underscores(buf);
     fprintf(out, "%s", merged);
@@ -93,7 +94,7 @@ void emit_c_decl(ParserContext *ctx, FILE *out, const char *type_str, const char
     }
     else if (generic && (!bracket || generic < bracket))
     {
-        char mangled_candidate[256];
+        char mangled_candidate[MAX_MANGLED_NAME_LEN];
         char *gt = strchr(generic, '>');
         int success = 0;
 
@@ -151,7 +152,7 @@ void emit_var_decl_type(ParserContext *ctx, FILE *out, const char *type_str, con
 // Get field type from struct.
 char *get_field_type_str(ParserContext *ctx, const char *struct_name, const char *field_name)
 {
-    char clean_name[256];
+    char clean_name[MAX_TYPE_NAME_LEN];
     strncpy(clean_name, struct_name, sizeof(clean_name) - 1);
     clean_name[sizeof(clean_name) - 1] = 0;
 
@@ -313,7 +314,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
             char *target_type = infer_type(ctx, node->call.callee->member.target);
             if (target_type)
             {
-                char clean_type[256];
+                char clean_type[MAX_TYPE_NAME_LEN];
                 snprintf(clean_type, sizeof(clean_type), "%s", target_type);
 
                 // Robustly strip all pointer levels for method lookup
@@ -329,7 +330,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
                     base += 7;
                 }
 
-                char func_base[512];
+                char func_base[MAX_FUNC_NAME_LEN];
                 sprintf(func_base, "%s__%s", base, node->call.callee->member.field);
                 char *func_name = merge_underscores(func_base);
 
@@ -446,7 +447,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
             return NULL;
         }
 
-        char clean_name[256];
+        char clean_name[MAX_TYPE_NAME_LEN];
         snprintf(clean_name, sizeof(clean_name), "%s", parent_type);
         char *ptr = strchr(clean_name, '*');
         if (ptr)

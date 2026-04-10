@@ -1,5 +1,6 @@
 
 #include "../ast/ast.h"
+#include "../constants.h"
 #include "../zprep.h"
 #include "codegen.h"
 #include <stdio.h>
@@ -336,7 +337,7 @@ static void emit_auto_drop_glues(ParserContext *ctx, ASTNode *structs, FILE *out
             fprintf(out, "// Auto-Generated RAII Glue for %s\n", sname);
             fprintf(out, "void %s__Drop__glue(%s *self) {\n", sname, sname);
 
-            char glue_mangled[512];
+            char glue_mangled[MAX_MANGLED_NAME_LEN];
             snprintf(glue_mangled, sizeof(glue_mangled), "%s__Drop__drop", sname);
             if (find_func(ctx, glue_mangled))
             {

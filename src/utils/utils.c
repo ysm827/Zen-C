@@ -1,5 +1,6 @@
 
 #include "parser.h"
+#include "constants.h"
 #include "zprep.h"
 #include "cmd.h"
 #include "platform/os.h"
@@ -163,7 +164,7 @@ char *z_resolve_path(const char *fn, const char *relative_to)
         return NULL;
     }
 
-    char path[1024];
+    char path[MAX_PATH_LEN];
 
     // 2. Relative to current file
     if (relative_to)
@@ -310,9 +311,9 @@ static void expand_env_vars(char *dest, size_t dest_size, const char *src)
             const char *end = strchr(s + 2, '}');
             if (end)
             {
-                char var_name[256];
+                char var_name[MAX_VAR_NAME_LEN];
                 int len = end - (s + 2);
-                if (len < 255)
+                if (len < MAX_VAR_NAME_LEN - 1)
                 {
                     strncpy(var_name, s + 2, len);
                     var_name[len] = 0;
@@ -478,7 +479,7 @@ void scan_build_directives(ParserContext *ctx, const char *src)
                         break;
                     }
 
-                    char path[1024];
+                    char path[MAX_PATH_LEN];
                     char *d = path;
                     while (*dp && !isspace((unsigned char)*dp))
                     {
@@ -518,7 +519,7 @@ void scan_build_directives(ParserContext *ctx, const char *src)
                         break;
                     }
 
-                    char path[1024];
+                    char path[MAX_PATH_LEN];
                     char *d = path;
                     while (*dp && !isspace((unsigned char)*dp))
                     {
@@ -558,7 +559,7 @@ void scan_build_directives(ParserContext *ctx, const char *src)
                         break;
                     }
 
-                    char name[256];
+                    char name[MAX_VAR_NAME_LEN];
                     char *d = name;
                     while (*dp && !isspace((unsigned char)*dp))
                     {
@@ -573,7 +574,7 @@ void scan_build_directives(ParserContext *ctx, const char *src)
                     }
                     *d = '\0';
 
-                    char flags[512];
+                    char flags[MAX_SHORT_MSG_LEN];
                     snprintf(flags, sizeof(flags), "-framework %s", name);
                     append_flag(g_link_flags, sizeof(g_link_flags), flags, NULL);
                 }
@@ -598,7 +599,7 @@ void scan_build_directives(ParserContext *ctx, const char *src)
                         break;
                     }
 
-                    char def_val[1024];
+                    char def_val[MAX_ERROR_MSG_LEN];
                     char *d = def_val;
                     while (*dp && !isspace((unsigned char)*dp))
                     {
@@ -690,7 +691,7 @@ void scan_build_directives(ParserContext *ctx, const char *src)
                     arg_list_add(&args, "--cflags");
                     arg_list_add_from_string(&args, libs);
 
-                    char buf[1024];
+                    char buf[MAX_ERROR_MSG_LEN];
                     if (z_run_command_capture(args.args, buf, sizeof(buf)) == 0)
                     {
                         size_t l = strlen(buf);

@@ -1,4 +1,5 @@
 #include "diagnostics.h"
+#include "constants.h"
 #include "parser.h"
 #include "lsp/cJSON.h"
 #include <stdio.h>
@@ -27,7 +28,7 @@ void zpanic(const char *fmt, ...)
 {
     if (g_config.json_output)
     {
-        char msg[1024];
+        char msg[MAX_ERROR_MSG_LEN];
         va_list a;
         va_start(a, fmt);
         vsnprintf(msg, sizeof(msg), fmt, a);
@@ -64,7 +65,7 @@ void zwarn(const char *fmt, ...)
     }
     if (g_config.json_output)
     {
-        char msg[1024];
+        char msg[MAX_ERROR_MSG_LEN];
         va_list a;
         va_start(a, fmt);
         vsnprintf(msg, sizeof(msg), fmt, a);
@@ -89,7 +90,7 @@ void zwarn_at(Token t, const char *fmt, ...)
     }
     if (g_config.json_output)
     {
-        char msg[1024];
+        char msg[MAX_ERROR_MSG_LEN];
         va_list a;
         va_start(a, fmt);
         vsnprintf(msg, sizeof(msg), fmt, a);
@@ -190,7 +191,7 @@ void zpanic_at(Token t, const char *fmt, ...)
 {
     if (g_config.json_output)
     {
-        char msg[1024];
+        char msg[MAX_ERROR_MSG_LEN];
         va_list a;
         va_start(a, fmt);
         vsnprintf(msg, sizeof(msg), fmt, a);
@@ -240,7 +241,7 @@ void zpanic_at(Token t, const char *fmt, ...)
     if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
     {
         // Construct error message buffer
-        char msg[1024];
+        char msg[MAX_ERROR_MSG_LEN];
         va_list args2;
         va_start(args2, fmt);
         vsnprintf(msg, sizeof(msg), fmt, args2);
@@ -261,7 +262,7 @@ void zpanic_with_suggestion(Token t, const char *msg, const char *suggestion)
         emit_json("error", t, msg, suggestion);
         if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
         {
-            char full_msg[1024];
+            char full_msg[MAX_ERROR_MSG_LEN];
             snprintf(full_msg, sizeof(full_msg), "%s (Suggestion: %s)", msg,
                      suggestion ? suggestion : "");
             g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
@@ -304,7 +305,7 @@ void zpanic_with_suggestion(Token t, const char *msg, const char *suggestion)
     if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
     {
         // Construct error message buffer
-        char full_msg[1024];
+        char full_msg[MAX_ERROR_MSG_LEN];
         snprintf(full_msg, sizeof(full_msg), "%s (Suggestion: %s)", msg,
                  suggestion ? suggestion : "");
         g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
@@ -318,7 +319,7 @@ void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
 {
     if (g_config.json_output)
     {
-        char combined_hints[4096] = {0};
+        char combined_hints[MAX_PATH_LEN] = {0};
         if (hints)
         {
             const char *const *h = hints;
@@ -336,7 +337,7 @@ void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
 
         if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
         {
-            char full_msg[8192];
+            char full_msg[MAX_PATH_LEN * 2];
             snprintf(full_msg, sizeof(full_msg), "%s\n%s", msg, combined_hints);
             g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
             return;
@@ -384,8 +385,8 @@ void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
     if (g_parser_ctx && g_parser_ctx->is_fault_tolerant && g_parser_ctx->on_error)
     {
         // Construct error message buffer
-        char full_msg[8192];
-        char combined_hints[2048] = {0};
+        char full_msg[MAX_PATH_LEN * 2];
+        char combined_hints[MAX_MANGLED_NAME_LEN * 4] = {0};
         if (hints)
         {
             const char *const *h = hints;
@@ -414,7 +415,7 @@ void zerror_at(Token t, const char *fmt, ...)
 {
     if (g_config.json_output)
     {
-        char msg[1024];
+        char msg[MAX_ERROR_MSG_LEN];
         va_list a;
         va_start(a, fmt);
         vsnprintf(msg, sizeof(msg), fmt, a);
@@ -466,7 +467,7 @@ void zerror_at(Token t, const char *fmt, ...)
     if (g_parser_ctx && g_parser_ctx->on_error)
     {
         // Construct error message buffer
-        char msg[1024];
+        char msg[MAX_ERROR_MSG_LEN];
         va_list args2;
         va_start(args2, fmt);
         vsnprintf(msg, sizeof(msg), fmt, args2);
@@ -483,7 +484,7 @@ void zerror_with_suggestion(Token t, const char *msg, const char *suggestion)
         emit_json("error", t, msg, suggestion);
         if (g_parser_ctx && g_parser_ctx->on_error)
         {
-            char full_msg[1024];
+            char full_msg[MAX_ERROR_MSG_LEN];
             snprintf(full_msg, sizeof(full_msg), "%s (Suggestion: %s)", msg,
                      suggestion ? suggestion : "");
             g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
@@ -527,7 +528,7 @@ void zerror_with_suggestion(Token t, const char *msg, const char *suggestion)
 
     {
         // Construct error message buffer
-        char full_msg[1024];
+        char full_msg[MAX_ERROR_MSG_LEN];
         snprintf(full_msg, sizeof(full_msg), "%s (Suggestion: %s)", msg,
                  suggestion ? suggestion : "");
         g_parser_ctx->on_error(g_parser_ctx->error_callback_data, t, full_msg);
@@ -536,7 +537,7 @@ void zerror_with_suggestion(Token t, const char *msg, const char *suggestion)
 
 void zerror_with_hints(Token t, const char *msg, const char *const *hints)
 {
-    char combined_hints[4096] = {0};
+    char combined_hints[MAX_PATH_LEN] = {0};
     if (hints)
     {
         const char *const *h = hints;
@@ -556,7 +557,7 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
         emit_json("error", t, msg, combined_hints[0] ? combined_hints : NULL);
         if (g_parser_ctx && g_parser_ctx->on_error)
         {
-            char full_msg[8192];
+            char full_msg[MAX_PATH_LEN * 2];
             int header_len = snprintf(full_msg, sizeof(full_msg), "%s\n", msg);
             if (header_len < (int)sizeof(full_msg))
             {
@@ -610,7 +611,7 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
     if (g_parser_ctx && g_parser_ctx->on_error)
     {
         // Construct error message buffer
-        char full_msg[8192];
+        char full_msg[MAX_PATH_LEN * 2];
         int header_len = snprintf(full_msg, sizeof(full_msg), "%s", msg);
         if (header_len < (int)sizeof(full_msg))
         {
@@ -624,12 +625,12 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
 // Specific error types with helpful messages.
 void error_undefined_function(Token t, const char *func_name, const char *suggestion)
 {
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Undefined function '%s'", func_name);
 
     if (suggestion)
     {
-        char help[512];
+        char help[MAX_MANGLED_NAME_LEN];
         snprintf(help, sizeof(help), "Did you mean '%s'?", suggestion);
         zerror_with_suggestion(t, msg, help);
     }
@@ -641,10 +642,10 @@ void error_undefined_function(Token t, const char *func_name, const char *sugges
 
 void error_wrong_arg_count(Token t, const char *func_name, int expected, int got)
 {
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Wrong number of arguments to function '%s'", func_name);
 
-    char help[256];
+    char help[MAX_SHORT_MSG_LEN];
     snprintf(help, sizeof(help), "Expected %d argument%s, but got %d", expected,
              expected == 1 ? "" : "s", got);
 
@@ -654,12 +655,12 @@ void error_wrong_arg_count(Token t, const char *func_name, int expected, int got
 void error_undefined_field(Token t, const char *struct_name, const char *field_name,
                            const char *suggestion)
 {
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Struct '%s' has no field '%s'", struct_name, field_name);
 
     if (suggestion)
     {
-        char help[256];
+        char help[MAX_SHORT_MSG_LEN];
         snprintf(help, sizeof(help), "Did you mean '%s'?", suggestion);
         zerror_with_suggestion(t, msg, help);
     }
@@ -671,10 +672,10 @@ void error_undefined_field(Token t, const char *struct_name, const char *field_n
 
 void error_type_expected(Token t, const char *expected, const char *got)
 {
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Type mismatch");
 
-    char help[512];
+    char help[MAX_MANGLED_NAME_LEN];
     snprintf(help, sizeof(help), "Expected type '%s', but found '%s'", expected, got);
 
     zerror_with_suggestion(t, msg, help);
@@ -682,7 +683,7 @@ void error_type_expected(Token t, const char *expected, const char *got)
 
 void error_cannot_index(Token t, const char *type_name)
 {
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Cannot index into type '%s'", type_name);
 
     zerror_with_suggestion(t, msg, "Only arrays and slices can be indexed");
@@ -694,7 +695,7 @@ void warn_unused_variable(Token t, const char *var_name)
     {
         return;
     }
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Unused variable '%s'", var_name);
     zwarn_with_suggestion(t, msg, "Consider removing it or prefixing with '_'");
 }
@@ -705,7 +706,7 @@ void warn_shadowing(Token t, const char *var_name)
     {
         return;
     }
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Variable '%s' shadows a previous declaration", var_name);
     zwarn_with_suggestion(t, msg, "This can lead to confusion");
 }
@@ -725,7 +726,7 @@ void warn_implicit_conversion(Token t, const char *from_type, const char *to_typ
     {
         return;
     }
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Implicit conversion from '%s' to '%s'", from_type, to_type);
     zwarn_with_suggestion(t, msg, "Consider using an explicit cast");
 }
@@ -736,7 +737,7 @@ void warn_missing_return(Token t, const char *func_name)
     {
         return;
     }
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Function '%s' may not return a value in all paths", func_name);
     zwarn_with_suggestion(t, msg, "Add a return statement or make the function return 'void'");
 }
@@ -765,7 +766,7 @@ void warn_unused_parameter(Token t, const char *param_name, const char *func_nam
     {
         return;
     }
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Unused parameter '%s' in function '%s'", param_name, func_name);
     zwarn_with_suggestion(t, msg, "Consider prefixing with '_' if intentionally unused");
 }
@@ -776,7 +777,7 @@ void warn_narrowing_conversion(Token t, const char *from_type, const char *to_ty
     {
         return;
     }
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Narrowing conversion from '%s' to '%s'", from_type, to_type);
     zwarn_with_suggestion(t, msg, "This may cause data loss");
 }
@@ -796,7 +797,7 @@ void warn_integer_overflow(Token t, const char *type_name, long long value)
     {
         return;
     }
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Integer literal %lld overflows type '%s'", value, type_name);
     zwarn_with_suggestion(t, msg, "Value will be truncated");
 }
@@ -807,9 +808,9 @@ void warn_array_bounds(Token t, int index, int size)
     {
         return;
     }
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Array index %d is out of bounds for array of size %d", index, size);
-    char note[256];
+    char note[MAX_SHORT_MSG_LEN];
     snprintf(note, sizeof(note), "Valid indices are 0 to %d", size - 1);
     zwarn_with_suggestion(t, msg, note);
 }
@@ -820,7 +821,7 @@ void warn_format_string(Token t, int arg_num, const char *expected, const char *
     {
         return;
     }
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Format argument %d: expected '%s', got '%s'", arg_num, expected,
              got);
     zwarn_with_suggestion(t, msg, "Mismatched format specifier may cause undefined behavior");
@@ -832,7 +833,7 @@ void warn_null_pointer(Token t, const char *expr)
     {
         return;
     }
-    char msg[256];
+    char msg[MAX_SHORT_MSG_LEN];
     snprintf(msg, sizeof(msg), "Potential null pointer access in '%s'", expr);
     zwarn_with_suggestion(t, msg, "Add a null check before accessing");
 }
@@ -864,13 +865,13 @@ void zwarn_diag(DiagnosticID id, Token t, const char *msg, const char *hint)
         return;
     }
 
-    char final_hint[512];
+    char final_hint[MAX_MANGLED_NAME_LEN];
     if (id == DIAG_INTEROP_UNDEF_FUNC)
     {
         if (hint)
         {
             // Strip trailing period from hint if it exists to avoid double period
-            char hint_copy[256];
+            char hint_copy[MAX_SHORT_MSG_LEN];
             strncpy(hint_copy, hint, sizeof(hint_copy) - 1);
             hint_copy[sizeof(hint_copy) - 1] = '\0';
             size_t len = strlen(hint_copy);

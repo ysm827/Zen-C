@@ -1,3 +1,4 @@
+#include "../constants.h"
 #include "move_check.h"
 #include "../diagnostics/diagnostics.h"
 #include <stdio.h>
@@ -77,7 +78,7 @@ char *get_node_path(ASTNode *node)
             return NULL;
         }
 
-        char buffer[512];
+        char buffer[MAX_ERROR_MSG_LEN];
         snprintf(buffer, sizeof(buffer), "%s.%s", target_path, node->member.field);
         free(target_path);
         return xstrdup(buffer);
@@ -307,7 +308,7 @@ void check_path_validity(TypeChecker *tc, const char *path, Token t)
             }
         }
 
-        char msg[256];
+        char msg[MAX_ERROR_MSG_LEN];
         snprintf(msg, 255, "Use of moved value '%s'", path);
 
         const char *hints[] = {"This type owns resources and cannot be implicitly copied",

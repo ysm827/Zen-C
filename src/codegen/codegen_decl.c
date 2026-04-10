@@ -1,5 +1,6 @@
 
 #include "../ast/ast.h"
+#include "../constants.h"
 #include "../parser/parser.h"
 #include "../zprep.h"
 #include "codegen.h"
@@ -1413,7 +1414,7 @@ void emit_impl_vtables(ParserContext *ctx, FILE *out)
     {
         char *trait;
         char *strct;
-    } emitted[1024];
+    } emitted[MAX_ERROR_MSG_LEN];
     int count = 0;
 
     while (ref)

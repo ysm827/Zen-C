@@ -1,4 +1,5 @@
 #include "lsp_project.h"
+#include "../constants.h"
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,7 +87,7 @@ static void scan_dir(const char *dir_path)
             continue;
         }
 
-        char path[1024];
+        char path[MAX_PATH_LEN];
         snprintf(path, sizeof(path), "%s/%s", dir_path, dir->d_name);
 
         struct stat st;

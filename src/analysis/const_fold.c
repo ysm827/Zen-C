@@ -1,3 +1,4 @@
+#include "../constants.h"
 #include "analysis/const_fold.h"
 #include <string.h>
 #include <stdio.h>

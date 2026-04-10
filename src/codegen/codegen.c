@@ -30,7 +30,7 @@ static const char *get_missing_function_hint(ParserContext *ctx, const char *nam
     }
 
     int best_dist = 4;
-    static char best_buf[256];
+    static char best_buf[MAX_SHORT_MSG_LEN];
     const char *best = NULL;
 
     FuncSig *sig = ctx->func_registry;
@@ -151,8 +151,8 @@ static void codegen_var_expr(ParserContext *ctx, ASTNode *node, FILE *out)
         if (node->var_ref.suggestion && !ctx->silent_warnings &&
             !find_func(ctx, node->var_ref.name))
         {
-            char msg[256];
-            char help[256];
+            char msg[MAX_SHORT_MSG_LEN];
+            char help[MAX_SHORT_MSG_LEN];
             snprintf(msg, sizeof(msg), "Undefined variable '%s'", node->var_ref.name);
             snprintf(help, sizeof(help), "Did you mean '%s'?", node->var_ref.suggestion);
             zwarn_at(node->token, "%s\n   = help: %s", msg, help);
@@ -209,7 +209,7 @@ static void codegen_var_expr(ParserContext *ctx, ASTNode *node, FILE *out)
     if (underscore && underscore != node->var_ref.name && *(underscore + 1) != '_' &&
         strstr(node->var_ref.name, "__") == NULL)
     {
-        char base[256];
+        char base[MAX_TYPE_NAME_LEN];
         size_t len = underscore - node->var_ref.name;
         if (len < sizeof(base))
         {
@@ -474,7 +474,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                 {
                     fprintf(out, "(!");
                 }
-                char meth[256];
+                char meth[MAX_TYPE_NAME_LEN];
                 snprintf(meth, sizeof(meth), "%s__Eq__eq", base);
                 ZenSymbol *sym = find_symbol_in_all(ctx, meth);
                 FuncSig *sig = sym ? sym->data.sig : NULL;
@@ -757,7 +757,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
             // Check for Static Enum Variant Call: Enum.Variant(...) or Enum<T>.Variant(...)
             if (target->type == NODE_EXPR_VAR)
             {
-                char type_name[256];
+                char type_name[MAX_TYPE_NAME_LEN];
                 strncpy(type_name, target->var_ref.name, sizeof(type_name));
                 type_name[sizeof(type_name) - 1] = 0;
 
@@ -766,7 +766,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                 ASTNode *def = find_struct_def(ctx, mangled_type);
                 if (def && def->type == NODE_ENUM)
                 {
-                    char mangled[512];
+                    char mangled[MAX_MANGLED_NAME_LEN];
                     snprintf(mangled, sizeof(mangled), "%s__%s", mangled_type, method);
                     FuncSig *sig = find_func(ctx, mangled);
                     if (sig)
@@ -842,7 +842,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
 
                 const char *normalized = normalize_type_name(base);
                 char *mangled_base = (char *)normalized;
-                char base_buf[1024];
+                char base_buf[MAX_ERROR_MSG_LEN];
 
                 // Mangle generic types: Slice<int> -> Slice__int
                 char *lt = strchr(base, '<');
@@ -852,7 +852,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                     if (gt)
                     {
                         int prefix_len = lt - base;
-                        char prefix[256];
+                        char prefix[MAX_TYPE_NAME_LEN];
                         if (prefix_len >= 255)
                         {
                             prefix_len = 255;
@@ -894,7 +894,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                         mangled_base = type_mangled;
                     }
 
-                    char type_buf[1024];
+                    char type_buf[MAX_ERROR_MSG_LEN];
                     char *t_lt = strchr(type, '<');
                     if (t_lt)
                     {
@@ -902,7 +902,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                         if (t_gt)
                         {
                             int p_len = t_lt - type;
-                            char prefix[256];
+                            char prefix[MAX_TYPE_NAME_LEN];
                             if (p_len >= 255)
                             {
                                 p_len = 255;
@@ -971,7 +971,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                         {
                             if (strcmp(ta->original_type, call_base) == 0)
                             {
-                                char alias_func_base[1024];
+                                char alias_func_base[MAX_ERROR_MSG_LEN];
                                 snprintf(alias_func_base, sizeof(alias_func_base), "%s__%s",
                                          ta->alias, method);
                                 char *alias_func_name = merge_underscores(alias_func_base);
@@ -990,13 +990,13 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                             if (ref->node && ref->node->type == NODE_IMPL_TRAIT &&
                                 strcmp(ref->node->impl_trait.target_type, base) == 0)
                             {
-                                char trait_base[512];
+                                char trait_base[MAX_MANGLED_NAME_LEN];
                                 snprintf(trait_base, sizeof(trait_base), "%s__%s__%s", base,
                                          ref->node->impl_trait.trait_name, method);
                                 char *trait_mangled = merge_underscores(trait_base);
                                 if (find_func(ctx, trait_mangled))
                                 {
-                                    char suffix_base[512];
+                                    char suffix_base[MAX_MANGLED_NAME_LEN];
                                     snprintf(suffix_base, sizeof(suffix_base), "%s__%s",
                                              ref->node->impl_trait.trait_name, method);
                                     resolved_method_suffix = merge_underscores(suffix_base);
@@ -1017,13 +1017,13 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                                 if (it->impl_node && it->impl_node->type == NODE_IMPL_TRAIT)
                                 {
                                     tname = it->impl_node->impl_trait.trait_name;
-                                    char trait_base[1024];
+                                    char trait_base[MAX_ERROR_MSG_LEN];
                                     snprintf(trait_base, sizeof(trait_base), "%s__%s__%s", base,
                                              tname, method);
                                     char *trait_mangled = merge_underscores(trait_base);
                                     if (find_func(ctx, trait_mangled))
                                     {
-                                        char suffix_base[1024];
+                                        char suffix_base[MAX_ERROR_MSG_LEN];
                                         snprintf(suffix_base, sizeof(suffix_base), "%s__%s", tname,
                                                  method);
                                         resolved_method_suffix = merge_underscores(suffix_base);
@@ -1047,7 +1047,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                             {
                                 for (int k = 0; k < def->strct.used_struct_count; k++)
                                 {
-                                    char mixin_base[1024];
+                                    char mixin_base[MAX_ERROR_MSG_LEN];
                                     snprintf(mixin_base, sizeof(mixin_base), "%s__%s",
                                              def->strct.used_structs[k], method);
                                     char *mixin_check = merge_underscores(mixin_base);
@@ -1175,7 +1175,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                 strstr(name, "__") == NULL)
             {
                 // Potential Enum_Variant patterns (single underscore)
-                char base[256];
+                char base[MAX_TYPE_NAME_LEN];
                 size_t len = underscore - name;
                 if (len < sizeof(base))
                 {
@@ -1276,7 +1276,7 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
                           get_inner_type(node->call.callee->type_info)->kind == TYPE_FUNCTION))
                     {
                         Token t = node->call.callee->token;
-                        char msg[256];
+                        char msg[MAX_SHORT_MSG_LEN];
                         snprintf(msg, sizeof(msg), "Undefined function '%s'", name);
                         const char *hint = get_missing_function_hint(ctx, name);
 
@@ -1481,11 +1481,11 @@ void codegen_expression(ParserContext *ctx, ASTNode *node, FILE *out)
         {
             char *base_type = infer_type(ctx, node->index.array);
             char *struct_name = NULL;
-            char method_name[512] = {0};
+            char method_name[MAX_MANGLED_NAME_LEN] = {0};
 
             if (base_type && !strchr(base_type, '*'))
             {
-                char clean[256];
+                char clean[MAX_TYPE_NAME_LEN];
                 strncpy(clean, base_type, sizeof(clean) - 1);
                 clean[sizeof(clean) - 1] = '\0';
                 if (strncmp(clean, "struct ", 7) == 0)

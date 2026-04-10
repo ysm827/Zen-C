@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include "../constants.h"
 #include "cmd.h"
 #include "colors.h"
 #include "../zprep.h"
@@ -241,7 +242,7 @@ void build_compile_arg_list(ArgList *list, const char *outfile, const char *temp
     {
         arg_list_add_fmt(list, "-I%s", g_config.root_path);
 
-        char tre_path[1024];
+        char tre_path[MAX_PATH_LEN];
         snprintf(tre_path, sizeof(tre_path), "%s/std/third-party/tre/include", g_config.root_path);
 
         if (!g_config.is_freestanding && access(tre_path, F_OK) == 0)
@@ -419,7 +420,7 @@ void arg_list_add_from_string(ArgList *list, const char *str)
             break;
         }
 
-        char arg[4096];
+        char arg[MAX_PATH_LEN];
         char *d = arg;
         int in_quote = 0;
 

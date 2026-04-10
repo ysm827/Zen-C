@@ -1,3 +1,4 @@
+#include "../constants.h"
 
 #include "typecheck.h"
 #include "diagnostics/diagnostics.h"
@@ -414,7 +415,7 @@ static void check_expr_binary(TypeChecker *tc, ASTNode *node)
                     return;
                 }
 
-                char msg[256];
+                char msg[MAX_SHORT_MSG_LEN];
                 snprintf(msg, sizeof(msg), "Operator '%s' requires numeric operands", op);
                 const char *hints[] = {
                     "Arithmetic operators can only be used with integer, float, or vector types",
@@ -469,7 +470,7 @@ static void check_expr_binary(TypeChecker *tc, ASTNode *node)
                     node->type_info = type_new(TYPE_BOOL);
                     return;
                 }
-                char msg[256];
+                char msg[MAX_SHORT_MSG_LEN];
                 snprintf(msg, sizeof(msg), "Cannot compare '%s' with incompatible types", op);
                 const char *hints[] = {"Ensure both operands have the same or compatible types",
                                        NULL};
@@ -520,7 +521,7 @@ static void check_expr_binary(TypeChecker *tc, ASTNode *node)
             if ((!is_integer_type(left_type) && left_type->kind != TYPE_VECTOR) ||
                 (!is_integer_type(right_type) && right_type->kind != TYPE_VECTOR))
             {
-                char msg[256];
+                char msg[MAX_SHORT_MSG_LEN];
                 snprintf(msg, sizeof(msg),
                          "Bitwise operator '%s' requires integer or vector operands", op);
                 const char *hints[] = {"Bitwise operators only work on integer or vector types",
@@ -577,7 +578,7 @@ static void check_expr_call(TypeChecker *tc, ASTNode *node)
                 ZenSymbol *global_sym = find_symbol_in_all(tc->pctx, func_name);
                 if (!global_sym && !should_suppress_undef_warning(tc->pctx, func_name))
                 {
-                    char msg[256];
+                    char msg[MAX_SHORT_MSG_LEN];
                     snprintf(msg, sizeof(msg), "Undefined function '%s'", func_name);
                     const char *hints[] = {"Check if the function is defined or imported", NULL};
                     tc_error_with_hints(tc, node->call.callee->token, msg, hints);
@@ -642,7 +643,7 @@ static void check_expr_call(TypeChecker *tc, ASTNode *node)
             // safe.
             if (!func_name || strcmp(func_name, "_z_str") != 0)
             {
-                char msg[256];
+                char msg[MAX_SHORT_MSG_LEN];
                 snprintf(msg, sizeof(msg),
                          "Pure function '%s' cannot call non-pure or dynamic function '%s'",
                          tc->current_func->func.name, func_name ? func_name : "unknown");
@@ -673,7 +674,7 @@ static void check_expr_call(TypeChecker *tc, ASTNode *node)
 
         if (arg_count < min_args)
         {
-            char msg[256];
+            char msg[MAX_SHORT_MSG_LEN];
             snprintf(msg, sizeof(msg), "Too few arguments: '%s' expects at least %d, got %d",
                      func_name, min_args, arg_count);
 
@@ -682,7 +683,7 @@ static void check_expr_call(TypeChecker *tc, ASTNode *node)
         }
         else if (arg_count > sig->total_args && !sig->is_varargs)
         {
-            char msg[256];
+            char msg[MAX_SHORT_MSG_LEN];
             snprintf(msg, sizeof(msg), "Too many arguments: '%s' expects %d, got %d", func_name,
                      sig->total_args, arg_count);
 
@@ -857,8 +858,8 @@ static int is_struct_base_match(Type *base, Type *instantiated)
         return 1;
     }
 
-    char base_str[256];
-    char inst_str[256];
+    char base_str[MAX_TYPE_NAME_LEN];
+    char inst_str[MAX_TYPE_NAME_LEN];
     extract_base_name(base->name, base_str, sizeof(base_str));
     extract_base_name(instantiated->name, inst_str, sizeof(inst_str));
 
@@ -1000,7 +1001,7 @@ static int check_type_compatibility(TypeChecker *tc, Type *target, Type *value, 
         {
             char *t_str = type_to_string(target);
             char *v_str = type_to_string(value);
-            char msg[256];
+            char msg[MAX_SHORT_MSG_LEN];
             snprintf(msg, sizeof(msg),
                      "Implicit narrowing conversion from '%s' (%d-bit) to '%s' (%d-bit)", v_str,
                      value_width, t_str, target_width);
@@ -1049,7 +1050,7 @@ static int check_type_compatibility(TypeChecker *tc, Type *target, Type *value, 
     char *t_str = type_to_string(target);
     char *v_str = type_to_string(value);
 
-    char msg[512];
+    char msg[MAX_ERROR_MSG_LEN];
     snprintf(msg, sizeof(msg), "Type mismatch: expected '%s', but found '%s'", t_str, v_str);
 
     const char *hints[] = {
@@ -1223,7 +1224,7 @@ static void check_function(TypeChecker *tc, ASTNode *node)
     {
         if (!block_always_returns(node->func.body))
         {
-            char msg[256];
+            char msg[MAX_SHORT_MSG_LEN];
             snprintf(msg, sizeof(msg), "Function '%s' may not return a value on all code paths",
                      node->func.name);
 
@@ -1336,7 +1337,7 @@ static void check_struct_init(TypeChecker *tc, ASTNode *node)
     ASTNode *def = find_struct_def(tc->pctx, node->struct_init.struct_name);
     if (!def)
     {
-        char msg[256];
+        char msg[MAX_SHORT_MSG_LEN];
         snprintf(msg, sizeof(msg), "Unknown struct '%s'", node->struct_init.struct_name);
         tc_error(tc, node->token, msg);
         return;
@@ -1373,7 +1374,7 @@ static void check_struct_init(TypeChecker *tc, ASTNode *node)
 
         if (!found)
         {
-            char msg[256];
+            char msg[MAX_SHORT_MSG_LEN];
             snprintf(msg, sizeof(msg), "Struct '%s' has no field named '%s'",
                      node->struct_init.struct_name, field_init->var_decl.name);
             tc_error(tc, field_init->token, msg);
@@ -1409,7 +1410,7 @@ static void check_struct_init(TypeChecker *tc, ASTNode *node)
             }
             if (!provided)
             {
-                char msg[256];
+                char msg[MAX_SHORT_MSG_LEN];
                 snprintf(msg, sizeof(msg), "Missing field '%s' in initializer for struct '%s'",
                          def_field->field.name, node->struct_init.struct_name);
                 const char *hints[] = {"All struct fields must be initialized", NULL};
@@ -1732,7 +1733,7 @@ static void check_node(TypeChecker *tc, ASTNode *node)
             }
             else if (!func_is_void && !node->ret.value)
             {
-                char msg[256];
+                char msg[MAX_SHORT_MSG_LEN];
                 snprintf(msg, 255, "Return without value in function returning '%s'", ret_type);
 
                 const char *hints[] = {"This function declares a non-void return type",
@@ -2016,7 +2017,7 @@ static void check_node(TypeChecker *tc, ASTNode *node)
 
                 if (struct_name)
                 {
-                    char buf[1024];
+                    char buf[MAX_ERROR_MSG_LEN];
                     snprintf(buf, sizeof(buf), "%s__%s", struct_name, node->member.field);
                     char *mangled = merge_underscores(buf);
 
@@ -2211,7 +2212,7 @@ static void check_node(TypeChecker *tc, ASTNode *node)
             ZenSymbol *sym = tc_lookup(tc, node->asm_stmt.outputs[i]);
             if (!sym)
             {
-                char msg[256];
+                char msg[MAX_SHORT_MSG_LEN];
                 snprintf(msg, sizeof(msg), "Undefined output variable in inline assembly: '%s'",
                          node->asm_stmt.outputs[i]);
                 tc_error(tc, node->token, msg);
@@ -2230,7 +2231,7 @@ static void check_node(TypeChecker *tc, ASTNode *node)
             ZenSymbol *sym = tc_lookup(tc, node->asm_stmt.inputs[i]);
             if (!sym)
             {
-                char msg[256];
+                char msg[MAX_SHORT_MSG_LEN];
                 snprintf(msg, sizeof(msg), "Undefined input variable in inline assembly: '%s'",
                          node->asm_stmt.inputs[i]);
                 tc_error(tc, node->token, msg);
@@ -2246,7 +2247,7 @@ static void check_node(TypeChecker *tc, ASTNode *node)
         }
         if (node->asm_stmt.register_size > 64)
         {
-            char msg[256];
+            char msg[MAX_SHORT_MSG_LEN];
             snprintf(msg, sizeof(msg),
                      "Unsupported register size is required in inline assembly: %i bits",
                      node->asm_stmt.register_size);

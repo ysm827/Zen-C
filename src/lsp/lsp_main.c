@@ -1,5 +1,6 @@
 
 #include "json_rpc.h"
+#include "../constants.h"
 #include "zprep.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +19,7 @@ int lsp_main(int argc, char **argv)
     {
         // Read headers
         int content_len = 0;
-        char line[512];
+        char line[MAX_MANGLED_NAME_LEN];
         while (fgets(line, sizeof(line), stdin))
         {
             if (0 == strcmp(line, "\r\n"))

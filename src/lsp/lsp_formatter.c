@@ -1,3 +1,4 @@
+#include "../constants.h"
 #include "lsp_formatter.h"
 #include <stdio.h>
 #include <stdlib.h>

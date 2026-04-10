@@ -1,6 +1,7 @@
 #include "../codegen/codegen.h"
 #include "../plugins/plugin_manager.h"
 #include "parser.h"
+#include "../constants.h"
 #include "../ast/primitives.h"
 #include <ctype.h>
 #include "analysis/const_fold.h"
@@ -188,7 +189,7 @@ char *ast_to_string(ASTNode *node)
         return xstrdup("");
     }
 
-    char *buf = xmalloc(4096);
+    char *buf = xmalloc(MAX_PATH_LEN);
     buf[0] = 0;
 
     switch (node->type)
@@ -260,7 +261,7 @@ char *ast_to_string(ASTNode *node)
     case NODE_EXPR_CALL:
     {
         char *callee = ast_to_string(node->call.callee);
-        snprintf(buf, 256, "%s(", callee);
+        snprintf(buf, MAX_SHORT_MSG_LEN, "%s(", callee);
         free(callee);
 
         ASTNode *arg = node->call.args;
@@ -1063,7 +1064,7 @@ void register_slice(ParserContext *ctx, const char *type)
     ctx->used_slices = n;
 
     // Register Struct Def for Reflection
-    char slice_name[256];
+    char slice_name[MAX_TYPE_NAME_LEN];
     sprintf(slice_name, "Slice__%s", type);
 
     ASTNode *len_f = ast_create(NODE_FIELD);
@@ -1074,7 +1075,7 @@ void register_slice(ParserContext *ctx, const char *type)
     cap_f->field.type = xstrdup("int");
     ASTNode *data_f = ast_create(NODE_FIELD);
     data_f->field.name = xstrdup("data");
-    char ptr_type[256];
+    char ptr_type[MAX_TYPE_NAME_LEN];
     sprintf(ptr_type, "%s*", type);
     data_f->field.type = xstrdup(ptr_type);
 
@@ -1088,7 +1089,7 @@ void register_slice(ParserContext *ctx, const char *type)
     register_struct_def(ctx, slice_name, def);
 
     // Backward compatibility: alias Slice_T to Slice__T
-    char legacy_name[256];
+    char legacy_name[MAX_VAR_NAME_LEN];
     sprintf(legacy_name, "Slice_%s", type);
     if (strcmp(slice_name, legacy_name) != 0)
     {
@@ -1112,7 +1113,7 @@ void register_tuple(ParserContext *ctx, const char *sig)
     n->next = ctx->used_tuples;
     ctx->used_tuples = n;
 
-    char struct_name[1024];
+    char struct_name[MAX_ERROR_MSG_LEN];
     char *clean_sig = sanitize_mangled_name(sig);
     sprintf(struct_name, "Tuple__%s", clean_sig);
     free(clean_sig);
@@ -1750,7 +1751,7 @@ char *replace_type_str(const char *src, const char *param, const char *concrete,
     // Case 3a: Explicit template replacement (e.g. Vec<T> -> Vec__int32_t)
     if (old_struct && new_struct && param)
     {
-        char tpl_w[256];
+        char tpl_w[MAX_TYPE_NAME_LEN];
         snprintf(tpl_w, sizeof(tpl_w), "%s<%s>", old_struct, param);
         if (strstr(res, tpl_w))
         {
@@ -2110,7 +2111,7 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
             if (match)
             {
                 slen = found_slen;
-                char c_suffix[1024];
+                char c_suffix[MAX_ERROR_MSG_LEN];
                 c_suffix[0] = 0;
                 const char *c_ptr = c;
                 while (c_ptr && *c_ptr)
@@ -2519,7 +2520,7 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
                 strncmp(n1, ns, ns_len) != 0)
             {
                 char *suffix = n1 + os_len;
-                char buf[1024];
+                char buf[MAX_ERROR_MSG_LEN];
                 snprintf(buf, sizeof(buf), "%s%s", ns, suffix);
                 char *n3 = merge_underscores(buf);
                 free(n1);
@@ -3048,7 +3049,7 @@ char *instantiate_function_template(ParserContext *ctx, const char *name, const 
         is_still_generic = 1;
     }
 
-    char buf[1024];
+    char buf[MAX_ERROR_MSG_LEN];
     snprintf(buf, sizeof(buf), "%s__%s", name, clean_type);
     char *mangled = merge_underscores(buf);
     free(clean_type);
@@ -4347,7 +4348,7 @@ char *rewrite_expr_methods(ParserContext *ctx, char *raw)
                 }
 
                 // Mixin Lookup Logic
-                char target_func_raw[256];
+                char target_func_raw[MAX_FUNC_NAME_LEN];
                 sprintf(target_func_raw, "%s__%s", ptr_check, method);
                 char *target_func = merge_underscores(target_func_raw);
 
@@ -4395,7 +4396,7 @@ char *rewrite_expr_methods(ParserContext *ctx, char *raw)
                 if (final_cast)
                 {
                     // Mixin call: Foo__method((Foo*)&obj
-                    char call_buf[1024];
+                    char call_buf[MAX_ERROR_MSG_LEN];
                     snprintf(call_buf, sizeof(call_buf), "%s__%s", final_struct, final_method);
                     char *mangled_call = merge_underscores(call_buf);
 
@@ -4405,7 +4406,7 @@ char *rewrite_expr_methods(ParserContext *ctx, char *raw)
                 else
                 {
                     // Standard call
-                    char call_buf[1024];
+                    char call_buf[MAX_ERROR_MSG_LEN];
                     snprintf(call_buf, sizeof(call_buf), "%s__%s", final_struct, final_method);
                     char *mangled_call = merge_underscores(call_buf);
 
@@ -4463,7 +4464,7 @@ char *rewrite_expr_methods(ParserContext *ctx, char *raw)
                     }
                 }
                 // Mixin Lookup Logic (No Parens)
-                char target_func_raw[256];
+                char target_func_raw[MAX_FUNC_NAME_LEN];
                 sprintf(target_func_raw, "%s__%s", ptr_check, method);
                 char *target_func = merge_underscores(target_func_raw);
 
@@ -4510,7 +4511,7 @@ char *rewrite_expr_methods(ParserContext *ctx, char *raw)
 
                 if (final_cast)
                 {
-                    char call_buf[1024];
+                    char call_buf[MAX_ERROR_MSG_LEN];
                     snprintf(call_buf, sizeof(call_buf), "%s__%s", final_struct, final_method);
                     char *mangled_call = merge_underscores(call_buf);
 
@@ -4519,7 +4520,7 @@ char *rewrite_expr_methods(ParserContext *ctx, char *raw)
                 }
                 else
                 {
-                    char call_buf[1024];
+                    char call_buf[MAX_ERROR_MSG_LEN];
                     snprintf(call_buf, sizeof(call_buf), "%s__%s", final_struct, final_method);
                     char *mangled_call = merge_underscores(call_buf);
 
@@ -4641,7 +4642,7 @@ char *rewrite_expr_methods(ParserContext *ctx, char *raw)
                 {
                     src++;
 
-                    char mangled[256];
+                    char mangled[MAX_MANGLED_NAME_LEN];
 
                     const char *aliased = find_type_alias(ctx, func_name);
                     const char *use_name = aliased ? aliased : func_name;
@@ -4655,7 +4656,7 @@ char *rewrite_expr_methods(ParserContext *ctx, char *raw)
                         }
                         else
                         {
-                            char mangled_raw[512];
+                            char mangled_raw[MAX_MANGLED_NAME_LEN];
                             snprintf(mangled_raw, sizeof(mangled_raw), "%s__%s", mod->base_name,
                                      method);
                             char *mangled_merged = merge_underscores(mangled_raw);
@@ -4668,7 +4669,7 @@ char *rewrite_expr_methods(ParserContext *ctx, char *raw)
                         ASTNode *sdef = find_struct_def(ctx, use_name);
                         if (sdef)
                         {
-                            char mangled_raw[512];
+                            char mangled_raw[MAX_MANGLED_NAME_LEN];
                             snprintf(mangled_raw, sizeof(mangled_raw), "%s__%s", use_name, method);
                             char *mangled_merged = merge_underscores(mangled_raw);
                             strncpy(mangled, mangled_merged, sizeof(mangled) - 1);
@@ -4676,7 +4677,7 @@ char *rewrite_expr_methods(ParserContext *ctx, char *raw)
                         }
                         else
                         {
-                            char mangled_raw[512];
+                            char mangled_raw[MAX_MANGLED_NAME_LEN];
                             snprintf(mangled_raw, sizeof(mangled_raw), "%s__%s", use_name, method);
                             char *mangled_merged = merge_underscores(mangled_raw);
                             strncpy(mangled, mangled_merged, sizeof(mangled) - 1);
@@ -5060,14 +5061,14 @@ void register_plugin(ParserContext *ctx, const char *name, const char *alias)
 
         if (!plugin)
         {
-            char path[1024];
+            char path[MAX_PATH_LEN];
             snprintf(path, sizeof(path), "%s%s", name, z_get_plugin_ext());
             plugin = zptr_load_plugin(path);
         }
 
         if (!plugin && !strchr(name, '/'))
         {
-            char path[1024];
+            char path[MAX_PATH_LEN];
             snprintf(path, sizeof(path), "%s%s%s", z_get_run_prefix(), name, z_get_plugin_ext());
             plugin = zptr_load_plugin(path);
         }
@@ -5143,13 +5144,13 @@ int validate_types(ParserContext *ctx)
                 {
                     if (!is_trait(u->name) && TYPE_UNKNOWN == find_primitive_kind(u->name))
                     {
-                        char msg[256];
+                        char msg[MAX_SHORT_MSG_LEN];
                         snprintf(msg, sizeof(msg), "Unknown type '%s' (assuming external C struct)",
                                  u->name);
                         const char *hint = get_closest_type_hint(ctx, u->name);
                         if (hint)
                         {
-                            char help[512];
+                            char help[MAX_MANGLED_NAME_LEN];
                             snprintf(help, sizeof(help), "Did you mean '%s'?", hint);
                             zwarn_with_suggestion(u->location, msg, help);
                         }
@@ -5342,7 +5343,7 @@ void check_identifier(ParserContext *ctx, Token t)
     (void)ctx;
     if (is_reserved_keyword(t))
     {
-        char buf[256];
+        char buf[MAX_SHORT_MSG_LEN];
         char name[64];
         int len = t.len < 63 ? t.len : 63;
         strncpy(name, t.start, len);

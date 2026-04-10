@@ -1,5 +1,6 @@
 
 #include "parser.h"
+#include "../constants.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -160,7 +161,7 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
         //   - Single value: 1
         //   - OR patterns: 1 || 2 or 1 or 2 or 1, 2
         //   - Range patterns: 1..5 or 1..=5 or 1..<5
-        char patterns_buf[1024];
+        char patterns_buf[MAX_ERROR_MSG_LEN];
         patterns_buf[0] = 0;
         int pattern_count = 0;
 
@@ -1326,7 +1327,7 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
                     slice_decl->var_decl.name = xstrdup("__zc_arr_slice");
 
                     char *elem_type_str = type_to_string(obj_expr->type_info->inner);
-                    char slice_type[256];
+                    char slice_type[MAX_TYPE_NAME_LEN];
                     sprintf(slice_type, "Slice<%s>", elem_type_str);
                     slice_decl->var_decl.type_str = xstrdup(slice_type);
 
@@ -1334,7 +1335,7 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
                     from_array_call->token = tk;
                     ASTNode *static_method = ast_create(NODE_EXPR_VAR);
 
-                    char func_name[512];
+                    char func_name[MAX_FUNC_NAME_LEN];
                     snprintf(func_name, 511, "Slice__%s__from_array", elem_type_str);
                     static_method->var_ref.name = xstrdup(func_name);
 
@@ -1345,7 +1346,7 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
                     arr_addr->unary.operand = obj_expr;
 
                     ASTNode *arr_cast = ast_create(NODE_EXPR_CAST);
-                    char cast_type[256];
+                    char cast_type[MAX_TYPE_NAME_LEN];
                     sprintf(cast_type, "%s*", elem_type_str);
                     arr_cast->cast.target_type = xstrdup(cast_type);
                     arr_cast->cast.expr = arr_addr;
@@ -1367,11 +1368,11 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
                     Token dummy_tok = {0};
                     instantiate_generic(ctx, "Slice", elem_type_str, elem_type_str, dummy_tok);
 
-                    char iter_type[256];
+                    char iter_type[MAX_TYPE_NAME_LEN];
                     sprintf(iter_type, "SliceIter<%s>", elem_type_str);
                     instantiate_generic(ctx, "SliceIter", elem_type_str, elem_type_str, dummy_tok);
 
-                    char option_type[256];
+                    char option_type[MAX_TYPE_NAME_LEN];
                     sprintf(option_type, "Option<%s>", elem_type_str);
                     instantiate_generic(ctx, "Option", elem_type_str, elem_type_str, dummy_tok);
 
@@ -2166,7 +2167,7 @@ char *process_printf_sugar(ParserContext *ctx, Token srctoken, const char *conte
                 if (base && base->kind == TYPE_ARRAY && base->array_size == 0)
                 {
                     char *inner_name = type_to_string(base->inner);
-                    char slice_name[256];
+                    char slice_name[MAX_TYPE_NAME_LEN];
                     sprintf(slice_name, "Slice__%s", inner_name);
                     free(inner_name);
 
@@ -2554,7 +2555,7 @@ ASTNode *parse_macro_call(ParserContext *ctx, Lexer *l, char *macro_name)
     const char *plugin_name = resolve_plugin(ctx, macro_name);
     if (!plugin_name)
     {
-        char err[256];
+        char err[MAX_SHORT_MSG_LEN];
         snprintf(err, sizeof(err), "Unknown plugin: %s (did you forget 'import plugin \"%s\"'?)",
                  macro_name, macro_name);
         zpanic_at(start_tok, "%s", err);
@@ -2566,7 +2567,7 @@ ASTNode *parse_macro_call(ParserContext *ctx, Lexer *l, char *macro_name)
 
     if (!found)
     {
-        char err[256];
+        char err[MAX_SHORT_MSG_LEN];
         snprintf(err, sizeof(err), "Plugin implementation not found: %s", plugin_name);
         zpanic_at(start_tok, "%s", err);
     }
@@ -3802,7 +3803,7 @@ void scan_c_header_contents(ParserContext *ctx, const char *path, int depth)
     }
 
     // Compute directory of the current header for resolving relative includes
-    char header_dir[1024];
+    char header_dir[MAX_PATH_LEN];
     header_dir[0] = 0;
     const char *last_slash = z_path_last_sep(path);
     if (last_slash)
@@ -3876,11 +3877,11 @@ void scan_c_header_contents(ParserContext *ctx, const char *path, int depth)
                             {
                                 inc_len = 255; // Sanity limit for include paths
                             }
-                            char inc_name[256];
+                            char inc_name[MAX_VAR_NAME_LEN];
                             memcpy(inc_name, inc, inc_len);
                             inc_name[inc_len] = '\0';
 
-                            char nested_path[1280];
+                            char nested_path[MAX_PATH_LEN];
                             if (header_dir[0])
                             {
                                 snprintf(nested_path, sizeof(nested_path), "%s/%s", header_dir,
@@ -3925,7 +3926,7 @@ ASTNode *parse_include(ParserContext *ctx, Lexer *l)
     {
         // System include: include <raylib.h>
         is_system = 1;
-        char buf[256];
+        char buf[MAX_SHORT_MSG_LEN];
         buf[0] = 0;
         while (1)
         {
@@ -3993,7 +3994,7 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l)
             if (last_slash)
             {
                 *last_slash = 0;
-                char resolved_path[1024];
+                char resolved_path[MAX_PATH_LEN];
                 snprintf(resolved_path, sizeof(resolved_path), "%s/%s", current_dir, plugin_name);
                 free(plugin_name);
                 plugin_name = xstrdup(resolved_path);
@@ -4435,8 +4436,8 @@ char *run_comptime_block(ParserContext *ctx, Lexer *l)
     fprintf(f, "return 0;\n}\n");
     fclose(f);
 
-    char cmdbuf[4096];
-    char bin[1024];
+    char cmdbuf[MAX_PATH_LEN * 2];
+    char bin[MAX_PATH_LEN];
 
     sprintf(bin, "%s%s", filename, z_get_exe_ext());
 
@@ -4464,7 +4465,7 @@ char *run_comptime_block(ParserContext *ctx, Lexer *l)
         zpanic_at(lexer_peek(l), "Comptime compilation failed for:\n%s", code);
     }
 
-    char out_file[1024];
+    char out_file[MAX_PATH_LEN];
     sprintf(out_file, "%s.out", filename);
 
     // Execution command

@@ -145,7 +145,7 @@ ASTNode *transform_to_trait_object(ParserContext *ctx, const char *target_trait,
         if (check_impl(ctx, clean_trait, clean_struct_type))
         {
             char *code = xmalloc(512);
-            char v_buf[512];
+            char v_buf[MAX_MANGLED_NAME_LEN];
             snprintf(v_buf, sizeof(v_buf), "%s__%s__VTable", clean_struct_type, clean_trait);
             char *v_mangled = merge_underscores(v_buf);
 
@@ -222,7 +222,7 @@ static void validate_named_arguments(Token call_token, const char *func_name, ch
 
         if (strcmp(arg_names[i], expected_name) != 0)
         {
-            char msg[256];
+            char msg[MAX_SHORT_MSG_LEN];
             snprintf(
                 msg, sizeof(msg),
                 "Named arguments must follow function parameter order. Expected '%s' but got '%s'",
@@ -1510,7 +1510,7 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
 
         if (invalid_start)
         {
-            char err_msg[1024];
+            char err_msg[MAX_ERROR_MSG_LEN];
             snprintf(err_msg, sizeof(err_msg), "Invalid expression start in f-string: '%.*s'.",
                      peek.len, peek.start);
 
@@ -1547,7 +1547,7 @@ static ASTNode *create_fstring_block(ParserContext *ctx, Token parent_token, cha
                     strcat(tok_buf, "...");
                 }
 
-                char err_msg[256];
+                char err_msg[MAX_SHORT_MSG_LEN];
                 snprintf(err_msg, sizeof(err_msg),
                          "Invalid expression in f-string: expected '}' or ':', found '%s'.",
                          tok_buf);
@@ -1729,7 +1729,7 @@ static ASTNode *parse_int_literal(Token t)
     {
         if (!is_valid_int_suffix(endptr))
         {
-            char err[256];
+            char err[MAX_SHORT_MSG_LEN];
             snprintf(err, sizeof(err), "Invalid integer literal suffix: '%s'", endptr);
             zpanic_at(t, "%s", err);
         }
@@ -1771,7 +1771,7 @@ static ASTNode *parse_float_literal(Token t)
     {
         if (!is_valid_float_suffix(endptr))
         {
-            char err[256];
+            char err[MAX_SHORT_MSG_LEN];
             snprintf(err, sizeof(err), "Invalid float literal suffix: '%s'", endptr);
             zpanic_at(t, "%s", err);
         }
@@ -2317,7 +2317,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                 break;
             }
 
-            char pat_buf[1024] = {0};
+            char pat_buf[MAX_ERROR_MSG_LEN] = {0};
             Token mpeek;
             while (1)
             {
@@ -2584,7 +2584,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                     char *tmp =
                         xmalloc(strlen(si->source_module) + strlen(si->symbol) + suffix.len + 5);
 
-                    char base_raw[256];
+                    char base_raw[MAX_TYPE_NAME_LEN];
                     sprintf(base_raw, "%s__%s", si->source_module, si->symbol);
                     char *base = merge_underscores(base_raw);
                     ASTNode *def = find_struct_def(ctx, base);
@@ -2609,14 +2609,14 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                             }
                         }
 
-                        char tmp_raw[512];
+                        char tmp_raw[MAX_MANGLED_NAME_LEN];
                         sprintf(tmp_raw, "%s__%s__%.*s", si->source_module, si->symbol,
                                 (int)suffix.len, suffix.start);
                         tmp = merge_underscores(tmp_raw);
                     }
                     else
                     {
-                        char tmp_raw[512];
+                        char tmp_raw[MAX_MANGLED_NAME_LEN];
                         sprintf(tmp_raw, "%s__%s__%.*s", si->source_module, si->symbol,
                                 (int)suffix.len, suffix.start);
                         tmp = merge_underscores(tmp_raw);
@@ -2642,7 +2642,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                         }
                         else
                         {
-                            char sbuf[256];
+                            char sbuf[MAX_TYPE_NAME_LEN];
                             strncpy(sbuf, suffix.start, suffix.len);
                             sbuf[suffix.len] = 0;
 
@@ -2653,7 +2653,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                             }
                             else
                             {
-                                char tmp2_raw[512];
+                                char tmp2_raw[MAX_MANGLED_NAME_LEN];
                                 sprintf(tmp2_raw, "%s__%.*s", mod->base_name, (int)suffix.len,
                                         suffix.start);
                                 char *tmp2 = merge_underscores(tmp2_raw);
@@ -2711,7 +2711,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
 
                             if (is_variant)
                             {
-                                char v_mangled_raw[512];
+                                char v_mangled_raw[MAX_MANGLED_NAME_LEN];
                                 snprintf(v_mangled_raw, sizeof(v_mangled_raw), "%s__%s", acc,
                                          method_name);
                                 char *v_mangled = merge_underscores(v_mangled_raw);
@@ -2721,7 +2721,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                             }
                             else
                             {
-                                char direct_raw[512];
+                                char direct_raw[MAX_MANGLED_NAME_LEN];
                                 snprintf(direct_raw, sizeof(direct_raw), "%s__%s", acc,
                                          method_name);
                                 char *direct = merge_underscores(direct_raw);
@@ -2751,7 +2751,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                                                   ? "_"
                                                                   : "__";
 
-                                            char t_m_raw[512];
+                                            char t_m_raw[MAX_MANGLED_NAME_LEN];
                                             snprintf(t_m_raw, sizeof(t_m_raw), "%s__%s%s%s", acc,
                                                      tname, sep, method_name);
                                             char *t_m = merge_underscores(t_m_raw);
@@ -2810,7 +2810,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                         }
                                         if (is_v)
                                         {
-                                            char tmp_raw[512];
+                                            char tmp_raw[MAX_MANGLED_NAME_LEN];
                                             sprintf(tmp_raw, "%s__%s", acc, method_name);
                                             tmp = merge_underscores(tmp_raw);
                                             handled_as_generic = 1;
@@ -2853,14 +2853,14 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                             }
                                             if (is_variant)
                                             {
-                                                char tmp_raw[512];
+                                                char tmp_raw[MAX_MANGLED_NAME_LEN];
                                                 sprintf(tmp_raw, "%s__%.*s", acc, (int)suffix.len,
                                                         suffix.start);
                                                 tmp = merge_underscores(tmp_raw);
                                             }
                                             else
                                             {
-                                                char tmp_raw[512];
+                                                char tmp_raw[MAX_MANGLED_NAME_LEN];
                                                 sprintf(tmp_raw, "%s__%.*s", acc, (int)suffix.len,
                                                         suffix.start);
                                                 tmp = merge_underscores(tmp_raw);
@@ -2875,7 +2875,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
 
                             if (!handled_as_generic)
                             {
-                                char combined_raw[512];
+                                char combined_raw[MAX_MANGLED_NAME_LEN];
                                 sprintf(combined_raw, "%s__%.*s", acc, (int)suffix.len,
                                         suffix.start);
                                 char *combined = merge_underscores(combined_raw);
@@ -3012,8 +3012,8 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                     {
                         // Function Template
                         // Join types with comma
-                        char full_concrete[1024] = {0};
-                        char full_unmangled[1024] = {0};
+                        char full_concrete[MAX_ERROR_MSG_LEN] = {0};
+                        char full_unmangled[MAX_ERROR_MSG_LEN] = {0};
 
                         for (int i = 0; i < arg_count; ++i)
                         {
@@ -3207,14 +3207,14 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                     SelectiveImport *si = find_selective_import(ctx, acc);
                     if (si)
                     {
-                        char struct_name_raw[512];
+                        char struct_name_raw[MAX_MANGLED_NAME_LEN];
                         sprintf(struct_name_raw, "%s__%s", si->source_module, si->symbol);
                         struct_name = merge_underscores(struct_name_raw);
                     }
                 }
                 if (struct_name == acc && ctx->current_module_prefix && !is_known_generic(ctx, acc))
                 {
-                    char prefixed_raw[512];
+                    char prefixed_raw[MAX_MANGLED_NAME_LEN];
                     sprintf(prefixed_raw, "%s__%s", ctx->current_module_prefix, acc);
                     struct_name = merge_underscores(prefixed_raw);
                 }
@@ -3388,7 +3388,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                     size_t ftl = strlen(ft);
                                     if (ftl >= 3 && ft[ftl - 1] == ']')
                                     {
-                                        char inner_name[256];
+                                        char inner_name[MAX_TYPE_NAME_LEN];
                                         size_t inner_len = ftl - 2;
                                         if (inner_len < sizeof(inner_name))
                                         {
@@ -3407,7 +3407,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                     size_t ftl = strlen(ft);
                                     if (ftl >= 2 && ft[ftl - 1] == '*')
                                     {
-                                        char base_name[256];
+                                        char base_name[MAX_TYPE_NAME_LEN];
                                         size_t base_len = ftl - 1;
                                         if (base_len < sizeof(base_name))
                                         {
@@ -3432,7 +3432,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                         instantiate_generic(ctx, gtpl->name, inferred, inferred, t_tok);
 
                         char *clean = sanitize_mangled_name(inferred);
-                        char mangled_raw[512];
+                        char mangled_raw[MAX_MANGLED_NAME_LEN];
                         snprintf(mangled_raw, sizeof(mangled_raw), "%s__%s", gtpl->name, clean);
                         char *mangled = merge_underscores(mangled_raw);
                         free(clean);
@@ -3488,7 +3488,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
             }
             else
             {
-                char fmt[256];
+                char fmt[MAX_SHORT_MSG_LEN];
                 fmt[0] = 0;
                 for (int i = 0; i < ac; i++)
                 {
@@ -3703,7 +3703,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                         f_self->var_decl.name = xstrdup("self");
                                         f_self->var_decl.init_expr = def;
 
-                                        char v_raw[512];
+                                        char v_raw[MAX_MANGLED_NAME_LEN];
                                         sprintf(v_raw, "%s__%s__VTable", inner->name,
                                                 expected->name);
                                         char *vtable_name = merge_underscores(v_raw);
@@ -3743,7 +3743,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                 f_self->var_decl.name = xstrdup("self");
                                 f_self->var_decl.init_expr = def;
 
-                                char v_raw[512];
+                                char v_raw[MAX_MANGLED_NAME_LEN];
                                 sprintf(v_raw, "%s__%s__VTable", arg_type->inner->name,
                                         expected->name);
                                 char *vtable_name = merge_underscores(v_raw);
@@ -3811,7 +3811,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                     char *inner = type_to_string(sig->ret_type);
                     if (inner)
                     {
-                        char buf[512];
+                        char buf[MAX_MANGLED_NAME_LEN];
                         snprintf(buf, 511, "Async<%s>", inner);
                         node->resolved_type = xstrdup(buf);
                         async_type->name = xstrdup(buf); // HACK: Persist generic info in name
@@ -4467,7 +4467,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                                "- Array literals `[...]`",
                                "- Block expressions `{...}`",
                                NULL};
-        char msg[256];
+        char msg[MAX_SHORT_MSG_LEN];
         snprintf(msg, sizeof(msg), "Unexpected token '%.*s' while parsing expression", t.len,
                  t.start);
         zpanic_with_hints(t, msg, hints);
@@ -4636,7 +4636,7 @@ ASTNode *parse_primary(ParserContext *ctx, Lexer *l)
                 char *struct_name = (st->kind == TYPE_STRUCT) ? st->name : st->inner->name;
                 int is_ptr = (st->kind == TYPE_POINTER);
 
-                char mangled_raw[512];
+                char mangled_raw[MAX_MANGLED_NAME_LEN];
                 snprintf(mangled_raw, sizeof(mangled_raw), "%s____get", struct_name);
                 char *mangled = merge_underscores(mangled_raw);
                 FuncSig *sig = find_func(ctx, mangled);
@@ -4972,7 +4972,7 @@ char *resolve_struct_name_from_type(ParserContext *ctx, Type *t, int *is_ptr_out
             }
 
             char *clean = sanitize_mangled_name(c_type);
-            char mangled_raw[512];
+            char mangled_raw[MAX_MANGLED_NAME_LEN];
             sprintf(mangled_raw, "%s__%s", tpl, clean);
             char *mangled = merge_underscores(mangled_raw);
             struct_name = mangled;
@@ -5087,7 +5087,7 @@ char *resolve_struct_name_from_type(ParserContext *ctx, Type *t, int *is_ptr_out
                     }
 
                     char *clean = sanitize_mangled_name(args_ptr);
-                    char mangled_raw[512];
+                    char mangled_raw[MAX_MANGLED_NAME_LEN];
                     sprintf(mangled_raw, "%s__%s", tpl, clean);
                     char *mangled = merge_underscores(mangled_raw);
                     struct_name = mangled;
@@ -5165,7 +5165,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                     zpanic_at(lexer_peek(l), "Expected )");
                 }
 
-                char fmt[256];
+                char fmt[MAX_SHORT_MSG_LEN];
                 fmt[0] = 0;
                 for (int i = 0; i < ac; i++)
                 {
@@ -5300,7 +5300,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                 }
             }
 
-            char fmt[256];
+            char fmt[MAX_SHORT_MSG_LEN];
             fmt[0] = 0;
             for (int i = 0; i < ac; i++)
             {
@@ -5609,7 +5609,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
             if (struct_name)
             {
-                char buf[1024];
+                char buf[MAX_ERROR_MSG_LEN];
                 snprintf(buf, sizeof(buf), "%s__%s", struct_name, method);
                 char *mangled = merge_underscores(buf);
 
@@ -6050,7 +6050,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                 if (struct_name)
                 {
-                    char buf[1024];
+                    char buf[MAX_ERROR_MSG_LEN];
                     snprintf(buf, sizeof(buf), "%s__%s", struct_name, lhs->member.field);
                     char *mangled = merge_underscores(buf);
 
@@ -6067,7 +6067,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                                 if (ref->node->impl_trait.target_type &&
                                     strcmp(ref->node->impl_trait.target_type, struct_name) == 0)
                                 {
-                                    char buf_trait[1024];
+                                    char buf_trait[MAX_ERROR_MSG_LEN];
                                     snprintf(buf_trait, sizeof(buf_trait), "%s__%s__%s",
                                              struct_name, ref->node->impl_trait.trait_name,
                                              lhs->member.field);
@@ -6498,11 +6498,11 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                 if (struct_name)
                 {
-                    char index_raw[512];
+                    char index_raw[MAX_MANGLED_NAME_LEN];
                     snprintf(index_raw, sizeof(index_raw), "%s__index", struct_name);
                     char *mangled_index = merge_underscores(index_raw);
 
-                    char get_raw[512];
+                    char get_raw[MAX_MANGLED_NAME_LEN];
                     snprintf(get_raw, sizeof(get_raw), "%s__get", struct_name);
                     char *mangled_get = merge_underscores(get_raw);
 
@@ -6540,11 +6540,11 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                             {
                                 ASTNode *m = it->impl_node->impl.methods;
 
-                                char idx_raw[512];
+                                char idx_raw[MAX_MANGLED_NAME_LEN];
                                 sprintf(idx_raw, "%s__index", base);
                                 char *mangled_idx = merge_underscores(idx_raw);
 
-                                char g_raw[512];
+                                char g_raw[MAX_MANGLED_NAME_LEN];
                                 sprintf(g_raw, "%s__get", base);
                                 char *mangled_g = merge_underscores(g_raw);
 
@@ -6824,7 +6824,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                 if (struct_name)
                 {
-                    char buf[1024];
+                    char buf[MAX_ERROR_MSG_LEN];
                     snprintf(buf, sizeof(buf), "%s__%s", struct_name, node->member.field);
                     char *mangled = merge_underscores(buf);
 
@@ -6841,7 +6841,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                                 const char *t_struct = ref->node->impl_trait.target_type;
                                 if (t_struct && strcmp(t_struct, struct_name) == 0)
                                 {
-                                    char buf_trait[1024];
+                                    char buf_trait[MAX_ERROR_MSG_LEN];
                                     snprintf(buf_trait, sizeof(buf_trait), "%s__%s__%s",
                                              struct_name, ref->node->impl_trait.trait_name,
                                              node->member.field);
@@ -6959,7 +6959,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                     if (struct_name)
                     {
-                        char buf[1024];
+                        char buf[MAX_ERROR_MSG_LEN];
                         snprintf(buf, sizeof(buf), "%s__%s", struct_name, node->member.field);
                         full_name = merge_underscores(buf);
 
@@ -7316,7 +7316,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                 if (struct_name)
                 {
-                    char buf_m[1024];
+                    char buf_m[MAX_ERROR_MSG_LEN];
                     snprintf(buf_m, sizeof(buf_m), "%s__%s", struct_name, inner_method);
                     char *mangled = merge_underscores(buf_m);
                     FuncSig *sig = find_func(ctx, mangled);
@@ -7483,7 +7483,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
             if (struct_name)
             {
-                char buf[1024];
+                char buf[MAX_ERROR_MSG_LEN];
                 snprintf(buf, sizeof(buf), "%s__%s", struct_name, method);
                 char *mangled = merge_underscores(buf);
 
@@ -7500,7 +7500,7 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                             const char *t_struct = ref->node->impl_trait.target_type;
                             if (t_struct && strcmp(t_struct, struct_name) == 0)
                             {
-                                char buf_t[1024];
+                                char buf_t[MAX_ERROR_MSG_LEN];
                                 snprintf(buf_t, sizeof(buf_t), "%s__%s__%s", struct_name,
                                          ref->node->impl_trait.trait_name, method);
                                 char *trait_mangled = merge_underscores(buf_t);
@@ -7731,11 +7731,11 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
                 if (!skip_check && !type_eq(lhs->type_info, rhs->type_info) &&
                     !(lhs_is_num && rhs_is_num))
                 {
-                    char msg[256];
+                    char msg[MAX_SHORT_MSG_LEN];
                     sprintf(msg, "Type mismatch in comparison: cannot compare '%s' and '%s'", t1,
                             t2);
 
-                    char suggestion[256];
+                    char suggestion[MAX_SHORT_MSG_LEN];
                     sprintf(suggestion, "Both operands must have compatible types for comparison");
 
                     if (g_config.mode_lsp)
@@ -7955,11 +7955,11 @@ ASTNode *parse_expr_prec(ParserContext *ctx, Lexer *l, Precedence min_prec)
 
                             if (!valid_arith)
                             {
-                                char msg[256];
+                                char msg[MAX_SHORT_MSG_LEN];
                                 sprintf(msg, "Type mismatch in binary operation '%s'",
                                         bin->binary.op);
 
-                                char suggestion[512];
+                                char suggestion[MAX_MANGLED_NAME_LEN];
                                 sprintf(
                                     suggestion,
                                     "Left operand has type '%s', right operand has type '%s'\n   = "
@@ -8206,7 +8206,7 @@ ASTNode *parse_tuple_expression(ParserContext *ctx, Lexer *l, const char *type_n
     }
     else
     {
-        char sig[1024];
+        char sig[MAX_ERROR_MSG_LEN];
         sig[0] = 0;
         ASTNode *curr = head;
         int i = 0;

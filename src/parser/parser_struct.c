@@ -1,5 +1,6 @@
 
 #include "parser.h"
+#include "../constants.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -391,7 +392,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 ASTNode *f = parse_function(ctx, l, 0, 0);
                 // Mangle: Type_Trait_Method
                 {
-                    char tmp[512];
+                    char tmp[MAX_MANGLED_NAME_LEN];
                     sprintf(tmp, "%s__%s__%s", name2, name1, f->func.name);
                     free(f->func.name);
                     f->func.name = merge_underscores(tmp);
@@ -439,7 +440,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     f->func.is_async = 1;
                     // Mangle: Type_Trait_Method
                     {
-                        char tmp[512];
+                        char tmp[MAX_MANGLED_NAME_LEN];
                         sprintf(tmp, "%s__%s__%s", name2, name1, f->func.name);
                         free(f->func.name);
                         f->func.name = merge_underscores(tmp);
@@ -1211,7 +1212,7 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l)
                 if (lexer_peek(l).type == TOK_COMMA)
                 {
                     // Multi-arg variant -> Tuple
-                    char sig[512];
+                    char sig[MAX_MANGLED_NAME_LEN];
                     sig[0] = 0;
 
                     char *s = type_to_string(first_t);

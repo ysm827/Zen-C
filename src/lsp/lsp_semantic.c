@@ -1,3 +1,4 @@
+#include "../constants.h"
 #include "lsp_project.h"
 #include "cJSON.h"
 #include <stdio.h>

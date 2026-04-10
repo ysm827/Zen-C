@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "cJSON.h"
+#include "constants.h"
 
 ASTNode *parse_program(ParserContext *ctx, Lexer *l);
 
@@ -423,7 +424,7 @@ static void repl_highlight(const char *buf, int cursor_pos)
                 p++;
             }
             int len = p - start;
-            char word[256];
+            char word[MAX_VAR_NAME_LEN];
             if (len < 256)
             {
                 strncpy(word, start, len);
@@ -536,7 +537,7 @@ static char *repl_complete(const char *buf, int pos)
         return NULL;
     }
 
-    char prefix[256];
+    char prefix[MAX_VAR_NAME_LEN];
     if (len >= 255)
     {
         return NULL;
@@ -610,7 +611,7 @@ static char *repl_readline(const char *prompt, char **history, int history_len, 
     char *saved_current_line = NULL;
 
     int in_search_mode = 0;
-    char search_buf[256];
+    char search_buf[MAX_VAR_NAME_LEN];
     search_buf[0] = 0;
     int search_match_idx = -1;
 
@@ -1058,7 +1059,7 @@ void run_repl(const char *self_path)
     int history_len = 0;
     char **history = xmalloc(history_cap * sizeof(char *));
 
-    char history_path[512];
+    char history_path[MAX_PATH_LEN];
     const char *home = getenv("HOME");
     if (z_is_windows() && !home)
     {
@@ -1070,7 +1071,7 @@ void run_repl(const char *self_path)
         FILE *hf = fopen(history_path, "r");
         if (hf)
         {
-            char buf[1024];
+            char buf[MAX_ERROR_MSG_LEN];
             while (fgets(buf, sizeof(buf), hf))
             {
                 size_t l = strlen(buf);
@@ -1110,12 +1111,12 @@ void run_repl(const char *self_path)
 
     if (home)
     {
-        char init_path[512];
+        char init_path[MAX_PATH_LEN];
         snprintf(init_path, sizeof(init_path), "%s/.zprep_init.zc", home);
         FILE *init_f = fopen(init_path, "r");
         if (init_f)
         {
-            char buf[1024];
+            char buf[MAX_ERROR_MSG_LEN];
             int init_count = 0;
             while (fgets(buf, sizeof(buf), init_f))
             {
@@ -1149,7 +1150,7 @@ void run_repl(const char *self_path)
         }
     }
 
-    char line_buf[1024];
+    char line_buf[MAX_ERROR_MSG_LEN];
 
     char *input_buffer = NULL;
     size_t input_len = 0;
@@ -1158,8 +1159,8 @@ void run_repl(const char *self_path)
 
     while (1)
     {
-        char cwd[1024];
-        char prompt_text[1280];
+        char cwd[MAX_PATH_LEN];
+        char prompt_text[MAX_PATH_LEN + 64];
         if (getcwd(cwd, sizeof(cwd)))
         {
             char *base = strrchr(cwd, '/');
@@ -1194,7 +1195,7 @@ void run_repl(const char *self_path)
         if (NULL == input_buffer)
         {
             size_t cmd_len = strlen(line_buf);
-            char cmd_buf[1024];
+            char cmd_buf[MAX_ERROR_MSG_LEN];
             snprintf(cmd_buf, sizeof(cmd_buf), "%s", line_buf);
             if (cmd_len > 0 && cmd_buf[cmd_len - 1] == '\n')
             {
@@ -1655,7 +1656,7 @@ void run_repl(const char *self_path)
                     FILE *f = fopen(filename, "r");
                     if (f)
                     {
-                        char buf[1024];
+                        char buf[MAX_ERROR_MSG_LEN];
                         int count = 0;
                         while (fgets(buf, sizeof(buf), f))
                         {
@@ -1862,7 +1863,7 @@ void run_repl(const char *self_path)
                                         sprintf(val_expr, "(void*)&%s", s->var_decl.name);
                                     }
 
-                                    char print_stmt[512];
+                                    char print_stmt[MAX_ERROR_MSG_LEN];
                                     snprintf(print_stmt, sizeof(print_stmt),
                                              "printf(\"  %s (%s): %s\\n\", %s); ", s->var_decl.name,
                                              t, fmt, val_expr);
@@ -1983,7 +1984,7 @@ void run_repl(const char *self_path)
                         FILE *p = popen(cmdbuf, "r");
                         if (p)
                         {
-                            char buf[1024];
+                            char buf[MAX_ERROR_MSG_LEN];
                             int found = 0;
                             while (fgets(buf, sizeof(buf), p))
                             {
@@ -2257,10 +2258,10 @@ void run_repl(const char *self_path)
                         }
                         else
                         {
-                            char man_cmd[512];
+                            char man_cmd[MAX_MANGLED_NAME_LEN];
                             // Sanitize symbol name to only allow alphanumeric, underscore, colon,
                             // dot
-                            char safe_sym[256];
+                            char safe_sym[MAX_VAR_NAME_LEN];
                             size_t slen = strlen(sym);
                             if (slen > 255)
                             {
@@ -2283,7 +2284,7 @@ void run_repl(const char *self_path)
                             FILE *mp = popen(man_cmd, "r");
                             if (mp)
                             {
-                                char buf[256];
+                                char buf[MAX_SHORT_MSG_LEN];
                                 int lines = 0;
                                 while (fgets(buf, sizeof(buf), mp) && lines < 8)
                                 {
@@ -2478,7 +2479,7 @@ void run_repl(const char *self_path)
                         int is_void = 0;
                         if (pp)
                         {
-                            char buf[1024];
+                            char buf[MAX_ERROR_MSG_LEN];
                             while (fgets(buf, sizeof(buf), pp))
                             {
                                 if (strstr(buf, "void") && strstr(buf, "expression"))
@@ -2517,7 +2518,7 @@ void run_repl(const char *self_path)
                 strcat(full_code, "; ");
                 for (int i = 0; i < watches_len; i++)
                 {
-                    char wbuf[1024];
+                    char wbuf[MAX_ERROR_MSG_LEN];
                     sprintf(wbuf,
                             "printf(\"\\033[90mwatch:%s = \\033[0m\"); print \"{%s}\"; "
                             "printf(\"\\n\"); ",
@@ -2541,7 +2542,7 @@ void run_repl(const char *self_path)
             fclose(f);
             free(full_code);
 
-            char cmd[2048];
+            char cmd[MAX_PATH_LEN];
             sprintf(cmd, "%s run -q %s", self_path, tmp_path);
 
             int ret = system(cmd);

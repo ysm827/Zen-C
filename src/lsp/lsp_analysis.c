@@ -1,4 +1,5 @@
 #include "cJSON.h"
+#include "../constants.h"
 #include "lsp_project.h" // Includes lsp_index.h, parser.h
 #include <ctype.h>
 #include <stdio.h>
@@ -63,7 +64,7 @@ void lsp_check_file(const char *uri, const char *json_src, int id)
     (void)id;
     if (!g_project)
     {
-        char cwd[1024];
+        char cwd[MAX_PATH_LEN];
         if (getcwd(cwd, sizeof(cwd)))
         {
             lsp_project_init(cwd);
@@ -312,7 +313,7 @@ static ASTNode *find_local_in_func(ASTNode *func, const char *name)
         return NULL;
     }
 
-    ASTNode *queue[1024];
+    ASTNode *queue[MAX_ERROR_MSG_LEN];
     int q_head = 0, q_tail = 0;
     queue[q_tail++] = func->func.body;
 
@@ -476,7 +477,7 @@ void lsp_completion(const char *uri, int line, int col, int id)
                 if (start_ident <= end_ident)
                 {
                     int len = end_ident - start_ident + 1;
-                    char var_name[256];
+                    char var_name[MAX_VAR_NAME_LEN];
                     strncpy(var_name, ptr + start_ident, len);
                     var_name[len] = 0;
 
@@ -513,7 +514,7 @@ void lsp_completion(const char *uri, int line, int col, int id)
 
                     if (type_name)
                     {
-                        char clean_name[256];
+                        char clean_name[MAX_VAR_NAME_LEN];
                         char *src = type_name;
                         if (strncmp(src, "struct ", 7) == 0)
                         {
@@ -540,7 +541,7 @@ void lsp_completion(const char *uri, int line, int col, int id)
                                         cJSON *item = cJSON_CreateObject();
                                         cJSON_AddStringToObject(item, "label", field->field.name);
                                         cJSON_AddNumberToObject(item, "kind", 5); // Field
-                                        char detail[256];
+                                        char detail[MAX_SHORT_MSG_LEN];
                                         sprintf(detail, "field %s", field->field.type);
                                         cJSON_AddStringToObject(item, "detail", detail);
                                         cJSON_AddItemToArray(items, item);
@@ -623,7 +624,7 @@ void lsp_completion(const char *uri, int line, int col, int id)
                     cJSON_AddItemToArray(items, item);
                 }
             }
-            ASTNode *queue[1024];
+            ASTNode *queue[MAX_ERROR_MSG_LEN];
             int q_head = 0;
             int q_tail = 0;
             if (target_func->func.body)
@@ -953,9 +954,9 @@ void lsp_signature_help(const char *uri, int line, int col, int id)
             ident_start++;
 
             int len = ident_end - ident_start + 1;
-            if (len > 0 && len < 255)
+            if (len > 0 && len < MAX_FUNC_NAME_LEN - 1)
             {
-                char func_name[256];
+                char func_name[MAX_FUNC_NAME_LEN];
                 strncpy(func_name, ident_start, len);
                 func_name[len] = 0;
                 // Lookup
@@ -970,7 +971,7 @@ void lsp_signature_help(const char *uri, int line, int col, int id)
                         cJSON *sig = cJSON_CreateObject();
 
                         char label[2048];
-                        char params[1024] = "";
+                        char params[MAX_ERROR_MSG_LEN] = "";
                         int first = 1;
                         for (int i = 0; i < fn->total_args; i++)
                         {
@@ -1005,7 +1006,7 @@ void lsp_signature_help(const char *uri, int line, int col, int id)
                         while (*p_ptr)
                         {
                             char *p_end = strstr(p_ptr, ", ");
-                            char param_label[256];
+                            char param_label[MAX_VAR_NAME_LEN];
                             if (p_end)
                             {
                                 int p_len = p_end - p_ptr;

@@ -1,5 +1,6 @@
 
 #include "parser.h"
+#include "../constants.h"
 #include "zprep.h"
 #include "analysis/const_fold.h"
 
@@ -1456,7 +1457,7 @@ static ASTNode *generate_derive_impls(ParserContext *ctx, ASTNode *strct, char *
                         {
                             strcat(body, " && ");
                         }
-                        char cmp[256];
+                        char cmp[MAX_VAR_NAME_LEN];
 
                         // Detect pointer using type_info OR string check (fallback)
                         int is_ptr = 0;
