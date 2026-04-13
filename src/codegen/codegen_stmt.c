@@ -1039,7 +1039,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
 
             // Bind value
             emit_source_mapping_duplicate(node, out);
-            if (strstr(g_config.cc, "tcc"))
+            if (z_path_match_compiler(g_config.cc, "tcc"))
             {
                 fprintf(out, "    __typeof__(_tmp_%d.%s) %s = _tmp_%d.%s;\n", id, check,
                         node->destruct.names[0], id, check);
@@ -1058,7 +1058,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
                 {
                     char *field = node->destruct.field_names ? node->destruct.field_names[i]
                                                              : node->destruct.names[i];
-                    if (strstr(g_config.cc, "tcc"))
+                    if (z_path_match_compiler(g_config.cc, "tcc"))
                     {
                         fprintf(out, "    __typeof__(_tmp_%d.%s) %s = _tmp_%d.%s;\n", id, field,
                                 node->destruct.names[i], id, field);
@@ -1079,7 +1079,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
                         fprintf(out, "    %s %s = _tmp_%d.v%d;\n", explicit_type,
                                 node->destruct.names[i], id, i);
                     }
-                    else if (strstr(g_config.cc, "tcc"))
+                    else if (z_path_match_compiler(g_config.cc, "tcc"))
                     {
                         fprintf(out, "    __typeof__(_tmp_%d.v%d) %s = _tmp_%d.v%d;\n", id, i,
                                 node->destruct.names[i], id, i);
@@ -1630,7 +1630,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
         loop_defer_boundary[loop_depth++] = defer_count;
 
         fprintf(out, "for (");
-        if (strstr(g_config.cc, "tcc"))
+        if (z_path_match_compiler(g_config.cc, "tcc"))
         {
             fprintf(out, "__typeof__((");
             codegen_expression(ctx, node->for_range.start, out);
@@ -1948,7 +1948,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
                 if (def && def->type_info && def->type_info->traits.has_drop)
                 {
                     fprintf(out, "    return ({ ");
-                    if (strstr(g_config.cc, "tcc"))
+                    if (z_path_match_compiler(g_config.cc, "tcc"))
                     {
                         fprintf(out, "__typeof__(");
                         codegen_expression(ctx, node->ret.value, out);

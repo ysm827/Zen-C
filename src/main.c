@@ -269,7 +269,7 @@ int main(int argc, char **argv)
                 else
                 {
                     snprintf(g_config.cc, sizeof(g_config.cc), "%s", cc_arg);
-                    if (z_is_windows() && !strstr(g_config.cc, ".exe"))
+                    if (z_is_windows() && !z_path_has_extension(g_config.cc, ".exe"))
                     {
                         strcat(g_config.cc, ".exe");
                     }
@@ -485,21 +485,21 @@ int main(int argc, char **argv)
     }
 
     // Backend detection for @cfg purposes
-    if (strstr(g_config.cc, "tcc"))
+    if (z_path_match_compiler(g_config.cc, "tcc"))
     {
         if (g_config.cfg_define_count < 64)
         {
             g_config.cfg_defines[g_config.cfg_define_count++] = xstrdup("__TINYC__");
         }
     }
-    else if (strstr(g_config.cc, "clang"))
+    else if (z_path_match_compiler(g_config.cc, "clang"))
     {
         if (g_config.cfg_define_count < 64)
         {
             g_config.cfg_defines[g_config.cfg_define_count++] = xstrdup("__clang__");
         }
     }
-    else if (strstr(g_config.cc, "zig"))
+    else if (z_path_match_compiler(g_config.cc, "zig"))
     {
         if (g_config.cfg_define_count < 64)
         {

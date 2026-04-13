@@ -248,6 +248,24 @@ int z_path_match_compiler(const char *path, const char *compiler_name)
     return 0;
 }
 
+int z_path_has_extension(const char *path, const char *ext)
+{
+    if (!path || !ext)
+    {
+        return 0;
+    }
+
+    size_t path_len = strlen(path);
+    size_t ext_len = strlen(ext);
+
+    if (path_len < ext_len)
+    {
+        return 0;
+    }
+
+    return strcmp(path + path_len - ext_len, ext) == 0;
+}
+
 FILE *z_tmpfile(void)
 {
 #if ZC_OS_WINDOWS

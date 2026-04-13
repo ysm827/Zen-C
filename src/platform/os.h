@@ -172,6 +172,14 @@ FILE *z_tmpfile(void);
 int z_path_match_compiler(const char *path, const char *compiler_name);
 
 /**
+ * @brief Check if a path has a specific extension.
+ * @param path The path to check.
+ * @param ext The extension to look for (including the dot).
+ * @return 1 if matched, 0 otherwise.
+ */
+int z_path_has_extension(const char *path, const char *ext);
+
+/**
  * @brief Run a command securely without shell interpretation.
  * @param argv NULL-terminated array of arguments.
  * @return Exit code of the process.

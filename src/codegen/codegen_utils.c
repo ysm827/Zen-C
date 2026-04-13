@@ -775,7 +775,7 @@ void emit_auto_type(ParserContext *ctx, ASTNode *init_expr, Token t, FILE *out)
     }
     else
     {
-        if (strstr(g_config.cc, "tcc") && init_expr)
+        if (z_path_match_compiler(g_config.cc, "tcc") && init_expr)
         {
             fprintf(out, "__typeof__((");
             codegen_expression(ctx, init_expr, out);
