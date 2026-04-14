@@ -96,7 +96,9 @@ void print_usage()
                     "Define macro / Set optimization level");
     print_help_item(COLOR_CYAN "-g, -g0, --release" COLOR_RESET,
                     "Debug info (on/off) or Release mode");
-    print_help_item(COLOR_CYAN "-v, -q, --json" COLOR_RESET, "Verbose, quiet, or JSON output");
+    print_help_item(COLOR_CYAN "-v, --verbose" COLOR_RESET, "Show granular compiler phases");
+    print_help_item(COLOR_CYAN "-q, --quiet" COLOR_RESET, "Suppress all non-error output");
+    print_help_item(COLOR_CYAN "--json" COLOR_RESET, "Emit structured JSON diagnostics");
 
     printf("\nlanguage & advanced:\n");
     print_help_item(COLOR_CYAN "--check, --free" COLOR_RESET,
@@ -121,6 +123,8 @@ void print_command_help(const char *command)
         print_help_item("-g, -g0", "Enable/disable debug information");
         print_help_item("--release", "Release mode (equivalent to -O3 -g0)");
         print_help_item("-shared", "Build a shared library (.so, .dll)");
+        print_help_item("-v, --verbose", "Show all granular compilation phases");
+        print_help_item("-q, --quiet", "Suppress non-essential status messages");
     }
     else if (strcmp(command, "run") == 0)
     {
@@ -129,6 +133,7 @@ void print_command_help(const char *command)
         printf("options:\n");
         print_help_item("-o <file>", "Temp binary name (default: a.out)");
         print_help_item("-O<level>", "Backend optimization level");
+        print_help_item("-q, --quiet", "Run without compiler status markers");
     }
     else if (strcmp(command, "check") == 0)
     {

@@ -557,7 +557,7 @@ int main(int argc, char **argv)
 
     if (!g_config.quiet)
     {
-        printf(COLOR_BOLD COLOR_GREEN "    Parsing" COLOR_RESET " %s\n", g_config.input_file);
+        printf(COLOR_BOLD COLOR_GREEN "   Compiling" COLOR_RESET " %s...\n", g_config.input_file);
         fflush(stdout);
     }
 
@@ -624,7 +624,7 @@ int main(int argc, char **argv)
                 return 1;
             }
 
-            if (!g_config.quiet)
+            if (g_config.verbose)
             {
                 printf(COLOR_BOLD COLOR_GREEN "   Compiling" COLOR_RESET " %s\n", extra_path);
                 fflush(stdout);
@@ -686,7 +686,7 @@ int main(int argc, char **argv)
     int tc_result = 0;
     if (g_config.use_typecheck || g_config.mode_check)
     {
-        if (!g_config.quiet)
+        if (g_config.verbose)
         {
             printf(COLOR_BOLD COLOR_GREEN "   Analyzing" COLOR_RESET " %s\n", g_config.input_file);
             fflush(stdout);
@@ -708,7 +708,10 @@ int main(int argc, char **argv)
                     g_warning_count, g_warning_count == 1 ? "" : "s");
             return 1;
         }
-        printf(COLOR_BOLD COLOR_GREEN "       Check" COLOR_RESET " passed\n");
+        if (g_config.verbose)
+        {
+            printf(COLOR_BOLD COLOR_GREEN "       Check" COLOR_RESET " passed\n");
+        }
         return 0;
     }
 
@@ -765,7 +768,7 @@ int main(int argc, char **argv)
     const char *temp_source_file = temp_source_buf;
 
     // Codegen to C/C++/CUDA
-    if (!g_config.quiet)
+    if (g_config.verbose)
     {
         printf(COLOR_BOLD COLOR_GREEN " Transpiling" COLOR_RESET " %s\n", g_config.input_file);
         fflush(stdout);
@@ -797,7 +800,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (g_config.mode_transpile && !g_config.quiet)
+    if (g_config.mode_transpile && g_config.verbose)
     {
         if (g_config.output_file)
         {
@@ -929,14 +932,14 @@ int main(int argc, char **argv)
                 remove(exe_out);
             }
         }
-        if (!g_config.quiet)
+        if (g_config.verbose)
         {
             printf(COLOR_BOLD COLOR_CYAN "   Cleaning up" COLOR_RESET " plugins...\n");
             fflush(stdout);
         }
         zptr_plugin_mgr_cleanup();
 
-        if (!g_config.quiet)
+        if (g_config.verbose)
         {
             printf(COLOR_BOLD COLOR_CYAN "   Evaluating" COLOR_RESET " Zen facts...\n");
             fflush(stdout);
@@ -949,14 +952,14 @@ int main(int argc, char **argv)
 #endif
     }
 
-    if (!g_config.quiet)
+    if (g_config.verbose)
     {
         printf(COLOR_BOLD COLOR_CYAN "   Cleaning up" COLOR_RESET " plugins...\n");
         fflush(stdout);
     }
     zptr_plugin_mgr_cleanup();
 
-    if (!g_config.quiet)
+    if (g_config.verbose)
     {
         printf(COLOR_BOLD COLOR_CYAN "   Evaluating" COLOR_RESET " Zen facts...\n");
         fflush(stdout);
