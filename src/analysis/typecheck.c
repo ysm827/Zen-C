@@ -1675,13 +1675,13 @@ static void check_loop_passes(TypeChecker *tc, ASTNode *node, int depth)
 
 static void check_node(TypeChecker *tc, ASTNode *node, int depth)
 {
-    if (!node)
+    if (!node || !tc)
     {
         return;
     }
-
-    if (depth > 64)
+    if (depth > 1024)
     {
+        tc_error(tc, node->token, "Expression too deep");
         return;
     }
 

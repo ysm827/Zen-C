@@ -2105,7 +2105,14 @@ char *process_printf_sugar(ParserContext *ctx, Token srctoken, const char *conte
         lex.col = srctoken.col;
 
         ASTNode *expr_node = parse_expression(ctx, &lex);
-        infer_type(ctx, expr_node);
+        if (expr_node)
+        {
+            infer_type(ctx, expr_node);
+        }
+        else
+        {
+            zpanic_at(srctoken, "Could not parse expression in interpolation");
+        }
 
         char *rw_expr = NULL;
         int used_codegen = 0;

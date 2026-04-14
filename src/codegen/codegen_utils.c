@@ -183,7 +183,7 @@ char *get_field_type_str(ParserContext *ctx, const char *struct_name, const char
 // Type inference.
 char *infer_type(ParserContext *ctx, ASTNode *node)
 {
-    if (!node)
+    if (!node || !ctx)
     {
         return NULL;
     }
@@ -901,7 +901,6 @@ void emit_func_signature(ParserContext *ctx, FILE *out, ASTNode *func, const cha
     }
 }
 
-// Invalidate a moved-from variable by zeroing it out to prevent double-free
 int emit_move_invalidation(ParserContext *ctx, ASTNode *node, FILE *out)
 {
     if (!node)
