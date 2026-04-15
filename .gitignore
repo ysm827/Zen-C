@@ -3,6 +3,12 @@ obj-*/
 obj.ape/
 bin/
 zc
+zc.exe
+zc.com
+zc-boot.com
+zc-fuzz
+zc-fuzz-cmplog
+zc-asan
 result
 out.c
 a.out
