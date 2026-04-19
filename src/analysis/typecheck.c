@@ -3049,6 +3049,12 @@ static void check_node(TypeChecker *tc, ASTNode *node, int depth)
         misra_check_stdarg(tc, node->token);
         break;
 
+    case NODE_RAW_STMT:
+        misra_check_raw_block(tc, node->token);
+        break;
+    case NODE_PLUGIN:
+        misra_check_plugin_block(tc, node->token);
+        break;
     case NODE_LABEL:
         if (g_config.misra_mode)
         {

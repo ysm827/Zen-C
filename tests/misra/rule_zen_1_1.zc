@@ -1,0 +1,8 @@
+// EXPECT: Rule Zen 1.1
+
+fn main() {
+    raw {
+        // This is a transpiler bypass and should be rejected in MISRA mode
+        int x = 10;
+    }
+}

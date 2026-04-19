@@ -1,0 +1,8 @@
+// EXPECT: Rule Zen 1.2
+
+fn main() {
+    // This executes build-time code and should be rejected in MISRA mode
+    plugin befunge
+        @ >  25*,@
+    end
+}

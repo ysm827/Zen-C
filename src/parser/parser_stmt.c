@@ -3247,7 +3247,7 @@ ASTNode *parse_statement(ParserContext *ctx, Lexer *l)
         if (strncmp(tk.start, "plugin", 6) == 0 && tk.len == 6)
         {
             lexer_next(l); // consume 'plugin'
-            return parse_plugin(ctx, l);
+            return parse_plugin(ctx, l, tk);
         }
 
         if (strncmp(tk.start, "let", 3) == 0 && tk.len == 3)
@@ -4866,7 +4866,7 @@ ASTNode *parse_comptime(ParserContext *ctx, Lexer *l)
 }
 
 // Parse plugin block: plugin name ... end
-ASTNode *parse_plugin(ParserContext *ctx, Lexer *l)
+ASTNode *parse_plugin(ParserContext *ctx, Lexer *l, Token tok)
 {
     (void)ctx;
 
@@ -4917,6 +4917,7 @@ ASTNode *parse_plugin(ParserContext *ctx, Lexer *l)
 
     // Create plugin node
     ASTNode *n = ast_create(NODE_PLUGIN);
+    n->token = tok;
     n->plugin_stmt.plugin_name = plugin_name;
     n->plugin_stmt.body = body;
 

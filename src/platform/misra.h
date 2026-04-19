@@ -79,4 +79,8 @@ void misra_audit_unused_symbols(struct TypeChecker *tc);
 // Section 5: Identifiers
 void misra_audit_identifier_uniqueness(struct TypeChecker *tc);
 
+// Zen C Extensions
+void misra_check_raw_block(struct TypeChecker *tc, Token token);
+void misra_check_plugin_block(struct TypeChecker *tc, Token token);
+
 #endif // PLATFORM_MISRA_H

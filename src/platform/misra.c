@@ -1040,3 +1040,19 @@ void misra_audit_identifier_uniqueness(TypeChecker *tc)
         s1 = s1->next;
     }
 }
+
+void misra_check_raw_block(struct TypeChecker *tc, Token token)
+{
+    if (g_config.misra_mode)
+    {
+        tc_error(tc, token, "Rule Zen 1.1");
+    }
+}
+
+void misra_check_plugin_block(struct TypeChecker *tc, Token token)
+{
+    if (g_config.misra_mode)
+    {
+        tc_error(tc, token, "Rule Zen 1.2");
+    }
+}

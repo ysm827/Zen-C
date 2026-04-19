@@ -1053,7 +1053,7 @@ ASTNode *parse_asm(ParserContext *ctx, Lexer *l);
 /**
  * @brief Parses a plugin statement.
  */
-ASTNode *parse_plugin(ParserContext *ctx, Lexer *l);
+ASTNode *parse_plugin(ParserContext *ctx, Lexer *l, Token tok);
 
 /**
  * @brief Parses a variable declaration.

@@ -27,7 +27,7 @@ for test_file in "$TEST_DIR"/*.zc; do
     echo -n "Testing $(basename "$test_file")... "
     
     # Extract expected rules
-    expected_rules=$(grep "// EXPECT: MISRA Rule" "$test_file" | sed -E 's/.*MISRA Rule ([0-9]+\.[0-9]+).*/\1/')
+    expected_rules=$(grep "// EXPECT: " "$test_file" | grep -v "PASS" | sed -E 's|.*// EXPECT: (.*)|\1|')
     expect_pass=$(grep -c "// EXPECT: PASS" "$test_file")
     
     # Run compiler with --misra
@@ -44,12 +44,13 @@ for test_file in "$TEST_DIR"/*.zc; do
         fi
     else
         # Verify diagnostics for each expected rule
-        for rule in $expected_rules; do
-            if [[ ! "$output" =~ "MISRA Rule $rule" ]]; then
+        while IFS= read -r rule; do
+            [ -z "$rule" ] && continue
+            if [[ ! "$output" =~ "$rule" ]]; then
                 file_failed=1
                 missing_rules="$missing_rules $rule"
             fi
-        done
+        done <<< "$expected_rules"
         
         if [ -z "$expected_rules" ] && [ $exit_code -ne 0 ]; then
              # No expected rules, but it failed - maybe it's just a general MISRA failure?
