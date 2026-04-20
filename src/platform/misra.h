@@ -37,6 +37,8 @@ void misra_check_cast(struct TypeChecker *tc, struct Type *target, struct Type *
 void misra_check_null_pointer_constant(struct TypeChecker *tc, struct ASTNode *node, Token token);
 void misra_check_binary_op_essential_types(struct TypeChecker *tc, struct ASTNode *left,
                                            struct ASTNode *right, Token token);
+void misra_check_unsigned_wrap(struct TypeChecker *tc, const char *op, long long left,
+                               long long right, long long res, struct Type *type, Token token);
 
 // Section 13/14/15: Expressions & Control Flow
 void misra_check_side_effects_sizeof(struct TypeChecker *tc, struct ASTNode *expr);
@@ -58,6 +60,8 @@ void misra_check_recursion(struct TypeChecker *tc, Token token);
 void misra_check_function_return_usage(struct TypeChecker *tc, struct ASTNode *node);
 void misra_check_array_param_size(TypeChecker *tc, int expected, int actual, Token token);
 void misra_check_null_pointer_constant(TypeChecker *tc, struct ASTNode *node, Token token);
+void misra_check_external_array_size(TypeChecker *tc, Type *t, Token token, int is_static,
+                                     int is_local);
 void misra_check_param_modified(TypeChecker *tc, struct ASTNode *left, Token token);
 void misra_check_pointer_arithmetic(TypeChecker *tc, Type *t, Token token);
 void misra_check_pointer_nesting(TypeChecker *tc, Type *t, Token token);
@@ -81,6 +85,11 @@ void misra_audit_unused_symbols(struct TypeChecker *tc);
 
 // Section 5: Identifiers
 void misra_audit_identifier_uniqueness(struct TypeChecker *tc);
+void misra_audit_block_scope(struct TypeChecker *tc);
+
+// Section 19: Overlapping Storage
+void misra_check_assignment_overlap(struct TypeChecker *tc, struct ASTNode *left,
+                                    struct ASTNode *right, Token token);
 
 // Zen C Extensions
 void misra_check_raw_block(struct TypeChecker *tc, Token token);

@@ -1,0 +1,2 @@
+include "rule_20_12.h"
+fn main() {}

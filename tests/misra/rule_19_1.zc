@@ -1,0 +1,21 @@
+/**
+ * @test MISRA Rule 19.1: Overlapping Storage
+ * Requirement: An object shall not be assigned or copied to an overlapping object.
+ */
+
+struct Point {
+    x: i32;
+    y: i32;
+}
+
+fn main() {
+    let x = 10;
+    x = x; // Error: MISRA Rule 19.1
+
+    let p = Point { x: 0, y: 0 };
+    p.x = p.x; // Error: MISRA Rule 19.1
+    p = p;     // Error: MISRA Rule 19.1
+
+    let y = 20;
+    x = y; // OK: No overlap
+}

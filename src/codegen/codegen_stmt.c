@@ -312,7 +312,11 @@ void codegen_match_internal(ParserContext *ctx, ASTNode *node, FILE *out, int us
                 ASTNode *c2 = node->match_stmt.cases;
                 while (c2)
                 {
-                    if (strcmp(c2->match_case.pattern, v->variant_name) == 0)
+                    char mangled_v[512];
+                    snprintf(mangled_v, sizeof(mangled_v), "%s__%s", v->enum_name, v->variant_name);
+
+                    if (strcmp(c2->match_case.pattern, v->variant_name) == 0 ||
+                        strcmp(c2->match_case.pattern, mangled_v) == 0)
                     {
                         covered = 1;
                         break;

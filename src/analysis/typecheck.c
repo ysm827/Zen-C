@@ -748,6 +748,35 @@ static void check_expr_binary(TypeChecker *tc, ASTNode *node, int depth)
                 // Rule 10.4: Balancing
                 misra_check_binary_op_essential_types(tc, node->binary.left, node->binary.right,
                                                       node->token);
+
+                // Rule 12.4: Evaluation of constant expressions shall not lead to unsigned wrap
+                if (g_config.misra_mode && left_type && is_integer_type(left_type))
+                {
+                    long long lval, rval;
+                    if (eval_const_int_expr(node->binary.left, tc->pctx, &lval) &&
+                        eval_const_int_expr(node->binary.right, tc->pctx, &rval))
+                    {
+                        long long res = 0;
+                        if (strcmp(op, "+") == 0)
+                        {
+                            res = lval + rval;
+                        }
+                        else if (strcmp(op, "-") == 0)
+                        {
+                            res = lval - rval;
+                        }
+                        else if (strcmp(op, "*") == 0)
+                        {
+                            res = lval * rval;
+                        }
+
+                        if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0)
+                        {
+                            misra_check_unsigned_wrap(tc, op, lval, rval, res, left_type,
+                                                      node->token);
+                        }
+                    }
+                }
                 // Rule 10.2: Character arithmetic
                 misra_check_char_arithmetic(tc, left_type, right_type, op, node->token);
 
@@ -1555,11 +1584,19 @@ static void check_var_decl(TypeChecker *tc, ASTNode *node, int depth)
     ZenSymbol *new_sym = tc_lookup(tc, node->var_decl.name);
     if (new_sym)
     {
+        new_sym->is_static = node->var_decl.is_static;
         mark_symbol_valid(tc->pctx, new_sym, node);
     }
 
     if (g_config.misra_mode && t && t->kind == TYPE_ARRAY)
     {
+        // Rule 8.11: Array with external linkage shall have explicit size
+        ZenSymbol *existing = tc_lookup(tc, node->var_decl.name);
+        int is_static = (existing && existing->is_static) || (node->var_decl.is_static);
+        int is_local = (existing && existing->is_local) || (tc->current_func != NULL);
+
+        misra_check_external_array_size(tc, t, node->token, is_static, is_local);
+
         // Rule 18.8: No variable length arrays
         // In Zen C, all [T; N] arrays have constant size N, so Rule 18.8 is satisfied.
         // We only report if Zen somehow allowed non-constant sizes (which it doesn't in fixed-size
@@ -1784,6 +1821,20 @@ static void check_expr_var(TypeChecker *tc, ASTNode *node)
     if (sym && sym->type_info)
     {
         node->type_info = sym->type_info;
+
+        // Rule 8.9 tracking: Identify globals used in only one function
+        if (!sym->is_local && sym->kind == SYM_VARIABLE && tc->current_func)
+        {
+            ZenSymbol *orig = sym->original ? sym->original : sym;
+            if (orig->first_using_func == NULL)
+            {
+                orig->first_using_func = tc->current_func;
+            }
+            else if (orig->first_using_func != tc->current_func)
+            {
+                orig->multi_func_use = 1;
+            }
+        }
     }
     else
     {
@@ -3350,6 +3401,7 @@ int check_program(ParserContext *ctx, ASTNode *root)
     if (g_config.misra_mode)
     {
         misra_audit_unused_symbols(&tc);
+        misra_audit_block_scope(&tc);
         misra_audit_identifier_uniqueness(&tc);
     }
 

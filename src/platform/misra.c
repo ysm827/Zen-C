@@ -1137,3 +1137,113 @@ void misra_check_reserved_identifier(struct TypeChecker *tc, const char *name, T
         tc_error(tc, token, "MISRA Rule Zen 1.4");
     }
 }
+
+void misra_check_unsigned_wrap(struct TypeChecker *tc, const char *op, long long left,
+                               long long right, long long res, struct Type *type, Token token)
+{
+    (void)res;
+    if (!g_config.misra_mode || !type)
+    {
+        return;
+    }
+
+    Type *resolved = resolve_alias(type);
+    TypeKind k = resolved->kind;
+    if (k != TYPE_U8 && k != TYPE_U16 && k != TYPE_U32 && k != TYPE_U64 && k != TYPE_USIZE)
+    {
+        return;
+    }
+
+    unsigned long long max_val;
+    switch (k)
+    {
+    case TYPE_U8:
+        max_val = 255;
+        break;
+    case TYPE_U16:
+        max_val = 65535;
+        break;
+    case TYPE_U32:
+        max_val = 4294967295ULL;
+        break;
+    case TYPE_U64:
+        max_val = 18446744073709551615ULL;
+        break;
+    case TYPE_USIZE:
+        max_val = (sizeof(void *) == 8) ? 18446744073709551615ULL : 4294967295ULL;
+        break;
+    default:
+        return;
+    }
+
+    bool wrap = false;
+    unsigned long long l = (unsigned long long)left;
+    unsigned long long r = (unsigned long long)right;
+
+    if (strcmp(op, "+") == 0)
+    {
+        if (l > max_val - r)
+        {
+            wrap = true;
+        }
+    }
+    else if (strcmp(op, "-") == 0)
+    {
+        if (r > l)
+        {
+            wrap = true;
+        }
+    }
+    else if (strcmp(op, "*") == 0)
+    {
+        if (l != 0 && r > max_val / l)
+        {
+            wrap = true;
+        }
+    }
+
+    if (wrap)
+    {
+        tc_error(tc, token,
+                 "MISRA Rule 12.4: Evaluation of constant expression leads to unsigned integer "
+                 "wrap-around");
+    }
+}
+
+void misra_audit_block_scope(struct TypeChecker *tc)
+{
+    if (!g_config.misra_mode || !tc->pctx->global_scope)
+    {
+        return;
+    }
+
+    ZenSymbol *sym = tc->pctx->global_scope->symbols;
+    while (sym)
+    {
+        // Rule 8.9: An object should be defined at block scope if its identifier only appears
+        // in a single function.
+        // Heuristic: Global variables (not exported, not static) used in exactly one function.
+        // We also skip built-ins (line 0).
+        if (sym->kind == SYM_VARIABLE && !sym->is_export && !sym->is_static &&
+            sym->decl_token.line != 0 && sym->first_using_func != NULL && !sym->multi_func_use)
+        {
+            tc_error(tc, sym->decl_token, "MISRA Rule 8.9");
+        }
+        sym = sym->next;
+    }
+}
+
+void misra_check_external_array_size(TypeChecker *tc, Type *t, Token token, int is_static,
+                                     int is_local)
+{
+    if (!g_config.misra_mode || is_static || is_local || !t)
+    {
+        return;
+    }
+
+    Type *resolved = resolve_alias(t);
+    if (resolved->kind == TYPE_ARRAY && resolved->array_size == 0)
+    {
+        tc_error(tc, token, "MISRA Rule 8.11: External array shall have explicit size");
+    }
+}

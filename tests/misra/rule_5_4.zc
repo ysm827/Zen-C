@@ -1,0 +1,10 @@
+/**
+ * @test MISRA Rule 5.4: Macro identifiers shall be distinct
+ */
+
+def GLOBAL_VAL = 100;
+
+fn main() -> i32 {
+    def GLOBAL_VAL = 200; // Error: MISRA Rule 5.4 (Collision with global def)
+    return 0;
+}

@@ -724,6 +724,20 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
             {
                 s = parse_import(ctx, l);
             }
+            else if (t.len == 6 && strncmp(t.start, "static", 6) == 0)
+            {
+                lexer_next(l); // eat static
+                Token next = lexer_peek(l);
+                if (next.type == TOK_IDENT && next.len == 3 && strncmp(next.start, "let", 3) == 0)
+                {
+                    s = parse_var_decl(ctx, l, attrs.is_export);
+                    s->var_decl.is_static = 1;
+                }
+                else
+                {
+                    zpanic_at(next, "Expected 'let' after 'static' in global scope");
+                }
+            }
             else if (t.len == 3 && strncmp(t.start, "let", 3) == 0)
             {
                 s = parse_var_decl(ctx, l, attrs.is_export);

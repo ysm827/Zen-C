@@ -1,0 +1,12 @@
+// MISRA Rule 12.4 Test
+// Evaluation of constant expressions should not lead to unsigned integer wrap-around.
+
+fn main() {
+    let a: u8 = 250u8 + 10u8;  // Error: Rule 12.4
+    let b: u8 = 0u8 - 1u8;     // Error: Rule 12.4
+    let c: u8 = 100u8 * 3u8;   // Error: Rule 12.4
+    
+    let d: u16 = 60000u16 + 10000u16; // Error: Rule 12.4
+    
+    let ok: u8 = 100u8 + 50u8; // OK
+}

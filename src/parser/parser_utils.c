@@ -49,10 +49,189 @@ void try_parse_macro_const(ParserContext *ctx, const char *content)
         return;
     }
 
-    const char *after_name = name.start + name.len;
-    if (*after_name == '(')
+    const char *p_scan = name.start + name.len;
+    while (*p_scan && *p_scan != '\n')
     {
-        return; // Function-like macro definition
+        // Simple scan for # and ## without full lexing to catch them in all defines
+        if (*p_scan == '#')
+        {
+            if (*(p_scan + 1) == '#')
+            {
+                if (g_config.misra_mode)
+                {
+                    zerror_at(name, "MISRA Rule 20.10: '##' operator used in macro");
+                }
+                p_scan++;
+            }
+            else
+            {
+                if (g_config.misra_mode)
+                {
+                    zerror_at(name, "MISRA Rule 20.10: '#' operator used in macro");
+                }
+            }
+        }
+        p_scan++;
+    }
+
+    if (*(name.start + name.len) == '(')
+    {
+        if (g_config.misra_mode)
+        {
+            // Advanced audit for function-like macros (20.11, 20.12)
+            const char *pm = name.start + name.len;
+            while (isspace(*pm))
+            {
+                pm++;
+            }
+            if (*pm == '(')
+            {
+                pm++; // skip '('
+                char *params[32];
+                int param_count = 0;
+                while (*pm && *pm != ')' && param_count < 32)
+                {
+                    while (isspace(*pm) || *pm == ',')
+                    {
+                        pm++;
+                    }
+                    if (!isalpha(*pm) && *pm != '_')
+                    {
+                        break;
+                    }
+                    const char *p_start = pm;
+                    while (is_ident_char(*pm))
+                    {
+                        pm++;
+                    }
+                    int len = pm - p_start;
+                    params[param_count] = xmalloc(len + 1);
+                    strncpy(params[param_count], p_start, len);
+                    params[param_count][len] = 0;
+                    param_count++;
+                }
+                while (*pm && *pm != ')')
+                {
+                    pm++;
+                }
+                if (*pm == ')')
+                {
+                    pm++;
+                }
+
+                // Body usage tracking
+                unsigned int used_norm = 0;
+                unsigned int used_op = 0;
+
+                const char *pb = pm;
+                while (*pb && *pb != '\n')
+                {
+                    while (isspace(*pb))
+                    {
+                        pb++;
+                    }
+                    if (!*pb || *pb == '\n')
+                    {
+                        break;
+                    }
+
+                    if (*pb == '#')
+                    {
+                        int is_concat = (pb[1] == '#');
+                        pb += (is_concat ? 2 : 1);
+                        while (isspace(*pb))
+                        {
+                            pb++;
+                        }
+                        if (isalpha(*pb) || *pb == '_')
+                        {
+                            const char *id_start = pb;
+                            while (is_ident_char(*pb))
+                            {
+                                pb++;
+                            }
+                            int id_len = pb - id_start;
+                            for (int i = 0; i < param_count; i++)
+                            {
+                                if (id_len == (int)strlen(params[i]) &&
+                                    strncmp(id_start, params[i], id_len) == 0)
+                                {
+                                    used_op |= (1 << i);
+                                    if (!is_concat)
+                                    {
+                                        // Rule 20.11 check: #param followed by ##
+                                        const char *pafter = pb;
+                                        while (isspace(*pafter))
+                                        {
+                                            pafter++;
+                                        }
+                                        if (pafter[0] == '#' && pafter[1] == '#')
+                                        {
+                                            zerror_at(
+                                                name,
+                                                "MISRA Rule 20.11: # parameter followed by ##");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else if (isalpha(*pb) || *pb == '_')
+                    {
+                        const char *id_start = pb;
+                        while (is_ident_char(*pb))
+                        {
+                            pb++;
+                        }
+                        int id_len = pb - id_start;
+                        // Check if it's followed or preceded by ## (handled above for follow)
+                        // Actually, we can just check for ## around it
+                        const char *pafter = pb;
+                        while (isspace(*pafter))
+                        {
+                            pafter++;
+                        }
+                        int follows_concat = (pafter[0] == '#' && pafter[1] == '#');
+
+                        for (int i = 0; i < param_count; i++)
+                        {
+                            if (id_len == (int)strlen(params[i]) &&
+                                strncmp(id_start, params[i], id_len) == 0)
+                            {
+                                if (follows_concat)
+                                {
+                                    used_op |= (1 << i);
+                                }
+                                else
+                                {
+                                    used_norm |= (1 << i);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        pb++;
+                    }
+                }
+
+                // Rule 20.12 check: parameter used as op AND normally
+                for (int i = 0; i < param_count; i++)
+                {
+                    if ((used_op & (1 << i)) && (used_norm & (1 << i)))
+                    {
+                        char msg[128];
+                        snprintf(msg, sizeof(msg),
+                                 "MISRA Rule 20.12: parameter '%s' used as both operand to #/## "
+                                 "and normal token",
+                                 params[i]);
+                        zerror_at(name, msg);
+                    }
+                    free(params[i]);
+                }
+            }
+        }
+        return; // Fixed-size scanner already did 20.10 above
     }
 
     // Check remaining tokens for SAFETY
@@ -78,7 +257,19 @@ void try_parse_macro_const(ParserContext *ctx, const char *content)
             return; // Unsafe or complex
         }
 
-        // Safety check for C casts/pointers that cause compiler crash in expression parser
+        // MISRA Rule 20.10: The # and ## preprocessor operators should not be used
+        if (g_config.misra_mode && ct.type == TOK_OP)
+        {
+            if (ct.len == 1 && *ct.start == '#')
+            {
+                zerror_at(ct, "MISRA Rule 20.10: '#' operator used in macro");
+            }
+            else if (ct.len == 2 && strncmp(ct.start, "##", 2) == 0)
+            {
+                zerror_at(ct, "MISRA Rule 20.10: '##' operator used in macro");
+            }
+        }
+
         if (ct.type == TOK_IDENT)
         {
             char *tok_str = token_strdup(ct);
@@ -550,6 +741,9 @@ void register_symbol_to_lsp(ParserContext *ctx, ZenSymbol *s)
 
     ZenSymbol *lsp_copy = xmalloc(sizeof(ZenSymbol));
     memcpy(lsp_copy, s, sizeof(ZenSymbol));
+    lsp_copy->original = s; // Link clone back to the original symbol for global auditing
+    lsp_copy->next = ctx->all_symbols;
+    ctx->all_symbols = lsp_copy;
     if (s->name)
     {
         lsp_copy->name = xstrdup(s->name);
@@ -560,8 +754,6 @@ void register_symbol_to_lsp(ParserContext *ctx, ZenSymbol *s)
     }
 
     lsp_copy->is_local = s->is_local;
-    lsp_copy->next = ctx->all_symbols;
-    ctx->all_symbols = lsp_copy;
 }
 
 void add_symbol(ParserContext *ctx, const char *n, const char *t, Type *type_info, int is_export)
@@ -586,8 +778,8 @@ void add_symbol_with_token(ParserContext *ctx, const char *n, const char *t, Typ
         audit_section_5(ctx, ctx->current_scope, n, NULL, tok);
     }
 
-    // In LSP mode, check for existing symbol in the current scope to avoid duplicates
-    if (g_config.mode_lsp)
+    // In LSP/MISRA mode, check for existing symbol in the current scope to avoid duplicates
+    if (g_config.mode_lsp || g_config.misra_mode)
     {
         ZenSymbol *existing = symbol_lookup_local(ctx->current_scope, n);
         if (existing)
@@ -681,8 +873,8 @@ void register_func(ParserContext *ctx, Scope *scope, const char *name, int count
                    Type **arg_types, Type *ret_type, int is_varargs, int is_async, int is_pure,
                    const char *link_name, Token decl_token, int is_export)
 {
-    // In LSP mode, check for existing function in the registry to avoid duplicates
-    if (g_config.mode_lsp)
+    // In LSP/MISRA mode, check for existing function in the registry to avoid duplicates
+    if (g_config.mode_lsp || g_config.misra_mode)
     {
         FuncSig *existing = find_func(ctx, name);
         if (existing)
@@ -700,7 +892,7 @@ void register_func(ParserContext *ctx, Scope *scope, const char *name, int count
     }
 
     FuncSig *f = NULL;
-    if (g_config.mode_lsp)
+    if (g_config.mode_lsp || g_config.misra_mode)
     {
         f = find_func(ctx, name);
     }

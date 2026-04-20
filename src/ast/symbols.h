@@ -29,7 +29,13 @@ typedef enum
  */
 typedef struct ZenSymbol
 {
-    char *name;          ///< Symbol name.
+    char *name; ///< Symbol name.
+
+    // --- MISRA tracking ---
+    struct ZenSymbol *original; ///< Pointer to the original symbol (for clones).
+    ASTNode *first_using_func;  ///< First function that referenced this global.
+    int multi_func_use;         ///< Flag set if referenced by multiple functions.
+
     SymbolKind kind;     ///< Kind of symbol.
     char *type_name;     ///< String representation of the type (legacy).
     Type *type_info;     ///< Formal type definition.
@@ -102,17 +108,17 @@ void symbol_scope_free(Scope *s);
 ZenSymbol *symbol_add(Scope *s, const char *name, SymbolKind kind);
 
 /**
- * @brief Look up a symbol by name in the scope hierarchy.
- */
-ZenSymbol *symbol_lookup(Scope *s, const char *name);
-
-/**
- * @brief Look up a symbol only in the immediate scope.
+ * @brief Performs a local lookup in the given scope only.
  */
 ZenSymbol *symbol_lookup_local(Scope *s, const char *name);
 
 /**
- * @brief Look up a symbol of a specific kind.
+ * @brief Performs a recursive lookup across the scope hierarchy.
+ */
+ZenSymbol *symbol_lookup(Scope *s, const char *name);
+
+/**
+ * @brief Performs a recursive lookup of a specific symbol kind.
  */
 ZenSymbol *symbol_lookup_kind(Scope *s, const char *name, SymbolKind kind);
 
