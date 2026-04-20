@@ -530,6 +530,12 @@ Type *parse_type_formal(ParserContext *ctx, Lexer *l)
         }
     }
 
+    if (lexer_peek(l).type == TOK_OP && lexer_peek(l).start[0] == '*')
+    {
+        zpanic_at(lexer_peek(l), "Zen C uses postfix pointers (e.g. 'Type*'). Prefix pointer "
+                                 "syntax ('*Type') is not supported.");
+    }
+
     Type *t = NULL;
 
     // Example: fn(int, int) -> int

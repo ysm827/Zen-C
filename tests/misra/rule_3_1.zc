@@ -1,0 +1,11 @@
+// MISRA Rule 3.1 Verification: The character sequences /* and // shall not be used within a comment
+// EXPECT: MISRA Rule 3.1
+// EXPECT: MISRA Rule 3.1
+
+fn main() {
+    /* This is a comment containing /* another comment start */
+    // EXPECT: MISRA Rule 3.1
+    
+    // This is a line comment containing // another one
+    // EXPECT: MISRA Rule 3.1
+}

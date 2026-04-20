@@ -1,0 +1,19 @@
+// MISRA Rule 10.6 Verification: Composite expression assigned to wider type
+// EXPECT: MISRA Rule 10.6
+// EXPECT: MISRA Rule 10.6
+
+fn main() {
+    let a: u8 = (u8)100;
+    let b: u8 = (u8)200;
+    
+    // 1. Violation: u8 + u8 assigned to u32
+    // EXPECT: MISRA Rule 10.6
+    let c: u32 = a + b; 
+    
+    // 2. Compliance: Explicit cast to wider type before operation
+    let d: u32 = (u32)a + b; // OK
+    
+    // 3. Violation: composite in bitwise
+    // EXPECT: MISRA Rule 10.6
+    let e: u32 = (a << 2); 
+}

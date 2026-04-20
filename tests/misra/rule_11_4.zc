@@ -1,0 +1,16 @@
+// MISRA Rule 11.4 Verification: Pointer to integer conversions
+// EXPECT: MISRA Rule 11.4
+// EXPECT: MISRA Rule 11.4
+
+fn main() {
+    let x: i32 = 10;
+    let p: i32* = &x;
+    
+    // 1. Violation: pointer to integer
+    // EXPECT: MISRA Rule 11.4
+    let addr: usize = (usize)p;
+    
+    // 2. Violation: integer to pointer
+    // EXPECT: MISRA Rule 11.4
+    let p2: i32* = (i32*)0x1234;
+}

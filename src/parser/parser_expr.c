@@ -4048,6 +4048,8 @@ static ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
         }
 
         int saved = l->pos;
+
+        // SPECULATIVE CAST LOOKAHEAD (Identifiers and Suffix Pointers: T*)
         if (lexer_peek(l).type == TOK_IDENT)
         {
             Lexer cast_look = *l;

@@ -1,22 +1,24 @@
-// MISRA Rule 13.2 Verification
-// EXPECT: MISRA Rule 13.2
-// EXPECT: MISRA Rule 13.2
-
-fn test_misra_evaluation_order_binary() {
-    let i = 0;
-    // Violation: symbol both read and modified in same expression
-    let _x = i + i++; 
-}
-
-fn foo(a: int, b: int) { (void)a; (void)b; }
-
-fn test_misra_evaluation_order_call() {
-    let i = 0;
-    // Violation: symbol modified in multiple arguments
-    foo(i++, i++); 
-}
+fn foo(a: int, b: int) {}
 
 fn main() {
-    test_misra_evaluation_order_binary();
-    test_misra_evaluation_order_call();
+    let i = 0;
+    
+    // 1. Simple collision in assignment
+    // EXPECT: MISRA Rule 13.2: symbol modified multiple times in assignment
+    i = i++; // Prohibited by 13.2
+    
+    // 2. Collision in binary expression
+    // EXPECT: MISRA Rule 13.2: symbol both read and modified in same expression
+    let x = (i++) + i; // Prohibited by 13.2
+    
+    // 3. Collision in function arguments
+    // EXPECT: MISRA Rule 13.2: argument read and modified in same call
+    foo(i++, i++); // Prohibited by 13.2
+
+    // 4. Cross-argument collision (Read vs Write)
+    // EXPECT: MISRA Rule 13.2: argument read and modified in same call
+    foo(i++, i); // Prohibited by 13.2
+    
+    // 5. No collision (OK)
+    let y = (i++) + 5; // OK
 }

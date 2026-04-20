@@ -83,6 +83,15 @@ Token lexer_next(Lexer *l)
         int len = 2;
         while (s[len] && s[len] != '\n')
         {
+            if (g_config.misra_mode)
+            {
+                if ((s[len] == '/' && s[len + 1] == '/') || (s[len] == '/' && s[len + 1] == '*'))
+                {
+                    zerror_at(
+                        (Token){TOK_COMMENT, s, len + 2, start_line, start_col, g_current_filename},
+                        "MISRA Rule 3.1: '//' or '/*' within a comment");
+                }
+            }
             len++;
         }
 
@@ -108,6 +117,17 @@ Token lexer_next(Lexer *l)
 
         while (s[0])
         {
+            if (g_config.misra_mode)
+            {
+                // Check for nested /* or //
+                if ((s[0] == '/' && s[1] == '*') || (s[0] == '/' && s[1] == '/'))
+                {
+                    zerror_at((Token){TOK_COMMENT, comment_start, (size_t)(s - comment_start) + 2,
+                                      start_line, start_col, g_current_filename},
+                              "MISRA Rule 3.1: '/*' or '//' within a comment");
+                }
+            }
+
             // s[len+1] can be at most the null terminator
             if (s[0] == '*' && s[1] == '/')
             {

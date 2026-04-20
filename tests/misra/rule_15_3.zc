@@ -1,4 +1,5 @@
 // MISRA Rule 15.3: Jumping backwards with goto
+// EXPECT: MISRA Rule 15.2
 // EXPECT: MISRA Rule 15.3
 fn main() {
 label_start:

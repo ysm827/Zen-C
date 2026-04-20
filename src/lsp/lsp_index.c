@@ -159,7 +159,7 @@ static void lsp_walk_node(LSPIndex *idx, ASTNode *node, int depth)
         {
             char hover[MAX_SHORT_MSG_LEN];
             const char *name = node->var_decl.name ? node->var_decl.name : "unknown";
-            snprintf(hover, sizeof(hover), "%s %s", node->var_decl.is_let ? "let" : "var", name);
+            snprintf(hover, sizeof(hover), "let %s", name);
             lsp_index_add_def(idx, node->token, hover, node);
 
             lsp_walk_node(idx, node->var_decl.init_expr, depth + 1);
@@ -168,7 +168,7 @@ static void lsp_walk_node(LSPIndex *idx, ASTNode *node, int depth)
         {
             char hover[MAX_SHORT_MSG_LEN];
             const char *name = node->var_decl.name ? node->var_decl.name : "unknown";
-            snprintf(hover, sizeof(hover), "const %s", name);
+            snprintf(hover, sizeof(hover), "def %s", name);
             lsp_index_add_def(idx, node->token, hover, node);
 
             lsp_walk_node(idx, node->var_decl.init_expr, depth + 1);

@@ -1,0 +1,14 @@
+// MISRA Rule 12.2 Verification: Shift operator range checks
+// EXPECT: MISRA Rule 12.2
+
+fn main() {
+    let x: u8 = 1;
+    
+    // 1. Violation: shift by 8 (width of u8 is 8)
+    // EXPECT: MISRA Rule 12.2
+    let y = x << 8;
+    
+    // 2. Violation: shift by negative (if allowed by type, but here we use literal)
+    // EXPECT: MISRA Rule 12.2
+    let z = x << 255; // U8 literal 255 is treated as out of range shift
+}

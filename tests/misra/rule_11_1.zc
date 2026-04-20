@@ -1,0 +1,17 @@
+// MISRA Rule 11.1 Verification: Pointer to function conversions
+// EXPECT: MISRA Rule 11.1
+// EXPECT: MISRA Rule 11.1
+
+fn target() {}
+
+type FPtr = fn*();
+
+fn main() {
+    let dummy: usize = 0x1234;
+    // 1. Violation: fptr to void*
+    let _p: void* = (void*)target; 
+    
+    // 2. Violation: void* to fptr
+    let void_ptr: void* = (void*)dummy;
+    let _fptr2: FPtr = (FPtr)void_ptr;
+}

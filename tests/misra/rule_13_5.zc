@@ -1,0 +1,24 @@
+// MISRA Rule 13.5 Verification: The right hand operand of a logical && or || operator shall not contain persistent side effects
+// EXPECT: MISRA Rule 13.5
+// EXPECT: MISRA Rule 13.5
+
+fn side_effect() -> bool {
+    // We avoid println here as it violates MISRA Rule Zen 1.1
+    return true;
+}
+
+fn main() {
+    let a = true;
+    let i = 0;
+    
+    // 1. Side effect in && RHS
+    // EXPECT: MISRA Rule 13.5
+    if (a && (i++ > 0)) { }
+    
+    // 2. Function call with side effect in || RHS
+    // EXPECT: MISRA Rule 13.5
+    if (a || side_effect()) { }
+    
+    // 3. Constant RHS (OK)
+    if (a && true) { }
+}

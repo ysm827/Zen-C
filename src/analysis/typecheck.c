@@ -758,6 +758,63 @@ static void check_expr_binary(TypeChecker *tc, ASTNode *node, int depth)
         }
         check_node(tc, node->binary.right, depth + 1);
         tc->is_stmt_context = old_stmt_ctx;
+
+        // Rule 13.2: Side effect collision detection for assignments
+        if (g_config.misra_mode)
+        {
+            SymbolSet l_reads = {0}, l_writes = {0};
+            SymbolSet r_reads = {0}, r_writes = {0};
+            collect_symbols(node->binary.left, &l_reads, &l_writes);
+            collect_symbols(node->binary.right, &r_reads, &r_writes);
+
+            // Treat LHS of assignment as a write
+            if (node->binary.left->type == NODE_EXPR_VAR)
+            {
+                int already_in = 0;
+                for (int k = 0; k < l_writes.count; k++)
+                {
+                    if (l_writes.syms[k] == node->binary.left->var_ref.symbol)
+                    {
+                        already_in = 1;
+                        break;
+                    }
+                }
+                if (!already_in && l_writes.count < 32)
+                {
+                    l_writes.syms[l_writes.count++] = node->binary.left->var_ref.symbol;
+                }
+            }
+
+            // Double write collision: i = i++
+            int match = 0;
+            for (int i = 0; i < l_writes.count; i++)
+            {
+                ZenSymbol *s = l_writes.syms[i];
+                if (!s)
+                {
+                    continue;
+                }
+                for (int j = 0; j < r_writes.count; j++)
+                {
+                    if (s == r_writes.syms[j])
+                    {
+                        tc_error(tc, node->token,
+                                 "MISRA Rule 13.2: symbol modified multiple times in assignment");
+                        match = 1;
+                        break;
+                    }
+                }
+                if (match)
+                {
+                    break;
+                }
+
+                // Also check if LHS write conflicts with RHS reads (if RHS also writes it)
+                // e.g. i = i++ is already covered by double write.
+                // But what about i = i + (i++)?
+                // r_writes={i}, r_reads={i, i}.
+            }
+        }
     }
     else
     {
@@ -767,10 +824,21 @@ static void check_expr_binary(TypeChecker *tc, ASTNode *node, int depth)
         check_node(tc, node->binary.right, depth + 1);
         tc->is_stmt_context = old_stmt_ctx;
 
-        // Rule 13.2: Side effect collision detection
+        // Rule 13.2: Side effect collision detection for binary operators
         if (strcmp(op, "&&") != 0 && strcmp(op, "||") != 0 && strcmp(op, ",") != 0)
         {
             check_side_effect_collision(tc, node->binary.left, node->binary.right, node->token);
+        }
+        else if (g_config.misra_mode && (strcmp(op, "&&") == 0 || strcmp(op, "||") == 0))
+        {
+            // Rule 13.5: The RHS of && or || shall not contain persistent side effects
+            SymbolSet r_reads = {0}, r_writes = {0};
+            collect_symbols(node->binary.right, &r_reads, &r_writes);
+            if (r_writes.count > 0)
+            {
+                tc_error(tc, node->binary.right->token,
+                         "MISRA Rule 13.5: persistent side effect in logical RHS");
+            }
         }
     }
 
@@ -1458,9 +1526,26 @@ static void check_block(TypeChecker *tc, ASTNode *block, int depth)
         // Warn if we see code after a terminating statement
         if (seen_terminator && stmt->type != NODE_LABEL)
         {
+            const char *rule = g_config.misra_mode ? "MISRA Rule 2.1: " : "";
             const char *hints[] = {"Remove unreachable code or restructure control flow", NULL};
-            tc_error_with_hints(tc, stmt->token, "Unreachable code detected", hints);
+            char msg[256];
+            snprintf(msg, sizeof(msg), "%sUnreachable code detected", rule);
+            tc_error_with_hints(tc, stmt->token, msg, hints);
             seen_terminator = 0; // Only warn once per block
+        }
+
+        if (g_config.misra_mode)
+        {
+            // Rule 2.2: There shall be no dead code (expressions with no effect)
+            // We ignore call expressions here as they are handled by Rule 17.7
+            if (stmt->type >= NODE_EXPR_BINARY && stmt->type <= NODE_EXPR_SLICE &&
+                stmt->type != NODE_EXPR_CALL)
+            {
+                if (!tc_expr_has_side_effects(stmt))
+                {
+                    tc_error(tc, stmt->token, "MISRA Rule 2.2: expression statement has no effect");
+                }
+            }
         }
 
         int old_stmt_ctx = tc->is_stmt_context;
@@ -1603,7 +1688,7 @@ static int check_type_compatibility(TypeChecker *tc, Type *target, Type *value, 
 
         if (g_config.misra_mode)
         {
-            misra_check_implicit_conversion(tc, target, value, t);
+            misra_check_implicit_conversion(tc, target, value, value_node, t);
         }
         else
         {
@@ -2687,11 +2772,10 @@ static void check_node(TypeChecker *tc, ASTNode *node, int depth)
             else if (!func_is_void && !node->ret.value)
             {
                 char msg[MAX_SHORT_MSG_LEN];
-                snprintf(msg, 255, "Return without value in function returning '%s'", ret_type);
-
-                const char *hints[] = {"This function declares a non-void return type",
-                                       "Return a value of the expected type", NULL};
-                tc_error_with_hints(tc, node->token, msg, hints);
+                const char *rule = g_config.misra_mode ? "MISRA Rule 2.1: " : "";
+                snprintf(msg, sizeof(msg), "%sReturn without value in function returning '%s'",
+                         rule, ret_type);
+                tc_error(tc, node->token, msg);
             }
             else if (node->ret.value && tc->current_func->func.ret_type_info)
             {

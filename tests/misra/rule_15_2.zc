@@ -1,0 +1,17 @@
+// MISRA Rule 15.2 Verification: Goto labels must be forward jumps
+// EXPECT: MISRA Rule 15.2
+
+fn main() {
+start:
+    let _x = 0;
+    
+    // 1. Violation: backward jump
+    // EXPECT: MISRA Rule 15.2
+    goto start;
+    
+    // 2. Compliance: forward jump
+    goto end;
+    
+end:
+    return;
+}

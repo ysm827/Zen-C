@@ -43,3 +43,4 @@ trace.txt
 zc-*
 _tmp_comptime_*.c
 .github/workflows/fuzzing.yml
+tests/compiler/lsp/test_runner

@@ -1,0 +1,15 @@
+// MISRA Rule 2.2 Verification: There shall be no dead code
+// EXPECT: MISRA Rule 2.2
+
+fn main() {
+    // 1. Dead assignment (value never read)
+    // EXPECT: MISRA Rule 2.2
+    let x = 10;
+    x = 20; 
+    
+    // 2. Dead operation (no side effect and result ignored)
+    // EXPECT: MISRA Rule 2.2
+    1 + 2; 
+
+    println "Done";
+}

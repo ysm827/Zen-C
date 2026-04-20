@@ -23,7 +23,7 @@ void misra_check_ess_type_categories(struct TypeChecker *tc, struct Type *left, 
 void misra_check_ess_type_composite(struct TypeChecker *tc, struct Type *target,
                                     struct Type *source, Token token);
 void misra_check_implicit_conversion(struct TypeChecker *tc, struct Type *target,
-                                     struct Type *source, Token token);
+                                     struct Type *source, struct ASTNode *source_node, Token token);
 void misra_check_char_arithmetic(struct TypeChecker *tc, struct Type *left, struct Type *right,
                                  const char *op, Token token);
 void misra_check_bitwise_operand(struct TypeChecker *tc, struct Type *t, Token token);

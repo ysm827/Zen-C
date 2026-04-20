@@ -144,7 +144,8 @@ void misra_check_ess_type_composite(TypeChecker *tc, Type *target, Type *source,
     }
 }
 
-void misra_check_implicit_conversion(TypeChecker *tc, Type *target, Type *source, Token token)
+void misra_check_implicit_conversion(struct TypeChecker *tc, struct Type *target,
+                                     struct Type *source, struct ASTNode *source_node, Token token)
 {
     if (!g_config.misra_mode)
     {
@@ -157,12 +158,12 @@ void misra_check_implicit_conversion(TypeChecker *tc, Type *target, Type *source
     {
         if (ct == ESS_BOOL || cs == ESS_BOOL)
         {
-            tc_error(tc, token, "MISRA Rule 10.3");
+            tc_error(tc, token, "MISRA Rule 10.4");
         }
         else if ((ct == ESS_SIGNED && cs == ESS_UNSIGNED) ||
                  (ct == ESS_UNSIGNED && cs == ESS_SIGNED))
         {
-            tc_error(tc, token, "MISRA Rule 10.3");
+            tc_error(tc, token, "MISRA Rule 10.4");
         }
     }
 
@@ -171,6 +172,41 @@ void misra_check_implicit_conversion(TypeChecker *tc, Type *target, Type *source
     if (sw > tw)
     {
         tc_error(tc, token, "MISRA Rule 10.3");
+    }
+    else if (tw > sw && source_node && is_composite_expression(source_node))
+    {
+        // Rule 10.6: Composite expression assigned to wider type
+        tc_error(tc, token, "MISRA Rule 10.6");
+    }
+
+    // Rule 11.1 & 11.4: Pointer <-> Integer conversions
+    Type *rt = resolve_alias(target);
+    Type *rs = resolve_alias(source);
+    if ((rt->kind == TYPE_POINTER && is_integer_type(rs)) ||
+        (is_integer_type(rt) && rs->kind == TYPE_POINTER))
+    {
+        // Check if literal 0 (Rule 11.9 handled elsewhere, but non-zero is 11.4)
+        int is_zero = 0;
+        if (source_node && source_node->type == NODE_EXPR_LITERAL &&
+            source_node->literal.type_kind == LITERAL_INT && source_node->literal.int_val == 0)
+        {
+            is_zero = 1;
+        }
+
+        if (!is_zero)
+        {
+            if ((rs->kind == TYPE_POINTER && rs->inner &&
+                 resolve_alias(rs->inner)->kind == TYPE_FUNCTION) ||
+                (rt->kind == TYPE_POINTER && rt->inner &&
+                 resolve_alias(rt->inner)->kind == TYPE_FUNCTION))
+            {
+                tc_error(tc, token, "MISRA Rule 11.1");
+            }
+            else
+            {
+                tc_error(tc, token, "MISRA Rule 11.4");
+            }
+        }
     }
 }
 
@@ -232,10 +268,11 @@ void misra_check_pointer_conversion(TypeChecker *tc, Type *target, Type *source,
     Type *rt = resolve_alias(target);
     Type *rs = resolve_alias(source);
 
-    if (rt->kind == TYPE_POINTER && rs->kind == TYPE_POINTER)
+    if ((rt->kind == TYPE_POINTER || rt->kind == TYPE_FUNCTION) &&
+        (rs->kind == TYPE_POINTER || rs->kind == TYPE_FUNCTION))
     {
-        Type *rti = resolve_alias(rt->inner);
-        Type *rsi = resolve_alias(rs->inner);
+        Type *rti = (rt->kind == TYPE_POINTER) ? resolve_alias(rt->inner) : rt;
+        Type *rsi = (rs->kind == TYPE_POINTER) ? resolve_alias(rs->inner) : rs;
 
         // Rule 11.8: Cast shall not remove const qualification from the type pointed to
         if (rsi && (rsi->is_const || (rs->is_const && rsi == rs->inner)) && rti && !rti->is_const)
@@ -807,9 +844,10 @@ void misra_check_goto_constraint(TypeChecker *tc, Token goto_tok, Token label_to
         return;
     }
 
-    // Rule 15.3: Jumping backwards is prohibited
+    // Rule 15.2/15.3: Jumping backwards/generic goto constraints
     if (label_tok.line < goto_tok.line)
     {
+        tc_error(tc, goto_tok, "MISRA Rule 15.2");
         tc_error(tc, goto_tok, "MISRA Rule 15.3");
     }
 

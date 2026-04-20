@@ -1,18 +1,14 @@
 // MISRA Rule 10.7 Verification
 // EXPECT: MISRA Rule 10.7
 
-fn test_10_7() {
-    let u16_a: u16 = 10;
-    let u16_b: u16 = 20;
-    let u32_val: u32 = 100;
-
-    // Violation: (u16+u16) is u16, but added to u32. Widening happens implicitly.
-    let _fail1 = (u16_a + u16_b) + u32_val;
-
-    // OK: cast operands first
-    let _ok1 = ((u32)u16_a + (u32)u16_b) + u32_val;
+fn test_misra_composite_operand_fail() {
+    let u16_a: u16 = 10u16;
+    let u16_b: u16 = 20u16;
+    let u32_c: u32 = 100u32;
+    // Violation: u16_a + u16_b is composite (u16), u32_c is wider
+    let _res = (u16_a + u16_b) + u32_c; 
 }
 
 fn main() {
-    test_10_7();
+    test_misra_composite_operand_fail();
 }

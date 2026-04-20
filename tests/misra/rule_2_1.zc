@@ -1,0 +1,19 @@
+// MISRA Rule 2.1 Verification: A project shall not contain unreachable code
+// EXPECT: MISRA Rule 2.1
+
+fn main() {
+    return;
+    
+    // 1. Unreachable statement
+    // EXPECT: MISRA Rule 2.1
+    let x = 10;
+}
+
+fn test_loop() {
+    while (true) {
+        break;
+        // 2. Unreachable after break
+        // EXPECT: MISRA Rule 2.1
+        let y = 20;
+    }
+}

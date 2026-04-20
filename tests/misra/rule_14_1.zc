@@ -1,0 +1,10 @@
+// MISRA Rule 14.1 Verification: Loop counter types
+// EXPECT: MISRA Rule 14.1
+
+fn main() {
+    // 1. Violation: floating point loop counter in for loop
+    // EXPECT: MISRA Rule 14.1
+    for let f: f32 = 0.0; f < 10.0; f += 1.0 {
+        // ...
+    }
+}

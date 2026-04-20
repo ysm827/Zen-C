@@ -3,14 +3,14 @@
 // EXPECT: MISRA Rule 14.4
 
 fn main() {
-    let p: *int = NULL;
-    // Violation: pointer as condition
-    if (p) { 
+    let p: int* = NULL;
+    // Violation
+    if (p) {
     }
-    
+
     let x: i32 = 5;
     // Violation: integer as condition
-    while (x) { 
+    while (x) {
         x = x - 1;
     }
 }

@@ -353,12 +353,15 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l, int is_export)
     {
         if (tk.len == 3 && strncmp(tk.start, "var", 3) == 0)
         {
-            zpanic_at(tk, "'var' is no longer supported. Use 'let' instead.");
+            zpanic_at(tk, "MISRA Rule Zen 1.5: The 'var' keyword is fully deprecated.\n"
+                          "| Hint: Use 'let' for variable declarations (e.g., 'let x = 10;').");
         }
         else if (tk.len == 5 && strncmp(tk.start, "const", 5) == 0)
         {
-            zpanic_at(tk, "'const' for declarations is no longer supported. Use 'def' for "
-                          "constants or 'let x: const T' for read-only variables.");
+            zpanic_at(tk,
+                      "MISRA Rule Zen 1.5: The 'const' keyword is deprecated for declarations.\n"
+                      "| Hint: Use 'def' for manifest constants (e.g., 'def MAX = 100;')\n"
+                      "| Note: 'const' remains valid as a type qualifier for C-interop.");
         }
     }
 
@@ -402,7 +405,7 @@ ASTNode *parse_var_decl(ParserContext *ctx, Lexer *l, int is_export)
             }
             if (next.type != TOK_COMMA)
             {
-                zpanic_at(next, "Expected comma");
+                zpanic_at(next, "Expected comma in destructuring list");
             }
         }
         if (lexer_next(l).type != TOK_OP)

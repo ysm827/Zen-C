@@ -1127,7 +1127,6 @@ void lsp_completion(const char *uri, int line, int col, int id)
             {"defer", "defer {\n    $0\n}", 2 | 4 | 8},
             {"return", "return $0;", 2 | 4 | 8},
             {"let", "let ${1:var}: ${2:type} = ${3:value};", 2 | 4 | 8},
-            {"mut", "mut ${1:var}: ${2:type} = ${3:value};", 2 | 4 | 8},
             {"def", "def ${1:CONST} = ${2:value};", 1 | 2 | 4 | 8},
             {"test", "test \"${1:description}\" {\n    $0\n}", 1},
             {"assert", "assert(${1:expression}, \"${2:error message}\");", 2 | 4 | 8},
@@ -1175,18 +1174,19 @@ void lsp_completion(const char *uri, int line, int col, int id)
             cJSON_AddNumberToObject(item, "kind", 14); // Keyword
             cJSON_AddStringToObject(item, "insertText", keywords[i].snippet);
             cJSON_AddNumberToObject(item, "insertTextFormat", 2); // Snippet
-            cJSON_AddStringToObject(item, "sortText", "005");     // Keywords higher up
+            cJSON_AddStringToObject(item, "sortText", "001");     // Keywords highest priority
             cJSON_AddItemToArray(items, item);
         }
 
         // Add other keywords that don't need snippets
         const char *plain_keywords[] = {
-            "alias",      "true",        "false",  "int",    "char",     "bool",   "string",
-            "void",       "import",      "module", "defer",  "sizeof",   "opaque", "unsafe",
-            "asm",        "u8",          "u16",    "u32",    "u64",      "i8",     "i16",
-            "i32",        "i64",         "f32",    "f64",    "usize",    "isize",  "const",
-            "rune",       "U0",          "u0",     "c_int",  "c_char",   "c_long", "c_ulong",
-            "c_longlong", "c_ulonglong", "extern", "inline", "noreturn", NULL};
+            "alias",  "true",    "false",      "int",         "char",   "bool",   "string",
+            "let",    "def",     "void",       "import",      "module", "defer",  "sizeof",
+            "opaque", "unsafe",  "asm",        "u8",          "u16",    "u32",    "u64",
+            "i8",     "i16",     "i32",        "i64",         "f32",    "f64",    "usize",
+            "isize",  "const",   "rune",       "U0",          "u0",     "c_int",  "c_char",
+            "c_long", "c_ulong", "c_longlong", "c_ulonglong", "extern", "inline", "noreturn",
+            NULL};
 
         for (int i = 0; plain_keywords[i]; i++)
         {
