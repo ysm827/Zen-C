@@ -68,6 +68,10 @@ SRCS = src/main.c \
        src/lsp/cJSON.c \
        src/zen/zen_facts.c \
        src/repl/repl.c \
+       src/repl/repl_highlight.c \
+       src/repl/repl_readline.c \
+       src/repl/repl_eval.c \
+       src/repl/repl_commands.c \
        src/plugins/plugin_manager.c \
        std/third-party/tre/lib/regcomp.c \
        std/third-party/tre/lib/regerror.c \

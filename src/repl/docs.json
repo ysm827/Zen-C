@@ -156,142 +156,6 @@
         "doc": "void *memset(void *s, int c, size_t n)\n  Sets n bytes of s to value c."
     },
     {
-        "name": "strcpy",
-        "doc": "char *strcpy(char *dest, const char *src)\n  Copies string src to dest. Unsafe!"
-    },
-    {
-        "name": "strncpy",
-        "doc": "char *strncpy(char *dest, const char *src, size_t n)\n  Copies at most n chars. Pad with nulls."
-    },
-    {
-        "name": "strcat",
-        "doc": "char *strcat(char *dest, const char *src)\n  Appends src to dest. Unsafe!"
-    },
-    {
-        "name": "strncat",
-        "doc": "char *strncat(char *dest, const char *src, size_t n)\n  Appends at most n chars."
-    },
-    {
-        "name": "strlen",
-        "doc": "size_t strlen(const char *s)\n  Returns length of string."
-    },
-    {
-        "name": "strcmp",
-        "doc": "int strcmp(const char *s1, const char *s2)\n  Compares strings."
-    },
-    {
-        "name": "strncmp",
-        "doc": "int strncmp(const char *s1, const char *s2, size_t n)\n  Compares first n chars."
-    },
-    {
-        "name": "strdup",
-        "doc": "char *strdup(const char *s)\n  Duplicates string. Caller must free."
-    },
-    {
-        "name": "atoi",
-        "doc": "int atoi(const char *nptr)\n  Converts string to integer."
-    },
-    {
-        "name": "atof",
-        "doc": "double atof(const char *nptr)\n  Converts string to double."
-    },
-    {
-        "name": "rand",
-        "doc": "int rand(void)\n  Returns pseudo-random integer."
-    },
-    {
-        "name": "srand",
-        "doc": "void srand(unsigned int seed)\n  Seeds the random number generator."
-    },
-    {
-        "name": "time",
-        "doc": "time_t time(time_t *tloc)\n  Returns current time in seconds since Epoch."
-    },
-    {
-        "name": ":help",
-        "doc": ":help         Show this help message or list of commands"
-    },
-    {
-        "name": ":reset",
-        "doc": ":reset        Reset the REPL state (clear variables, imports, etc)"
-    },
-    {
-        "name": ":imports",
-        "doc": ":imports      List active imports"
-    },
-    {
-        "name": ":vars",
-        "doc": ":vars         List defined variables"
-    },
-    {
-        "name": ":funcs",
-        "doc": ":funcs        List defined functions"
-    },
-    {
-        "name": ":structs",
-        "doc": ":structs      List defined structs"
-    },
-    {
-        "name": ":history",
-        "doc": ":history      Show command history"
-    },
-    {
-        "name": ":type",
-        "doc": ":type <expr>  Show the type of an expression"
-    },
-    {
-        "name": ":time",
-        "doc": ":time <expr>  Time the execution of an expression"
-    },
-    {
-        "name": ":c",
-        "doc": ":c <code...>, Output generated C code for the given Zen C code"
-    },
-    {
-        "name": ":doc",
-        "doc": ":doc <symbol> Show documentation for symbol"
-    },
-    {
-        "name": ":run",
-        "doc": ":run <file>   Run a Zen C file"
-    },
-    {
-        "name": ":edit",
-        "doc": ":edit [index] Edit the last command (or history index) in external editor"
-    },
-    {
-        "name": ":save",
-        "doc": ":save <file>  Save current session to a file"
-    },
-    {
-        "name": ":load",
-        "doc": ":load <file>  Load commands from a file"
-    },
-    {
-        "name": ":watch",
-        "doc": ":watch <expr> Watch an expression (re-evaluated on every line)"
-    },
-    {
-        "name": ":unwatch",
-        "doc": ":unwatch <id> Stop watching an expression"
-    },
-    {
-        "name": ":undo",
-        "doc": ":undo         Undo the last command (remove from history)"
-    },
-    {
-        "name": ":delete",
-        "doc": ":delete <id>  Delete a specific command from history"
-    },
-    {
-        "name": ":clear",
-        "doc": ":clear        Clear the screen"
-    },
-    {
-        "name": ":quit",
-        "doc": ":quit         Exit the REPL"
-    },
-    {
         "name": "strlen",
         "doc": "size_t strlen(const char *s)\n  Returns length of string (not including null terminator)."
     },
@@ -406,5 +270,89 @@
     {
         "name": "qsort",
         "doc": "void qsort(void *base, size_t n, size_t size, int(*cmp)(const void*, const void*))\n  Quicksorts array in-place."
+    },
+    {
+        "name": ":help",
+        "doc": ":help         Show this help message or list of commands"
+    },
+    {
+        "name": ":reset",
+        "doc": ":reset        Reset the REPL state (clear variables, imports, etc)"
+    },
+    {
+        "name": ":imports",
+        "doc": ":imports      List active imports"
+    },
+    {
+        "name": ":vars",
+        "doc": ":vars         List defined variables"
+    },
+    {
+        "name": ":funcs",
+        "doc": ":funcs        List defined functions"
+    },
+    {
+        "name": ":structs",
+        "doc": ":structs      List defined structs"
+    },
+    {
+        "name": ":history",
+        "doc": ":history      Show command history"
+    },
+    {
+        "name": ":type",
+        "doc": ":type <expr>  Show the type of an expression"
+    },
+    {
+        "name": ":time",
+        "doc": ":time <expr>  Time the execution of an expression"
+    },
+    {
+        "name": ":c",
+        "doc": ":c <code...>, Output generated C code for the given Zen C code"
+    },
+    {
+        "name": ":doc",
+        "doc": ":doc <symbol> Show documentation for symbol"
+    },
+    {
+        "name": ":run",
+        "doc": ":run <file>   Run a Zen C file"
+    },
+    {
+        "name": ":edit",
+        "doc": ":edit [index] Edit the last command (or history index) in external editor"
+    },
+    {
+        "name": ":save",
+        "doc": ":save <file>  Save current session to a file"
+    },
+    {
+        "name": ":load",
+        "doc": ":load <file>  Load commands from a file"
+    },
+    {
+        "name": ":watch",
+        "doc": ":watch <expr> Watch an expression (re-evaluated on every line)"
+    },
+    {
+        "name": ":unwatch",
+        "doc": ":unwatch <id> Stop watching an expression"
+    },
+    {
+        "name": ":undo",
+        "doc": ":undo         Undo the last command (remove from history)"
+    },
+    {
+        "name": ":delete",
+        "doc": ":delete <id>  Delete a specific command from history"
+    },
+    {
+        "name": ":clear",
+        "doc": ":clear        Clear the screen"
+    },
+    {
+        "name": ":quit",
+        "doc": ":quit         Exit the REPL"
     }
 ]

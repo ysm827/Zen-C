@@ -109,6 +109,10 @@ set(SRCS
     src/lsp/lsp_semantic.c
     src/zen/zen_facts.c
     src/repl/repl.c
+    src/repl/repl_highlight.c
+    src/repl/repl_readline.c
+    src/repl/repl_eval.c
+    src/repl/repl_commands.c
     src/platform/os.c
     src/platform/console.c
     src/platform/dylib.c
