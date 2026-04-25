@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef ZC_HAS_JIT
 /* TCC Error Handler */
 static void tcc_error_handler(void *opaque, const char *msg)
 {
@@ -16,7 +17,6 @@ static void tcc_error_handler(void *opaque, const char *msg)
     fprintf(stderr, "\033[1;31mtcc error:\033[0m %s\n", msg);
 }
 
-#ifdef ZC_HAS_JIT
 int repl_jit_execute(const char *c_code)
 {
     TCCState *s = tcc_new();
