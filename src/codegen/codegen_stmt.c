@@ -737,7 +737,15 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
             fprintf(out, "%s _impl_%s(%s)\n", node->func.ret_type, final_name, node->func.args);
             fprintf(out, "{\n");
             defer_count = 0;
+            char *prev_ret = g_current_func_ret_type;
+            Type *prev_ret_info = g_current_func_ret_type_info;
+            g_current_func_ret_type = node->func.ret_type;
+            g_current_func_ret_type_info = node->func.ret_type_info;
+
             codegen_walker(ctx, node->func.body, out);
+
+            g_current_func_ret_type = prev_ret;
+            g_current_func_ret_type_info = prev_ret_info;
             for (int i = defer_count - 1; i >= 0; i--)
             {
                 emit_source_mapping_duplicate(defer_stack[i], out);
