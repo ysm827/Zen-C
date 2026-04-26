@@ -174,7 +174,8 @@ run_test() {
 
     local tmp_out="test_out_parallel_${job_id}.out"
     local cmd_str="$ZC run \"$test_file\" -o \"$tmp_out\" -w --emit-c \"${zc_args[@]}\""
-    local output=$(set -o pipefail; $ZC run "$test_file" -o "$tmp_out" -w --emit-c "${zc_args[@]}" 2>&1 | tr -d '\0')
+    local output
+    output=$(set -o pipefail; $ZC run "$test_file" -o "$tmp_out" -w --emit-c "${zc_args[@]}" 2>&1 | tr -d '\0')
     local exit_code=$?
     
     if grep -q "// EXPECT: FAIL" "$test_file"; then
