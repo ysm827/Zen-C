@@ -150,20 +150,22 @@ run_test() {
         return
     fi
     if [ $USE_CPP -eq 1 ]; then
-        if [[ "$test_file" == *"test_asm.zc"* ]] || [[ "$test_file" == *"test_asm_clobber.zc"* ]] || [[ "$test_file" == *"test_asm_arm64.zc"* ]] || [[ "$test_file" == *"test_asm_clobber_arm64.zc"* ]] || [[ "$test_file" == *"test_intel.zc"* ]]; then
+        if [[ "$test_file" == *"test_asm"* ]] || [[ "$test_file" == *"test_intel.zc"* ]] || [[ "$test_file" == *"test_simd_native.zc"* ]]; then
             echo "SKIP" > "$result_file.status"
             return
         fi
     fi
     if [[ "$sys_arch" != *"86"* && "$sys_arch" != "amd64" ]]; then
-        if [[ "$test_file" == *"test_asm.zc"* ]] || [[ "$test_file" == *"test_asm_clobber.zc"* ]] || [[ "$test_file" == *"test_intel.zc"* ]]; then
+        if [[ "$test_file" == *"test_asm"* ]] || [[ "$test_file" == *"test_intel.zc"* ]] || [[ "$test_file" == *"test_simd_x86.zc"* ]]; then
             echo "SKIP" > "$result_file.status"
             return
         fi
     fi
-    if [[ "$test_file" == *"_arm64.zc"* ]] && [[ "$sys_arch" != *"arm64"* && "$sys_arch" != "aarch64" ]]; then
-        echo "SKIP" > "$result_file.status"
-        return
+    if [[ "$test_file" == *"_arm64.zc"* ]] || [[ "$test_file" == *"_aarch64.zc"* ]]; then
+        if [[ "$sys_arch" != *"arm64"* && "$sys_arch" != "aarch64" ]]; then
+            echo "SKIP" > "$result_file.status"
+            return
+        fi
     fi
     if [[ "$test_file" == *"tests/misra/"* ]]; then
         echo "SKIP" > "$result_file.status"

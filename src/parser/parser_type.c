@@ -993,7 +993,14 @@ ASTNode *parse_embed(ParserContext *ctx, Lexer *l)
             {
                 Type *ptr_type = type_new_ptr(target_type->inner); // Reuse inner
                 target_type = ptr_type;
-                snprintf(o, oc, "(%s[]){", inner_ts);
+                if (use_cpp_stmt)
+                {
+                    snprintf(o, oc, "({ static const %s __tmp[] = {", inner_ts);
+                }
+                else
+                {
+                    snprintf(o, oc, "(%s[]){", inner_ts);
+                }
             }
             else
             {
@@ -1106,7 +1113,17 @@ ASTNode *parse_embed(ParserContext *ctx, Lexer *l)
             }
             else
             {
-                snprintf(p, oc - cur_len, "}");
+                if (use_cpp_stmt && target_type && target_type->kind == TYPE_POINTER &&
+                    target_type->inner)
+                {
+                    char *inner_ts = type_to_string(target_type->inner);
+                    snprintf(p, oc - cur_len, "}; (%s*)__tmp; })", inner_ts);
+                    free(inner_ts);
+                }
+                else
+                {
+                    snprintf(p, oc - cur_len, "}");
+                }
             }
         }
     }
