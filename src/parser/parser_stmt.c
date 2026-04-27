@@ -2509,73 +2509,8 @@ char *process_printf_sugar(ParserContext *ctx, Token srctoken, const char *conte
             }
             else if (inferred_type)
             {
-                if (strcmp(inferred_type, "bool") == 0)
-                {
-                    format_spec = "%s";
-                    is_bool = 1;
-                }
-                else if (strcmp(inferred_type, "int") == 0 || strcmp(inferred_type, "i32") == 0 ||
-                         strcmp(inferred_type, "I32") == 0 ||
-                         strcmp(inferred_type, "int32_t") == 0 ||
-                         strcmp(inferred_type, "i16") == 0 || strcmp(inferred_type, "I16") == 0 ||
-                         strcmp(inferred_type, "int16_t") == 0 ||
-                         strcmp(inferred_type, "i8") == 0 || strcmp(inferred_type, "I8") == 0 ||
-                         strcmp(inferred_type, "int8_t") == 0 ||
-                         strcmp(inferred_type, "short") == 0 ||
-                         strcmp(inferred_type, "ushort") == 0)
-                {
-                    format_spec = "%d";
-                }
-                else if (strcmp(inferred_type, "uint") == 0 || strcmp(inferred_type, "u32") == 0 ||
-                         strcmp(inferred_type, "U32") == 0 ||
-                         strcmp(inferred_type, "uint32_t") == 0 ||
-                         strcmp(inferred_type, "u16") == 0 || strcmp(inferred_type, "U16") == 0 ||
-                         strcmp(inferred_type, "uint16_t") == 0 ||
-                         strcmp(inferred_type, "u8") == 0 || strcmp(inferred_type, "U8") == 0 ||
-                         strcmp(inferred_type, "uint8_t") == 0 ||
-                         strcmp(inferred_type, "byte") == 0)
-                {
-                    format_spec = "%u";
-                }
-                else if (strcmp(inferred_type, "long") == 0 || strcmp(inferred_type, "i64") == 0 ||
-                         strcmp(inferred_type, "I64") == 0 ||
-                         strcmp(inferred_type, "int64_t") == 0 ||
-                         strcmp(inferred_type, "isize") == 0 ||
-                         strcmp(inferred_type, "ptrdiff_t") == 0)
-                {
-                    format_spec = "%ld";
-                }
-                else if (strcmp(inferred_type, "usize") == 0 || strcmp(inferred_type, "u64") == 0 ||
-                         strcmp(inferred_type, "U64") == 0 ||
-                         strcmp(inferred_type, "uint64_t") == 0 ||
-                         strcmp(inferred_type, "size_t") == 0 ||
-                         strcmp(inferred_type, "ulong") == 0)
-                {
-                    format_spec = "%lu";
-                }
-                else if (strcmp(inferred_type, "float") == 0 || strcmp(inferred_type, "f32") == 0 ||
-                         strcmp(inferred_type, "F32") == 0 ||
-                         strcmp(inferred_type, "double") == 0 ||
-                         strcmp(inferred_type, "f64") == 0 || strcmp(inferred_type, "F64") == 0)
-                {
-                    format_spec = "%f";
-                }
-                else if (strcmp(inferred_type, "char") == 0)
-                {
-                    format_spec = "%c";
-                }
-                else if (strcmp(inferred_type, "string") == 0 ||
-                         strcmp(inferred_type, "str") == 0 ||
-                         (inferred_type[strlen(inferred_type) - 1] == '*' &&
-                          strstr(inferred_type, "char")))
-                {
-                    format_spec = "%s";
-                }
-                else if (strstr(inferred_type, "*"))
-                {
-                    format_spec = "%p"; // Pointer
-                }
-
+                // We delegate all primitive type formatting to _z_str()
+                // to ensure platform independence (e.g. usize handling).
                 if (t)
                 {
                     free(inferred_type);
@@ -2584,26 +2519,7 @@ char *process_printf_sugar(ParserContext *ctx, Token srctoken, const char *conte
 
             if (!format_spec)
             {
-                if (isdigit(clean_expr[0]) || (clean_expr[0] == '-' && isdigit(clean_expr[1])))
-                {
-                    if (strchr(clean_expr, '.') || strchr(clean_expr, 'e') ||
-                        strchr(clean_expr, 'E'))
-                    {
-                        format_spec = "%f";
-                    }
-                    else
-                    {
-                        format_spec = "%d";
-                    }
-                }
-                else if (clean_expr[0] == '"')
-                {
-                    format_spec = "%s";
-                }
-                else if (clean_expr[0] == '\'')
-                {
-                    format_spec = "%c";
-                }
+                // Fall through to _z_str() system
             }
 
             if (format_spec)

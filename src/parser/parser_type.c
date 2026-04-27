@@ -810,16 +810,39 @@ char *parse_array_literal(ParserContext *ctx, Lexer *l, const char *st)
         strcpy(rt, "int");
     }
 
+    int in_func = (ctx->current_scope != ctx->global_scope);
     size_t st_len = st ? strlen(st) : 0;
-    size_t o_sz = strlen(c) + st_len + strlen(rt) + 128;
+    size_t o_sz = strlen(c) + st_len + strlen(rt) + 256;
     char *o = xmalloc(o_sz);
     if (st)
     {
-        snprintf(o, o_sz, "(%s){.data=(%s[]){%s},.len=%d,.cap=%d}", st, rt, c, n, n);
+        if (g_config.use_cpp && in_func)
+        {
+            snprintf(o, o_sz, "({ %s __tmp[] = {%s}; (%s){__tmp, %d, %d}; })", rt, c, st, n, n);
+        }
+        else if (g_config.use_cpp)
+        {
+            snprintf(o, o_sz, "(%s){(%s[]){%s}, %d, %d}", st, rt, c, n, n);
+        }
+        else
+        {
+            snprintf(o, o_sz, "(%s){.data=(%s[]){%s}, .len=%d, .cap=%d}", st, rt, c, n, n);
+        }
     }
     else
     {
-        snprintf(o, o_sz, "(Slice__int){.data=(int[]){%s},.len=%d,.cap=%d}", c, n, n);
+        if (g_config.use_cpp && in_func)
+        {
+            snprintf(o, o_sz, "({ int __tmp[] = {%s}; (Slice__int){__tmp, %d, %d}; })", c, n, n);
+        }
+        else if (g_config.use_cpp)
+        {
+            snprintf(o, o_sz, "(Slice__int){(int[]){%s}, %d, %d}", c, n, n);
+        }
+        else
+        {
+            snprintf(o, o_sz, "(Slice__int){.data=(int[]){%s}, .len=%d, .cap=%d}", c, n, n);
+        }
     }
     free(c);
     return o;
@@ -929,6 +952,9 @@ ASTNode *parse_embed(ParserContext *ctx, Lexer *l)
     size_t oc = len * 6 + 256;
     char *o = xmalloc(oc);
 
+    int in_func = (ctx->current_scope != ctx->global_scope);
+    int use_cpp_stmt = (g_config.use_cpp && in_func);
+
     // Default Type if none
     if (!target_type)
     {
@@ -939,7 +965,18 @@ ASTNode *parse_embed(ParserContext *ctx, Lexer *l)
         slice_type->name = xstrdup("Slice__char");
         target_type = slice_type;
 
-        snprintf(o, oc, "(Slice__char){.data=(char[]){");
+        if (use_cpp_stmt)
+        {
+            snprintf(o, oc, "({ char __tmp[] = {");
+        }
+        else if (g_config.use_cpp)
+        {
+            snprintf(o, oc, "(Slice__char){(char[]){");
+        }
+        else
+        {
+            snprintf(o, oc, "(Slice__char){.data=(char[]){");
+        }
     }
     else
     {
@@ -964,7 +1001,19 @@ ASTNode *parse_embed(ParserContext *ctx, Lexer *l)
                 Type *slice_t = type_new(TYPE_STRUCT);
                 slice_t->name = xstrdup(slice_name);
                 target_type = slice_t;
-                snprintf(o, oc, "(%s){.data=(%s[]){", slice_name, inner_ts);
+
+                if (use_cpp_stmt)
+                {
+                    snprintf(o, oc, "({ %s __tmp[] = {", inner_ts);
+                }
+                else if (g_config.use_cpp)
+                {
+                    snprintf(o, oc, "(%s){(%s[]){", slice_name, inner_ts);
+                }
+                else
+                {
+                    snprintf(o, oc, "(%s){.data=(%s[]){", slice_name, inner_ts);
+                }
             }
             free(inner_ts);
         }
@@ -1018,11 +1067,38 @@ ASTNode *parse_embed(ParserContext *ctx, Lexer *l)
         }
         else
         {
-            int is_slice = (strncmp(o, "(Slice__", 8) == 0);
+            char *actual_ts = type_to_string(target_type);
+            int is_slice = (actual_ts && strncmp(actual_ts, "Slice__", 7) == 0);
+            free(actual_ts);
 
             if (is_slice)
             {
-                snprintf(p, oc - cur_len, "},.len=%ld,.cap=%ld}", (long)len, (long)len);
+                if (use_cpp_stmt)
+                {
+                    char *ts = type_to_string(target_type);
+                    if (g_config.use_cpp)
+                    {
+                        snprintf(p, oc - cur_len, "}; (%s){__tmp, %ld, %ld}; })", ts, (long)len,
+                                 (long)len);
+                    }
+                    else
+                    {
+                        snprintf(p, oc - cur_len, "}; (%s){.data=__tmp, .len=%ld, .cap=%ld}; })",
+                                 ts, (long)len, (long)len);
+                    }
+                    free(ts);
+                }
+                else
+                {
+                    if (g_config.use_cpp)
+                    {
+                        snprintf(p, oc - cur_len, "}, %ld, %ld}", (long)len, (long)len);
+                    }
+                    else
+                    {
+                        snprintf(p, oc - cur_len, "},.len=%ld,.cap=%ld}", (long)len, (long)len);
+                    }
+                }
             }
             else
             {

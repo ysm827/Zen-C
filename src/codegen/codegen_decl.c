@@ -136,6 +136,10 @@ void emit_preamble(ParserContext *ctx, FILE *out)
                   out);
             fputs("template<typename T> inline T _z_arg(T x)     { return x; }\n", out);
             fputs("inline const char* _z_str(char)               { return \"%c\"; }\n", out);
+            fputs("inline const char* _z_str(signed char)        { return \"%d\"; }\n", out);
+            fputs("inline const char* _z_str(unsigned char)      { return \"%u\"; }\n", out);
+            fputs("inline const char* _z_str(short)               { return \"%d\"; }\n", out);
+            fputs("inline const char* _z_str(unsigned short)      { return \"%u\"; }\n", out);
             fputs("inline const char* _z_str(int)                { return \"%d\"; }\n", out);
             fputs("inline const char* _z_str(unsigned int)       { return \"%u\"; }\n", out);
             fputs("inline const char* _z_str(long)               { return \"%ld\"; }\n", out);

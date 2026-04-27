@@ -2117,8 +2117,17 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node, FILE *out)
                 elem = elem->next;
             }
 
-            fprintf(out, "    return (%s){.data = _tmp_arr, .len = %d, .cap = %d};\n",
-                    g_current_func_ret_type, count, count);
+            if (g_config.use_cpp)
+            {
+                // Traditional initializer: (Slice){data, len, cap}
+                fprintf(out, "    return (%s){_tmp_arr, %d, %d};\n", g_current_func_ret_type, count,
+                        count);
+            }
+            else
+            {
+                fprintf(out, "    return (%s){.data = _tmp_arr, .len = %d, .cap = %d};\n",
+                        g_current_func_ret_type, count, count);
+            }
             fprintf(out, "    }\n");
             handled = 1;
         }

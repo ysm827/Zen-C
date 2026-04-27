@@ -1,4 +1,5 @@
 #!/bin/bash
+set -m # Enable job control for 'jobs' command to work properly in scripts
 
 # Zen-C Test Suite Runner
 # Usage: ./tests/scripts/run_tests.sh [options]
@@ -77,6 +78,7 @@ for arg in "$@"; do
     fi
     if [ "$arg" = "--cpp" ]; then
         USE_CPP=1
+        zc_args+=("--cpp")
     fi
     if [ "$arg" = "--no-source" ]; then
         SHOW_SOURCE=0
@@ -239,21 +241,29 @@ job_count=0
 while read -r test_file; do
     [ -e "$test_file" ] || continue
     
-    run_test "$test_file" "$job_count" &
+    echo "$test_file" > "$RESULTS_DIR/$job_count.name"
+    if [ "$JOBS" -le 1 ]; then
+        run_test "$test_file" "$job_count"
+    else
+        run_test "$test_file" "$job_count" &
+        # Batch wait to maintain job concurrency without complex 'jobs' logic
+        if (( (job_count + 1) % JOBS == 0 )); then
+            wait
+        fi
+    fi
     ((job_count++))
-    
-    # Simple job control
-    while [ "$(jobs -r -p | wc -l)" -ge "$JOBS" ]; do
-        sleep 0.05
-    done
 done <<< "$TEST_LIST"
 
+wait
+
+# Wait for any remaining background jobs
 wait
 
 # Aggregate results
 for ((i=0; i<job_count; i++)); do
     status=$(cat "$RESULTS_DIR/$i.status" 2>/dev/null)
-    test_file=$(echo "$TEST_LIST" | sed -n "$((i+1))p")
+    test_file=$(cat "$RESULTS_DIR/$i.name" 2>/dev/null)
+    [ -z "$test_file" ] && continue
     
     case "$status" in
         PASS)

@@ -2,6 +2,7 @@
 test "enumerated range loop" {
     let sum_idx = 0;
     let sum_val = 0;
+    println "Running test: enumerated range loop";
     for i, val in 0..5 {
         sum_idx = sum_idx + i;
         sum_val = sum_val + val;
