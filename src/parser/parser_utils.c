@@ -418,7 +418,7 @@ void try_parse_macro_const(ParserContext *ctx, const char *content)
                                  "MISRA Rule 20.12: parameter '%s' used as both operand to #/## "
                                  "and normal token",
                                  params[i]);
-                        zerror_at(name, msg);
+                        zerror_at(name, "%s", msg);
                     }
                     free(params[i]);
                 }

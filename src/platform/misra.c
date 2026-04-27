@@ -992,7 +992,7 @@ void misra_check_identifier_collision(Token tok, const char *name1, const char *
         {
             snprintf(msg, sizeof(msg), "MISRA Rule 5.2");
         }
-        zerror_at(tok, msg);
+        zerror_at(tok, "%s", msg);
     }
 }
 
@@ -1205,7 +1205,7 @@ void misra_check_preprocessor_expression_parser(struct ParserContext *ctx, Token
             snprintf(msg, sizeof(msg),
                      "MISRA Rule 20.9: Identifier '%s' in preprocessor expression is not defined",
                      name);
-            zerror_at(tok, msg);
+            zerror_at(tok, "%s", msg);
         }
     }
 
