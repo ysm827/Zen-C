@@ -21,6 +21,56 @@ jobs:
         sudo apt-get update && sudo apt-get install -y clang-format
         find src -name '*.c' -o -name '*.h' | xargs clang-format --dry-run --Werror
 
+  lizard:
+    name: Complexity Check (Lizard)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - name: Install Lizard
+      run: pip install lizard
+    - name: Run Lizard
+      run: lizard src/ --CCN 25 --length 1500 --working_threads 4
+
+  cpd:
+    name: Copy-Paste Detection (PMD CPD)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    - name: Install PMD
+      run: |
+        VERSION="7.0.0"
+        wget https://github.com/pmd/pmd/releases/download/pmd_releases%2F${VERSION}/pmd-dist-${VERSION}-bin.zip
+        unzip pmd-dist-${VERSION}-bin.zip
+        echo "$(pwd)/pmd-bin-${VERSION}/bin" >> $GITHUB_PATH
+    - name: Run PMD CPD
+      run: pmd cpd --minimum-tokens 100 --files src/ --language c --format text --fail-on-violation true
+
+  clang-tidy:
+    name: Static Analysis (Clang-Tidy)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-tidy libtcc-dev cmake
+    - name: Generate compile_commands.json
+      run: |
+        mkdir build-cmake
+        cd build-cmake
+        cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+    - name: Run Clang-Tidy
+      run: run-clang-tidy -p build-cmake 'src/.*\.c'
+
   misra-lint:
     name: MISRA C Compliance
     runs-on: ubuntu-latest
