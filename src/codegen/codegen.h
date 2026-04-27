@@ -68,17 +68,19 @@ int is_enum_type_name(ParserContext *ctx, const char *name);
 /**
  * @brief Emits the standard preamble (includes, macros) to the output file.
  */
+typedef struct VisitedModules VisitedModules;
+
 void emit_preamble(ParserContext *ctx, FILE *out);
-void emit_includes_and_aliases(ASTNode *node, FILE *out);
-void emit_type_aliases(ASTNode *node, FILE *out);
+void emit_includes_and_aliases(ASTNode *node, FILE *out, VisitedModules **visited);
+void emit_type_aliases(ASTNode *node, FILE *out, VisitedModules **visited);
 void emit_global_aliases(ParserContext *ctx, FILE *out);
-void emit_struct_defs(ParserContext *ctx, ASTNode *node, FILE *out);
-void emit_trait_defs(ASTNode *node, FILE *out);
-void emit_trait_wrappers(ASTNode *node, FILE *out);
+void emit_struct_defs(ParserContext *ctx, ASTNode *node, FILE *out, VisitedModules **visited);
+void emit_trait_defs(ASTNode *node, FILE *out, VisitedModules **visited);
+void emit_trait_wrappers(ASTNode *node, FILE *out, VisitedModules **visited);
 void emit_enum_protos(ParserContext *ctx, ASTNode *node, FILE *out);
-void emit_globals(ParserContext *ctx, ASTNode *node, FILE *out);
+void emit_globals(ParserContext *ctx, ASTNode *node, FILE *out, VisitedModules **visited);
 void emit_lambda_defs(ParserContext *ctx, FILE *out);
-void emit_protos(ParserContext *ctx, ASTNode *node, FILE *out);
+void emit_protos(ParserContext *ctx, ASTNode *node, FILE *out, VisitedModules **visited);
 void emit_impl_vtables(ParserContext *ctx, FILE *out);
 
 /**

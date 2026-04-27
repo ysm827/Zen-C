@@ -7,8 +7,6 @@ include <stdio.h>
 include <stdarg.h>
 
 // EOF is typically -1, but we define it for portability
-
-// EOF is typically -1, but we define it for portability
 fn format(fmt: char*, ...) -> char* {
     static let buffer: char[1024];
     let ap: va_list;

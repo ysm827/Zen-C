@@ -170,6 +170,12 @@ zc build hello.zc -o hello
 # 交互式 Shell
 zc repl
 
+# 文档 (递归)
+zc doc main.zc
+
+# 文档 (单文件, 无检查)
+zc doc --no-recursive-doc --no-check main.zc
+
 # 显示 Zen Facts
 zc build hello.zc --zen
 ```
@@ -365,7 +371,19 @@ zc run app.zc --cc zig
 > **编译器构建警告：** 虽然 **Zig CC** 作为 Zen C 程序的后端非常出色，但使用它构建 *Zen C 编译器本身*可能会通过验证，但会生成无法通过测试的不稳定二进制文件。我们建议使用 **GCC** 或 **Clang** 构建编译器，并仅将 Zig 用作操作代码的后端。
 
 > [!TIP]
-> ### 使用 Zig 构建
+> 
+### MISRA C:2012 合规性测试
+
+Zen C 测试套件包含针对 MISRA C:2012 指南的验证。
+
+> [!IMPORTANT]
+> **MISRA 免责声明**
+> 本项目完全独立，与 MISRA (Motor Industry Software Reliability Association) 没有任何关联、官方认可或商业合作关系。 
+> 
+> 由于严格的版权限制，测试用例仅通过数字标识符列出指南，避免发布内部具体规范。需要原始文档的用户，请前往 [MISRA 官方门户网站](https://www.misra.org.uk/) 获取真实可靠的指南材料。
+
+### 使用 Zig 构建
+
 
 Zig 的 `zig cc` 命令提供了 GCC/Clang 的替代方案，具有出色的跨平台编译支持。使用 Zig：
 

@@ -552,32 +552,7 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
     ASTNode *h = 0, *tl = 0;
     while (1)
     {
-        if (g_config.keep_comments)
-        {
-            l->emit_comments = 1;
-            Token tk = lexer_peek(l);
-            if (tk.type == TOK_COMMENT)
-            {
-                lexer_next(l);        // consume
-                l->emit_comments = 0; // reset
-                ASTNode *node = ast_create(NODE_AST_COMMENT);
-                node->comment.content = xmalloc(tk.len + 1);
-                strncpy(node->comment.content, tk.start, tk.len);
-                node->comment.content[tk.len] = 0;
-
-                if (!h)
-                {
-                    h = node;
-                }
-                else
-                {
-                    tl->next = node;
-                }
-                tl = node;
-                continue;
-            }
-            l->emit_comments = 0;
-        }
+        skip_comments(l);
 
         // Fault-tolerant recovery: if a sub-parser encountered an error and
         // returned (instead of exit()ing), skip tokens until we find a likely
@@ -1008,6 +983,7 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
 
         if (s)
         {
+            ATTACH_DOC_COMMENT(ctx, s);
             s->cfg_condition = attrs.cfg_condition;
             s->link_name = attrs.link_name;
 
@@ -1065,6 +1041,8 @@ ASTNode *parse_program(ParserContext *ctx, Lexer *l)
     }
 
     ASTNode *r = ast_create(NODE_ROOT);
+    skip_comments(l);
+    ATTACH_DOC_COMMENT(ctx, r);
     r->root.children = parse_program_nodes(ctx, l);
 
     // Synchronize linkage overrides across all type references

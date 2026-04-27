@@ -2915,6 +2915,9 @@ static void check_node(TypeChecker *tc, ASTNode *node, int depth)
     case NODE_IMPL_TRAIT:
         tc_check_impl_trait(tc, node, depth + 1);
         break;
+    case NODE_IMPORT:
+        check_node(tc, node->import_stmt.module_root, depth + 1);
+        break;
     case NODE_EXPR_VAR:
         check_expr_var(tc, node);
         break;
@@ -3973,6 +3976,11 @@ static void check_program_prepass(TypeChecker *tc, ASTNode *root, int depth)
                 }
                 method = method->next;
             }
+        }
+        else if (n->type == NODE_IMPORT)
+        {
+            // Imports are conceptually ROOTs of their own module
+            check_program_prepass(tc, n->import_stmt.module_root, depth + 1);
         }
         n = n->next;
     }

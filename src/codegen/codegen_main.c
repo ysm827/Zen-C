@@ -137,6 +137,127 @@ static int struct_depends_on(ParserContext *ctx, ASTNode *s1, const char *target
     return 0;
 }
 
+typedef struct VisitedModules
+{
+    const char *path;
+    struct VisitedModules *next;
+} VisitedModules;
+
+static int is_module_visited(VisitedModules *visited, const char *path)
+{
+    while (visited)
+    {
+        if (strcmp(visited->path, path) == 0)
+        {
+            return 1;
+        }
+        visited = visited->next;
+    }
+    return 0;
+}
+
+static void mark_module_visited(VisitedModules **visited, const char *path)
+{
+    fprintf(stderr, "DEBUG_MAIN: marking module visited: %s\n", path);
+    VisitedModules *node = xmalloc(sizeof(VisitedModules));
+    node->path = path; // path is from import_stmt which persists
+    node->next = *visited;
+    *visited = node;
+}
+
+static void free_visited_modules(VisitedModules *visited)
+{
+    // NO-OP: We use arena allocation (xmalloc) for VisitedModules.
+    // Arena is reset globally, single nodes must not be free()d.
+    (void)visited;
+}
+
+static int count_sortable_nodes_internal(ASTNode *head, VisitedModules **visited, int depth)
+{
+    if (depth > 1024)
+    {
+        zfatal("Infinite recursion detected in count_sortable_nodes (circular imports?)");
+    }
+    int count = 0;
+    ASTNode *n = head;
+    while (n)
+    {
+        if (n->type == NODE_STRUCT || n->type == NODE_ENUM || n->type == NODE_TRAIT)
+        {
+            count++;
+        }
+        else if (n->type == NODE_IMPORT)
+        {
+            if (!is_module_visited(*visited, n->import_stmt.path))
+            {
+                mark_module_visited(visited, n->import_stmt.path);
+                count +=
+                    count_sortable_nodes_internal(n->import_stmt.module_root, visited, depth + 1);
+            }
+        }
+        else if (n->type == NODE_ROOT)
+        {
+            // Avoid same-root recursion if children == head
+            if (n->root.children != head)
+            {
+                count += count_sortable_nodes_internal(n->root.children, visited, depth + 1);
+            }
+        }
+        n = n->next;
+    }
+    return count;
+}
+
+static int count_sortable_nodes(ASTNode *head)
+{
+    VisitedModules *visited = NULL;
+    int count = count_sortable_nodes_internal(head, &visited, 0);
+    free_visited_modules(visited);
+    return count;
+}
+
+static void collect_sortable_nodes_internal(ASTNode *head, ASTNode **nodes, int *idx,
+                                            VisitedModules **visited, int depth)
+{
+    if (depth > 1024)
+    {
+        zfatal("Infinite recursion detected in collect_sortable_nodes (circular imports?)");
+    }
+    ASTNode *n = head;
+    while (n)
+    {
+        if (n->type == NODE_STRUCT || n->type == NODE_ENUM || n->type == NODE_TRAIT)
+        {
+            nodes[(*idx)++] = n;
+        }
+        else if (n->type == NODE_IMPORT)
+        {
+            if (!is_module_visited(*visited, n->import_stmt.path))
+            {
+                mark_module_visited(visited, n->import_stmt.path);
+                collect_sortable_nodes_internal(n->import_stmt.module_root, nodes, idx, visited,
+                                                depth + 1);
+            }
+        }
+        else if (n->type == NODE_ROOT)
+        {
+            // Avoid same-root recursion if children == head
+            if (n->root.children != head)
+            {
+                collect_sortable_nodes_internal(n->root.children, nodes, idx, visited, depth + 1);
+            }
+        }
+        n = n->next;
+    }
+}
+
+static void collect_sortable_nodes(ASTNode *head, ASTNode **nodes, int *idx)
+{
+    VisitedModules *visited = NULL;
+    collect_sortable_nodes_internal(head, nodes, idx, &visited, 0);
+    free_visited_modules(visited);
+}
+
 // Topologically sort a list of struct/enum nodes.
 static ASTNode *topo_sort_structs(ParserContext *ctx, ASTNode *head)
 {
@@ -146,16 +267,7 @@ static ASTNode *topo_sort_structs(ParserContext *ctx, ASTNode *head)
     }
 
     // Count all nodes (structs + enums + traits).
-    int count = 0;
-    ASTNode *n = head;
-    while (n)
-    {
-        if (n->type == NODE_STRUCT || n->type == NODE_ENUM || n->type == NODE_TRAIT)
-        {
-            count++;
-        }
-        n = n->next;
-    }
+    int count = count_sortable_nodes(head);
     if (count == 0)
     {
         return head;
@@ -164,16 +276,8 @@ static ASTNode *topo_sort_structs(ParserContext *ctx, ASTNode *head)
     // Build array of all nodes.
     ASTNode **nodes = malloc(count * sizeof(ASTNode *));
     int *emitted = calloc(count, sizeof(int));
-    n = head;
     int idx = 0;
-    while (n)
-    {
-        if (n->type == NODE_STRUCT || n->type == NODE_ENUM || n->type == NODE_TRAIT)
-        {
-            nodes[idx++] = n;
-        }
-        n = n->next;
-    }
+    collect_sortable_nodes(head, nodes, &idx);
 
     // Build order array (indices in emission order).
     int *order = malloc(count * sizeof(int));
@@ -320,6 +424,58 @@ static void free_emitted_list(EmittedContent *list)
     }
 }
 
+static void emit_raw_statements_internal(ASTNode *node, FILE *out, VisitedModules **visited,
+                                         int depth, int preproc_only, EmittedContent **emitted_raw)
+{
+    if (depth > 1024)
+    {
+        zfatal("Infinite recursion detected in emit_raw_statements_internal (circular imports?)");
+    }
+    while (node)
+    {
+        if (node->type == NODE_IMPORT)
+        {
+            if (!is_module_visited(*visited, node->import_stmt.path))
+            {
+                mark_module_visited(visited, node->import_stmt.path);
+                emit_raw_statements_internal(node->import_stmt.module_root, out, visited, depth + 1,
+                                             preproc_only, emitted_raw);
+            }
+            node = node->next;
+            continue;
+        }
+        else if (node->type == NODE_ROOT)
+        {
+            emit_raw_statements_internal(node->root.children, out, visited, depth + 1, preproc_only,
+                                         emitted_raw);
+            node = node->next;
+            continue;
+        }
+
+        if ((node->type == NODE_RAW_STMT || node->type == NODE_PREPROC_DIRECTIVE) &&
+            node->raw_stmt.content)
+        {
+            const char *content = node->raw_stmt.content;
+            while (*content == ' ' || *content == '\t' || *content == '\n')
+            {
+                content++;
+            }
+
+            int is_preproc = (*content == '#');
+
+            if ((preproc_only && is_preproc) || (!preproc_only && !is_preproc))
+            {
+                if (!is_content_emitted(*emitted_raw, node->raw_stmt.content))
+                {
+                    fprintf(out, "%s\n", node->raw_stmt.content);
+                    mark_content_emitted(emitted_raw, node->raw_stmt.content);
+                }
+            }
+        }
+        node = node->next;
+    }
+}
+
 static void emit_auto_drop_glues(ParserContext *ctx, ASTNode *structs, FILE *out)
 {
     ASTNode *s = structs;
@@ -441,6 +597,7 @@ void codegen_node(ParserContext *ctx, ASTNode *node, FILE *out)
         g_current_func_ret_type = NULL;
         g_current_lambda = NULL;
         global_user_structs = kids;
+        VisitedModules *visited = NULL;
 
         if (!ctx->skip_preamble)
         {
@@ -454,7 +611,7 @@ void codegen_node(ParserContext *ctx, ASTNode *node, FILE *out)
                     g_config.cfg_defines[i], g_config.cfg_defines[i]);
         }
 
-        emit_includes_and_aliases(kids, out);
+        emit_includes_and_aliases(kids, out, &visited);
         if (g_config.use_cpp)
         {
             fprintf(out, "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n");
@@ -591,98 +748,28 @@ void codegen_node(ParserContext *ctx, ASTNode *node, FILE *out)
             emit_enum_protos(ctx, sorted, out);
         }
         emit_global_aliases(ctx, out);
-        emit_type_aliases(kids, out);
-        emit_trait_defs(kids, out);
 
-        StructRef *trait_ref = ctx->parsed_globals_list;
-        while (trait_ref)
-        {
-            if (trait_ref->node && trait_ref->node->type == NODE_TRAIT)
-            {
-                // Check if this trait was already in kids (explicitly imported)
-                int already_in_kids = 0;
-                ASTNode *k_inner = kids;
-                while (k_inner)
-                {
-                    if (k_inner->type == NODE_TRAIT && k_inner->trait.name &&
-                        trait_ref->node->trait.name &&
-                        strcmp(k_inner->trait.name, trait_ref->node->trait.name) == 0)
-                    {
-                        already_in_kids = 1;
-                        break;
-                    }
-                    k_inner = k_inner->next;
-                }
+        visited = NULL;
+        emit_type_aliases(kids, out, &visited);
 
-                if (!already_in_kids)
-                {
-                    // Create a temporary single-node list for emit_trait_defs
-                    ASTNode *saved_next = trait_ref->node->next;
-                    trait_ref->node->next = NULL;
-                    emit_trait_defs(trait_ref->node, out);
-                    trait_ref->node->next = saved_next;
-                }
-            }
-            trait_ref = trait_ref->next;
-        }
+        visited = NULL;
+        emit_trait_defs(kids, out, &visited);
 
         // Track emitted raw statements to prevent duplicates
         EmittedContent *emitted_raw = NULL;
 
         // First pass: emit ONLY preprocessor directives before struct defs
-        ASTNode *raw_iter = kids;
-        while (raw_iter)
-        {
-            if ((raw_iter->type == NODE_RAW_STMT || raw_iter->type == NODE_PREPROC_DIRECTIVE) &&
-                raw_iter->raw_stmt.content)
-            {
-                const char *content = raw_iter->raw_stmt.content;
-                // Skip leading whitespace
-                while (*content == ' ' || *content == '\t' || *content == '\n')
-                {
-                    content++;
-                }
-                // Emit only if it's a preprocessor directive and not already emitted
-                if (*content == '#')
-                {
-                    if (!is_content_emitted(emitted_raw, raw_iter->raw_stmt.content))
-                    {
-                        fprintf(out, "%s\n", raw_iter->raw_stmt.content);
-                        mark_content_emitted(&emitted_raw, raw_iter->raw_stmt.content);
-                    }
-                }
-            }
-            raw_iter = raw_iter->next;
-        }
+        VisitedModules *raw_visited_1 = NULL;
+        emit_raw_statements_internal(kids, out, &raw_visited_1, 0, 1, &emitted_raw);
 
         if (sorted)
         {
-            emit_struct_defs(ctx, sorted, out);
+            emit_struct_defs(ctx, sorted, out, &visited);
         }
 
         // Second pass: emit non-preprocessor raw statements after struct defs
-        raw_iter = kids;
-        while (raw_iter)
-        {
-            if ((raw_iter->type == NODE_RAW_STMT || raw_iter->type == NODE_PREPROC_DIRECTIVE) &&
-                raw_iter->raw_stmt.content)
-            {
-                const char *content = raw_iter->raw_stmt.content;
-                while (*content == ' ' || *content == '\t' || *content == '\n')
-                {
-                    content++;
-                }
-                if (*content != '#')
-                {
-                    if (!is_content_emitted(emitted_raw, raw_iter->raw_stmt.content))
-                    {
-                        fprintf(out, "%s\n", raw_iter->raw_stmt.content);
-                        mark_content_emitted(&emitted_raw, raw_iter->raw_stmt.content);
-                    }
-                }
-            }
-            raw_iter = raw_iter->next;
-        }
+        VisitedModules *raw_visited_2 = NULL;
+        emit_raw_statements_internal(kids, out, &raw_visited_2, 0, 0, &emitted_raw);
 
         // Emit type aliases was here (moved up)
 
@@ -793,44 +880,14 @@ void codegen_node(ParserContext *ctx, ASTNode *node, FILE *out)
             }
         }
 
-        emit_trait_wrappers(kids, out);
+        visited = NULL;
+        emit_trait_wrappers(kids, out, &visited);
 
-        if (ctx->parsed_globals_list)
-        {
-            StructRef *trait_ref_wrappers = ctx->parsed_globals_list;
-            while (trait_ref_wrappers)
-            {
-                if (trait_ref_wrappers->node && trait_ref_wrappers->node->type == NODE_TRAIT)
-                {
-                    // Check if this trait was already in kids (explicitly imported)
-                    int already_in_kids = 0;
-                    ASTNode *k_inner = kids;
-                    while (k_inner)
-                    {
-                        if (k_inner->type == NODE_TRAIT && k_inner->trait.name &&
-                            trait_ref_wrappers->node->trait.name &&
-                            strcmp(k_inner->trait.name, trait_ref_wrappers->node->trait.name) == 0)
-                        {
-                            already_in_kids = 1;
-                            break;
-                        }
-                        k_inner = k_inner->next;
-                    }
+        visited = NULL;
+        emit_protos(ctx, merged_funcs, out, &visited);
 
-                    if (!already_in_kids)
-                    {
-                        ASTNode *saved_next = trait_ref_wrappers->node->next;
-                        trait_ref_wrappers->node->next = NULL;
-                        emit_trait_wrappers(trait_ref_wrappers->node, out);
-                        trait_ref_wrappers->node->next = saved_next;
-                    }
-                }
-                trait_ref_wrappers = trait_ref_wrappers->next;
-            }
-        }
-
-        emit_protos(ctx, merged_funcs, out);
-        emit_globals(ctx, merged_globals, out);
+        visited = NULL;
+        emit_globals(ctx, merged_globals, out, &visited);
 
         emit_impl_vtables(ctx, out);
         emit_auto_drop_glues(ctx, sorted, out);
@@ -976,5 +1033,6 @@ void codegen_node(ParserContext *ctx, ASTNode *node, FILE *out)
 
         // Clean up emitted content tracking list
         free_emitted_list(emitted_raw);
+        free_visited_modules(visited);
     }
 }

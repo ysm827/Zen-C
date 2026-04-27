@@ -169,6 +169,12 @@ zc build hello.zc -o hello
 # Interaktive Shell
 zc repl
 
+# Dokumentation (Rekursiv)
+zc doc main.zc
+
+# Dokumentation (Einzelne Datei, ohne Prüfung)
+zc doc --no-recursive-doc --no-check main.zc
+
 # Zen-Fakten zeigen
 zc build hello.zc --zen
 ```
@@ -390,7 +396,19 @@ zc run app.zc --cc zig
 > [!WARNING]
 > **COMPILER BUILD WARNING:** Obwohl **Zig CC** hervorragend als Backend für Zen C Programme funktioniert, kann das **Bauen des Zen C Compilers selbst** damit zwar erfolgreich verifizieren, aber instabile Binaries erzeugen, die Tests nicht bestehen. Empfehlung: Den Compiler selbst mit **GCC** oder **Clang** bauen und Zig nur als Backend für Produktionscode verwenden.
 
+
+### MISRA C:2012 Konformitätstests
+
+Die Zen C-Testsuite enthält Verifizierungen gemäß den MISRA C:2012-Richtlinien.
+
+> [!IMPORTANT]
+> **MISRA-Haftungsausschluss**
+> Dieses Projekt ist völlig unabhängig und steht in keiner Verbindung, offiziellen Unterstützung oder geschäftlichen Beziehung zu MISRA (Motor Industry Software Reliability Association). 
+> 
+> Aufgrund strenger urheberrechtlicher Beschränkungen listen Testfälle Richtlinien nur anhand ihrer numerischen Identifikatoren auf und vermeiden die Veröffentlichung interner Spezifikationen. Benutzer, die die Primärdokumentation benötigen, werden gebeten, authentische Richtlinienmaterialien über das [offizielle MISRA-Portal](https://www.misra.org.uk/) zu erwerben.
+
 ### Build mit Zig
+
 
 Zigs `zig cc` dient als Drop-in-Ersatz für GCC/Clang mit exzellenter Cross-Compilation-Unterstützung. Um Zig zu verwenden:
 

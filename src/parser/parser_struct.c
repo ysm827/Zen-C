@@ -180,6 +180,7 @@ ASTNode *parse_trait(ParserContext *ctx, Lexer *l)
         {
             lexer_next(l);
             ASTNode *m = ast_create(NODE_FUNCTION);
+            ATTACH_DOC_COMMENT(ctx, m);
             m->token = ft;
             m->func.param_names = param_names;
             m->func.name = mname;
@@ -400,6 +401,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
             if (lexer_peek(l).type == TOK_IDENT && strncmp(lexer_peek(l).start, "fn", 2) == 0)
             {
                 ASTNode *f = parse_function(ctx, l, 0, 0, attrs.link_name, 0);
+                ATTACH_DOC_COMMENT(ctx, f);
                 // Mangle: Type_Trait_Method
                 {
                     char tmp[MAX_MANGLED_NAME_LEN];
@@ -449,6 +451,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 if (lexer_peek(l).type == TOK_IDENT && strncmp(lexer_peek(l).start, "fn", 2) == 0)
                 {
                     ASTNode *f = parse_function(ctx, l, 1, 0, attrs.link_name, 0);
+                    ATTACH_DOC_COMMENT(ctx, f);
                     f->func.is_async = 1;
                     // Mangle: Type_Trait_Method
                     {
@@ -604,6 +607,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                 if (lexer_peek(l).type == TOK_IDENT && strncmp(lexer_peek(l).start, "fn", 2) == 0)
                 {
                     ASTNode *f = parse_function(ctx, l, 0, 0, attrs.link_name, 0);
+                    ATTACH_DOC_COMMENT(ctx, f);
                     // Standard Mangle for template: Box_method
                     {
                         char *tmp = xmalloc(strlen(name1) + strlen(f->func.name) + 3);
@@ -981,6 +985,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
                 z_parse_expect(l, TOK_SEMICOLON, "Expected ;");
 
                 ASTNode *nf = ast_create(NODE_FIELD);
+                ATTACH_DOC_COMMENT(ctx, nf);
                 nf->field.name = token_strdup(field_name);
                 nf->field.type = field_type_str;
                 nf->type_info = ft;
@@ -1057,6 +1062,7 @@ ASTNode *parse_struct(ParserContext *ctx, Lexer *l, int is_union, int is_opaque,
             char *f_type = type_to_c_string(ft);
 
             ASTNode *f = ast_create(NODE_FIELD);
+            ATTACH_DOC_COMMENT(ctx, f);
             f->field.name = token_strdup(f_name);
             f->field.type = f_type;
             f->type_info = ft;
@@ -1290,6 +1296,7 @@ ASTNode *parse_enum(ParserContext *ctx, Lexer *l, const char *link_name, int is_
             }
 
             ASTNode *va = ast_create(NODE_ENUM_VARIANT);
+            ATTACH_DOC_COMMENT(ctx, va);
             va->variant.name = vname;
             va->variant.tag_id = v++;      // Use tag_id instead of value
             va->variant.payload = payload; // Store Type*

@@ -170,6 +170,12 @@ zc build hello.zc -o hello
 # Interactive Shell
 zc repl
 
+# Documentation (Recursive)
+zc doc main.zc
+
+# Documentation (Single file, no check)
+zc doc --no-recursive-doc --no-check main.zc
+
 # Show Zen Facts
 zc build hello.zc --zen
 ```
@@ -391,6 +397,16 @@ zc run app.zc --cc zig
 
 > [!WARNING]
 > **COMPILER BUILD WARNING:** While **Zig CC** works excellently as a backend for your Zen C programs, building the *Zen C compiler itself* with it may verify but produce an unstable binary that fails tests. We recommend building the compiler with **GCC** or **Clang** and using Zig only as a backend for your operational code.
+
+### MISRA C:2012 Compliance Testing
+
+The Zen C test suite includes verification against MISRA C:2012 guidelines. 
+
+> [!IMPORTANT]
+> **MISRA Disclaimer**
+> This project is completely independent and holds no affiliation, official endorsement, or corporate connection with MISRA (Motor Industry Software Reliability Association). 
+> 
+> Due to strict copyright restrictions, test cases only list directives by their numeric identifiers and avoid publishing internal specifications. Users needing primary documentation are encouraged to acquire authentic guideline materials from the [Official MISRA portal](https://www.misra.org.uk/).
 
 ### Building with Zig
 

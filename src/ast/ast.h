@@ -181,6 +181,7 @@ typedef enum
     NODE_VA_COPY,            ///< va_copy intrinsic.
     NODE_VA_ARG,             ///< va_arg intrinsic.
     NODE_PREPROC_DIRECTIVE,  ///< C-style preprocessor directive (#define, etc).
+    NODE_IMPORT,             ///< Import statement (recursive).
     NODE_AST_COMMENT         ///< Comment node.
 } NodeType;
 
@@ -197,7 +198,8 @@ struct ASTNode
 {
     NodeType type;
     ASTNode *next;
-    int line; // Source line number for debugging.
+    int line;          // Source line number for debugging.
+    char *doc_comment; // Attached documentation comment.
 
     // Type information.
     char *resolved_type; // Legacy string representation (for example: "int",
@@ -594,6 +596,12 @@ struct ASTNode
             int num_inputs;
             int num_clobbers;
         } asm_stmt;
+
+        struct
+        {
+            char *path;
+            ASTNode *module_root;
+        } import_stmt;
 
         struct
         {

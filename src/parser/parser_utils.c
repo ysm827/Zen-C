@@ -813,10 +813,31 @@ char *token_get_string_content(Token t)
 
 void skip_comments(Lexer *l)
 {
+    int prev_emit = l->emit_comments;
+    l->emit_comments = 1;
     while (lexer_peek(l).type == TOK_COMMENT)
     {
-        lexer_next(l);
+        Token tk = lexer_next(l);
+        if (g_config.keep_comments && g_parser_ctx)
+        {
+            if (g_parser_ctx->last_doc_comment)
+            {
+                // Concatenate if multiple comments
+                size_t old_len = strlen(g_parser_ctx->last_doc_comment);
+                char *new_c = xmalloc(old_len + tk.len + 2);
+                sprintf(new_c, "%s\n%.*s", g_parser_ctx->last_doc_comment, tk.len, tk.start);
+                free(g_parser_ctx->last_doc_comment);
+                g_parser_ctx->last_doc_comment = new_c;
+            }
+            else
+            {
+                g_parser_ctx->last_doc_comment = xmalloc(tk.len + 1);
+                strncpy(g_parser_ctx->last_doc_comment, tk.start, tk.len);
+                g_parser_ctx->last_doc_comment[tk.len] = 0;
+            }
+        }
     }
+    l->emit_comments = prev_emit;
 }
 
 // C reserved words that conflict with C when used as identifiers.
@@ -1376,6 +1397,15 @@ void add_to_enum_list(ParserContext *ctx, ASTNode *node)
 
 void add_to_func_list(ParserContext *ctx, ASTNode *node)
 {
+    StructRef *curr = ctx->parsed_funcs_list;
+    while (curr)
+    {
+        if (curr->node == node)
+        {
+            return;
+        }
+        curr = curr->next;
+    }
     StructRef *r = xmalloc(sizeof(StructRef));
     r->node = node;
     r->next = ctx->parsed_funcs_list;
@@ -1384,6 +1414,15 @@ void add_to_func_list(ParserContext *ctx, ASTNode *node)
 
 void add_to_impl_list(ParserContext *ctx, ASTNode *node)
 {
+    StructRef *curr = ctx->parsed_impls_list;
+    while (curr)
+    {
+        if (curr->node == node)
+        {
+            return;
+        }
+        curr = curr->next;
+    }
     StructRef *r = xmalloc(sizeof(StructRef));
     r->node = node;
     r->next = ctx->parsed_impls_list;
@@ -1392,6 +1431,15 @@ void add_to_impl_list(ParserContext *ctx, ASTNode *node)
 
 void add_to_global_list(ParserContext *ctx, ASTNode *node)
 {
+    StructRef *curr = ctx->parsed_globals_list;
+    while (curr)
+    {
+        if (curr->node == node)
+        {
+            return;
+        }
+        curr = curr->next;
+    }
     StructRef *r = xmalloc(sizeof(StructRef));
     r->node = node;
     r->next = ctx->parsed_globals_list;
@@ -5953,7 +6001,7 @@ int validate_types(ParserContext *ctx)
                             continue;
                         }
 
-                        if (!g_config.mode_lsp)
+                        if (!g_config.mode_lsp && !g_config.mode_doc)
                         {
                             char msg[MAX_SHORT_MSG_LEN];
                             snprintf(msg, sizeof(msg),

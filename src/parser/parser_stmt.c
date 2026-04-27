@@ -4522,6 +4522,11 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l)
     const char *saved_fn = g_current_filename;
     g_current_filename = fn;
 
+    // Create import node and capture module-level comments immediately
+    ASTNode *import_node = ast_create(NODE_IMPORT);
+    skip_comments(&i);
+    ATTACH_DOC_COMMENT(ctx, import_node);
+
     ASTNode *r = parse_program_nodes(ctx, &i);
 
     // Restore filename context
@@ -4560,7 +4565,12 @@ ASTNode *parse_import(ParserContext *ctx, Lexer *l)
 
     // Do not free(fn) here, because the Lexer tokens generated during
     // parse_program_nodes hold a direct pointer (t.file) to this string!
-    return r;
+
+    import_node->token = t;
+    import_node->import_stmt.path = xstrdup(fn);
+    import_node->import_stmt.module_root = r;
+
+    return import_node;
 }
 
 // Helper: Execute comptime block and return generated source

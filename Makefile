@@ -78,6 +78,7 @@ SRCS = src/main.c \
        src/lsp/lsp_project.c \
        src/lsp/cJSON.c \
        src/zen/zen_facts.c \
+       src/zen/zen_doc.c \
        src/repl/repl.c \
        src/repl/repl_highlight.c \
        src/repl/repl_readline.c \

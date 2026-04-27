@@ -239,6 +239,7 @@ typedef struct
     int verbose;         ///< 1 if --verbose.
     int quiet;           ///< 1 if --quiet.
     int zen_mode;        ///< 1 if --zen (enable zen facts/easter eggs).
+    int mode_doc;        ///< 1 if 'doc' command (generate documentation).
     int repl_mode;       ///< 1 if --repl (internal flag for REPL usage).
     int is_freestanding; ///< 1 if --freestanding (no stdlib).
     int use_cpp;         ///< 1 if --cpp (emit C++ compatible code).
@@ -255,6 +256,7 @@ typedef struct
     uint64_t diag_mask;       ///< Bitmask of enabled diagnostics.
 
     int keep_comments; ///< 1 if --keep-comments (preserve comments in output).
+    int recursive_doc; ///< 1 if doc generation should be recursive (default 1).
 
     // GCC Flags accumulator.
     char gcc_flags[4096]; ///< Flags passed to the backend compiler.

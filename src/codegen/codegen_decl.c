@@ -288,10 +288,60 @@ void emit_preamble(ParserContext *ctx, FILE *out)
 }
 
 // Emit includes and type aliases (and top-level comments)
-void emit_includes_and_aliases(ASTNode *node, FILE *out)
+struct VisitedModules
 {
+    const char *path;
+    struct VisitedModules *next;
+};
+
+static int is_module_visited(VisitedModules *visited, const char *path)
+{
+    while (visited)
+    {
+        if (strcmp(visited->path, path) == 0)
+        {
+            return 1;
+        }
+        visited = visited->next;
+    }
+    return 0;
+}
+
+static void mark_module_visited(VisitedModules **visited, const char *path)
+{
+    VisitedModules *node = xmalloc(sizeof(VisitedModules));
+    node->path = path;
+    node->next = *visited;
+    *visited = node;
+}
+
+static void free_visited_modules(VisitedModules *visited)
+{
+    // NO-OP: We use arena allocation (xmalloc) for VisitedModules.
+    // Arena is reset globally, single nodes must not be free()d.
+    (void)visited;
+}
+
+static void emit_includes_and_aliases_internal(ASTNode *node, FILE *out, VisitedModules **visited,
+                                               int depth)
+{
+    if (depth > 1024)
+    {
+        zfatal("Infinite recursion detected in emit_includes_and_aliases (circular imports?)");
+    }
     while (node)
     {
+        if (node->type == NODE_IMPORT)
+        {
+            if (!is_module_visited(*visited, node->import_stmt.path))
+            {
+                mark_module_visited(visited, node->import_stmt.path);
+                emit_includes_and_aliases_internal(node->import_stmt.module_root, out, visited,
+                                                   depth + 1);
+            }
+            node = node->next;
+            continue;
+        }
         if (node->type == NODE_INCLUDE)
         {
             if (node->include.is_system)
@@ -311,12 +361,38 @@ void emit_includes_and_aliases(ASTNode *node, FILE *out)
     }
 }
 
-// Emit type aliases (after struct defs so the aliased types exist)
-void emit_type_aliases(ASTNode *node, FILE *out)
+void emit_includes_and_aliases(ASTNode *node, FILE *out, VisitedModules **visited)
 {
+    if (visited)
+    {
+        emit_includes_and_aliases_internal(node, out, visited, 0);
+    }
+    else
+    {
+        VisitedModules *local_visited = NULL;
+        emit_includes_and_aliases_internal(node, out, &local_visited, 0);
+    }
+}
+
+// Emit type aliases (after struct defs so the aliased types exist)
+static void emit_type_aliases_internal(ASTNode *node, FILE *out, VisitedModules **visited,
+                                       int depth)
+{
+    if (depth > 1024)
+    {
+        zfatal("Infinite recursion detected in emit_type_aliases (circular imports?)");
+    }
     while (node)
     {
-        if (node->type == NODE_TYPE_ALIAS)
+        if (node->type == NODE_IMPORT)
+        {
+            if (!is_module_visited(*visited, node->import_stmt.path))
+            {
+                mark_module_visited(visited, node->import_stmt.path);
+                emit_type_aliases_internal(node->import_stmt.module_root, out, visited, depth + 1);
+            }
+        }
+        else if (node->type == NODE_TYPE_ALIAS)
         {
             if (node->cfg_condition)
             {
@@ -353,6 +429,19 @@ void emit_type_aliases(ASTNode *node, FILE *out)
             }
         }
         node = node->next;
+    }
+}
+
+void emit_type_aliases(ASTNode *node, FILE *out, VisitedModules **visited)
+{
+    if (visited)
+    {
+        emit_type_aliases_internal(node, out, visited, 0);
+    }
+    else
+    {
+        VisitedModules *local_visited = NULL;
+        emit_type_aliases_internal(node, out, &local_visited, 0);
     }
 }
 
@@ -676,10 +765,36 @@ void emit_lambda_defs(ParserContext *ctx, FILE *out)
 }
 
 // Emit struct and enum definitions.
-void emit_struct_defs(ParserContext *ctx, ASTNode *node, FILE *out)
+static void emit_struct_defs_internal(ParserContext *ctx, ASTNode *node, FILE *out,
+                                      VisitedModules **visited, int depth)
 {
+    if (depth > 1024)
+    {
+        zfatal("Infinite recursion detected in emit_struct_defs (circular imports?)");
+    }
     while (node)
     {
+        if (node->type == NODE_IMPORT)
+        {
+            if (!is_module_visited(*visited, node->import_stmt.path))
+            {
+                mark_module_visited(visited, node->import_stmt.path);
+                emit_struct_defs_internal(ctx, node->import_stmt.module_root, out, visited,
+                                          depth + 1);
+            }
+            node = node->next;
+            continue;
+        }
+
+        if (node->type == NODE_ROOT)
+        {
+            if (node->root.children != node)
+            { // Basic cycle check
+                emit_struct_defs_internal(ctx, node->root.children, out, visited, depth + 1);
+            }
+            node = node->next;
+            continue;
+        }
         ASTNode *v;
         if (node->type == NODE_STRUCT && node->strct.is_template)
         {
@@ -976,6 +1091,19 @@ void emit_struct_defs(ParserContext *ctx, ASTNode *node, FILE *out)
     }
 }
 
+void emit_struct_defs(ParserContext *ctx, ASTNode *node, FILE *out, VisitedModules **visited)
+{
+    if (visited)
+    {
+        emit_struct_defs_internal(ctx, node, out, visited, 0);
+    }
+    else
+    {
+        VisitedModules *local_visited = NULL;
+        emit_struct_defs_internal(ctx, node, out, &local_visited, 0);
+    }
+}
+
 // Helper to substitute 'Self' with replacement string
 static char *substitute_proto_self(const char *type_str, const char *replacement)
 {
@@ -999,10 +1127,24 @@ static char *substitute_proto_self(const char *type_str, const char *replacement
 }
 
 // Emit trait definitions.
-void emit_trait_defs(ASTNode *node, FILE *out)
+static void emit_trait_defs_internal(ASTNode *node, FILE *out, VisitedModules **visited, int depth)
 {
+    if (depth > 1024)
+    {
+        zfatal("Infinite recursion detected in emit_trait_defs (circular imports?)");
+    }
     while (node)
     {
+        if (node->type == NODE_IMPORT)
+        {
+            if (!is_module_visited(*visited, node->import_stmt.path))
+            {
+                mark_module_visited(visited, node->import_stmt.path);
+                emit_trait_defs_internal(node->import_stmt.module_root, out, visited, depth + 1);
+            }
+            node = node->next;
+            continue;
+        }
         if (node->type == NODE_TRAIT)
         {
             if (node->trait.generic_param_count > 0)
@@ -1066,17 +1208,50 @@ void emit_trait_defs(ASTNode *node, FILE *out)
     }
 }
 
-// Emit trait wrapper functions.
-void emit_trait_wrappers(ASTNode *node, FILE *out)
+void emit_trait_defs(ASTNode *node, FILE *out, VisitedModules **visited)
 {
+    if (visited)
+    {
+        emit_trait_defs_internal(node, out, visited, 0);
+    }
+    else
+    {
+        VisitedModules *local_visited = NULL;
+        emit_trait_defs_internal(node, out, &local_visited, 0);
+    }
+}
+
+// Emit trait wrapper functions.
+static void emit_trait_wrappers_internal(ASTNode *node, FILE *out, VisitedModules **visited,
+                                         int depth)
+{
+    if (depth > 1024)
+    {
+        zfatal("Infinite recursion detected in emit_trait_wrappers (circular imports?)");
+    }
     while (node)
     {
+        if (node->type == NODE_IMPORT)
+        {
+            if (!is_module_visited(*visited, node->import_stmt.path))
+            {
+                mark_module_visited(visited, node->import_stmt.path);
+                emit_trait_wrappers_internal(node->import_stmt.module_root, out, visited,
+                                             depth + 1);
+            }
+            node = node->next;
+            continue;
+        }
         if (node->type == NODE_TRAIT)
         {
             if (node->trait.generic_param_count > 0)
             {
                 node = node->next;
                 continue;
+            }
+            if (node->cfg_condition)
+            {
+                fprintf(out, "#if %s\n", node->cfg_condition);
             }
             ASTNode *m = node->trait.methods;
             while (m)
@@ -1107,7 +1282,7 @@ void emit_trait_wrappers(ASTNode *node, FILE *out)
                 }
                 fprintf(out, ") {\n");
 
-                int ret_is_self = (strcasecmp(m->func.ret_type, "Self") == 0);
+                int ret_is_self = (m->func.ret_type && strcasecmp(m->func.ret_type, "Self") == 0);
                 if (ret_is_self)
                 {
                     fprintf(out, "    void* res = self->vtable->%s(self->self", orig);
@@ -1161,13 +1336,39 @@ void emit_trait_wrappers(ASTNode *node, FILE *out)
     }
 }
 
-// Emit global variables
-void emit_globals(ParserContext *ctx, ASTNode *node, FILE *out)
+void emit_trait_wrappers(ASTNode *node, FILE *out, VisitedModules **visited)
 {
-    g_current_func_ret_type = NULL;
-    g_current_lambda = NULL;
+    if (visited)
+    {
+        emit_trait_wrappers_internal(node, out, visited, 0);
+    }
+    else
+    {
+        VisitedModules *local_visited = NULL;
+        emit_trait_wrappers_internal(node, out, &local_visited, 0);
+    }
+}
+
+// Emit global variables
+static void emit_globals_internal(ParserContext *ctx, ASTNode *node, FILE *out,
+                                  VisitedModules **visited, int depth)
+{
+    if (depth > 1024)
+    {
+        zfatal("Infinite recursion detected in emit_globals (circular imports?)");
+    }
     while (node)
     {
+        if (node->type == NODE_IMPORT)
+        {
+            if (!is_module_visited(*visited, node->import_stmt.path))
+            {
+                mark_module_visited(visited, node->import_stmt.path);
+                emit_globals_internal(ctx, node->import_stmt.module_root, out, visited, depth + 1);
+            }
+            node = node->next;
+            continue;
+        }
         if (node->type == NODE_VAR_DECL || node->type == NODE_CONST)
         {
             if (node->cfg_condition)
@@ -1198,6 +1399,10 @@ void emit_globals(ParserContext *ctx, ASTNode *node, FILE *out)
                 {
                     emit_auto_type(ctx, node->var_decl.init_expr, node->token, out);
                     fprintf(out, " %s", node->var_decl.name);
+                }
+                if (inferred)
+                {
+                    free(inferred);
                 }
             }
             if (node->var_decl.init_expr)
@@ -1257,12 +1462,44 @@ void emit_globals(ParserContext *ctx, ASTNode *node, FILE *out)
     }
 }
 
-// Emit function prototypes
-void emit_protos(ParserContext *ctx, ASTNode *node, FILE *out)
+void emit_globals(ParserContext *ctx, ASTNode *node, FILE *out, VisitedModules **visited)
 {
+    g_current_func_ret_type = NULL;
+    g_current_lambda = NULL;
+    if (visited)
+    {
+        emit_globals_internal(ctx, node, out, visited, 0);
+    }
+    else
+    {
+        VisitedModules *local_visited = NULL;
+        emit_globals_internal(ctx, node, out, &local_visited, 0);
+        free_visited_modules(local_visited);
+    }
+}
+
+// Emit function prototypes
+static void emit_protos_internal(ParserContext *ctx, ASTNode *node, FILE *out,
+                                 VisitedModules **visited, int depth)
+{
+    if (depth > 1024)
+    {
+        zfatal("Infinite recursion detected in emit_protos (circular imports?)");
+    }
     ASTNode *f = node;
     while (f)
     {
+        if (f->type == NODE_IMPORT)
+        {
+            if (!is_module_visited(*visited, f->import_stmt.path))
+            {
+                mark_module_visited(visited, f->import_stmt.path);
+                emit_protos_internal(ctx, f->import_stmt.module_root, out, visited, depth + 1);
+            }
+            f = f->next;
+            continue;
+        }
+
         if (f->type == NODE_FUNCTION)
         {
             if (g_config.use_cpp && f->func.name && !f->func.body)
@@ -1498,8 +1735,29 @@ void emit_protos(ParserContext *ctx, ASTNode *node, FILE *out)
                 }
                 m = m->next;
             }
+            if (f->cfg_condition)
+            {
+                fprintf(out, "#endif\n");
+            }
+        }
+        else if (f->type == NODE_ROOT)
+        {
+            emit_protos_internal(ctx, f->root.children, out, visited, depth + 1);
         }
         f = f->next;
+    }
+}
+
+void emit_protos(ParserContext *ctx, ASTNode *node, FILE *out, VisitedModules **visited)
+{
+    if (visited)
+    {
+        emit_protos_internal(ctx, node, out, visited, 0);
+    }
+    else
+    {
+        VisitedModules *local_visited = NULL;
+        emit_protos_internal(ctx, node, out, &local_visited, 0);
     }
 }
 

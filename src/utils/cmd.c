@@ -86,7 +86,8 @@ void print_usage()
                     "Compile program (default / run immediately)");
     print_help_item(COLOR_GREEN "check, transpile" COLOR_RESET,
                     "Type check only / generate C code");
-    print_help_item(COLOR_GREEN "repl, lsp" COLOR_RESET, "Start REPL / Language Server");
+    print_help_item(COLOR_GREEN "repl, lsp, doc" COLOR_RESET,
+                    "REPL / Language Server / Documentation");
 
     printf("\ncommon options:\n");
     print_help_item(COLOR_CYAN "-o <f>, --cc <c>" COLOR_RESET,
@@ -166,6 +167,16 @@ void print_command_help(const char *command)
     {
         printf("usage: zc lsp\n\n");
         printf("Start the Language Server for IDE integration.\n");
+    }
+    else if (strcmp(command, "doc") == 0)
+    {
+        printf("usage: zc doc [options] <file>\n\n");
+        printf("Generate Markdown documentation for a Zen C source file and its imports.\n\n");
+        printf("options:\n");
+        print_help_item("--recursive-doc", "Traverse and document imported modules (default)");
+        print_help_item("--no-recursive-doc", "Only document the primary input file");
+        print_help_item("--no-check", "Skip semantic analysis to reduce build noise (default)");
+        print_help_item("--check", "Enable semantic analysis for full type resolution");
     }
     else
     {

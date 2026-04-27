@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "plugins/plugin_manager.h"
 #include "repl/repl.h"
+#include "zen/zen_doc.h"
 #include "zen/zen_facts.h"
 #include "zprep.h"
 #include "analysis/typecheck.h"
@@ -141,9 +142,13 @@ int main(int argc, char **argv)
     {
         g_config.mode_check = 1;
     }
-    else if (strcmp(command, "build") == 0)
+    else if (strcmp(command, "doc") == 0)
     {
-        // default mode
+        g_config.mode_doc = 1;
+        g_config.keep_comments = 1;
+        g_config.recursive_doc = 1;
+        g_config.mode_check = 0; // Disable typecheck by default for documentation to reduce noise
+        g_config.use_typecheck = 0;
     }
     else if (strcmp(command, "help") == 0)
     {
@@ -204,6 +209,14 @@ int main(int argc, char **argv)
         {
             g_config.keep_comments = 1;
         }
+        else if (strcmp(arg, "--recursive-doc") == 0)
+        {
+            g_config.recursive_doc = 1;
+        }
+        else if (strcmp(arg, "--no-recursive-doc") == 0)
+        {
+            g_config.recursive_doc = 0;
+        }
         else if (strcmp(arg, "--version") == 0 || strcmp(arg, "-V") == 0)
         {
             // Handled later
@@ -228,6 +241,11 @@ int main(int argc, char **argv)
         {
             g_config.mode_check = 1;
             g_config.use_typecheck = 1;
+        }
+        else if (strcmp(arg, "--no-check") == 0)
+        {
+            g_config.mode_check = 0;
+            g_config.use_typecheck = 0;
         }
         else if (strcmp(arg, "--misra") == 0)
         {
@@ -460,7 +478,7 @@ int main(int argc, char **argv)
             // Unknown flag, pass to C compiler just in case
             append_flag(g_config.gcc_flags, sizeof(g_config.gcc_flags), arg, NULL);
         }
-        else
+        else if (arg[0] != '\0')
         {
             if (!g_config.input_file)
             {
@@ -687,21 +705,24 @@ int main(int argc, char **argv)
         }
     }
 
-    propagate_vector_inner_types(&ctx);
-    propagate_drop_traits(&ctx);
-
-    if (!validate_types(&ctx))
+    if (!g_config.mode_doc || g_config.use_typecheck)
     {
-        // Type validation failed
-        return 1;
-    }
+        propagate_vector_inner_types(&ctx);
+        propagate_drop_traits(&ctx);
 
-    if (!g_config.use_typecheck && !g_config.mode_check)
-    {
-        int move_result = check_moves_only(&ctx, root);
-        if (move_result != 0)
+        if (!validate_types(&ctx))
         {
+            // Type validation failed
             return 1;
+        }
+
+        if (!g_config.use_typecheck && !g_config.mode_check)
+        {
+            int move_result = check_moves_only(&ctx, root);
+            if (move_result != 0)
+            {
+                return 1;
+            }
         }
     }
 
@@ -721,10 +742,17 @@ int main(int argc, char **argv)
         }
     }
 
+    // In doc mode, generate documentation and exit
+    if (g_config.mode_doc)
+    {
+        generate_docs(&ctx, root);
+        return 0;
+    }
+
     // In check mode, exit after type checking
     if (g_config.mode_check)
     {
-        if (tc_result != 0 || g_error_count > 0)
+        if ((tc_result != 0 || g_error_count > 0) && !g_config.mode_doc)
         {
             fprintf(stderr,
                     COLOR_BOLD COLOR_RED "       Check" COLOR_RESET

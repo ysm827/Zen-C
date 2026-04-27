@@ -762,24 +762,34 @@ char *replace_string_type(const char *args)
     {
         return NULL;
     }
-    char *res = xmalloc(strlen(args) * 2 + 1);
+    // Allocate enough space (const char* is longer than string)
+    char *res = xmalloc(strlen(args) * 2 + 16);
     res[0] = 0;
     const char *p = args;
     while (*p)
     {
-        const char *match = strstr(p, "string ");
+        const char *match = strstr(p, "string");
         if (match)
         {
-            if (match > args && (isalnum(*(match - 1)) || *(match - 1) == '_'))
+            // Copy prefix before "string"
+            size_t prefix_len = match - p;
+            strncat(res, p, prefix_len);
+            p = match;
+
+            // Check if it's a standalone word "string"
+            int before_ok = (match == args || (!isalnum(*(match - 1)) && *(match - 1) != '_'));
+            int after_ok = (!isalnum(match[6]) && match[6] != '_');
+
+            if (before_ok && after_ok)
             {
-                strncat(res, p, match - p + 6);
-                p = match + 6;
+                strcat(res, "const char*");
+                p += 6;
             }
             else
             {
-                strncat(res, p, match - p);
-                strcat(res, "const char* ");
-                p = match + 7;
+                // Just copy 's' and continue to avoid re-matching same "string"
+                strncat(res, p, 1);
+                p += 1;
             }
         }
         else

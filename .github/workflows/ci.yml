@@ -234,7 +234,7 @@ jobs:
         chmod +x out/bin/zc.com
         # Replace the local zc with the portable one to force run_tests.sh to use it
         cp out/bin/zc.com ./zc
-        ./tests/scripts/run_tests.sh
+        ./tests/scripts/run_tests.sh --no-source
 
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/v')

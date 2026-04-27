@@ -371,8 +371,9 @@ struct ParserContext
 
     // Type Validation
     struct TypeUsage *pending_type_validations; ///< List of types to validate after parsing.
-    int is_speculative;  ///< Flag to suppress side effects during speculative parsing.
-    int silent_warnings; ///< Suppress warnings (e.g., during codegen interpolation).
+    int is_speculative;     ///< Flag to suppress side effects during speculative parsing.
+    int silent_warnings;    ///< Suppress warnings (e.g., during codegen interpolation).
+    char *last_doc_comment; ///< Last seen doc-comment (for association).
 
     // Flow Analysis (Move Semantics)
     struct MoveState *move_state;
@@ -396,6 +397,13 @@ struct ParserContext
     }
 
 #define RECURSION_EXIT(ctx) ((ctx)->recursion_depth)--
+
+#define ATTACH_DOC_COMMENT(ctx, node)                                                              \
+    if ((node) && (ctx)->last_doc_comment)                                                         \
+    {                                                                                              \
+        (node)->doc_comment = (ctx)->last_doc_comment;                                             \
+        (ctx)->last_doc_comment = NULL;                                                            \
+    }
 
 typedef struct TypeUsage
 {

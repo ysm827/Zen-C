@@ -168,6 +168,13 @@ zc build hello.zc -o hello
 
 # Shell interativo
 zc repl
+
+# Documentação (Recursiva)
+zc doc main.zc
+
+# Documentação (Arquivo único, sem verificação)
+zc doc --no-recursive-doc --no-check main.zc
+
 # Mostrar Fatos Zen
 zc build hello.zc --zen
 ```
@@ -358,7 +365,19 @@ zc run app.zc --cc zig
 > [!WARNING]
 > **AVISO DE COMPILAÇÃO:** Embora **Zig CC** funcione excelentemente como backend para seus programas Zen C, compilar o *próprio compilador Zen C* com ele pode verificar, mas produzir um binário instável que falha nos testes. Recomendamos compilar o compilador com **GCC** ou **Clang** e usar Zig apenas como backend para seu código operacional.
 
+
+### Testes de Conformidade MISRA C:2012
+
+A suíte de testes do Zen C inclui verificação contra as diretrizes MISRA C:2012.
+
+> [!IMPORTANT]
+> **Aviso de Isenção de Responsabilidade da MISRA**
+> Este projeto é totalmente independente e não possui nenhuma afiliação, endosso oficial ou conexão corporativa com a MISRA (Motor Industry Software Reliability Association). 
+> 
+> Devido a restrições estritas de direitos autorais, os casos de teste apenas listam diretrizes por seus identificadores numéricos e evitam publicar especificações internas. Usuários que precisem da documentação primária são incentivados a adquirir os materiais autênticos das diretrizes no [Portal Oficial da MISRA](https://www.misra.org.uk/).
+
 ### Build com Zig
+
 
 O comando `zig cc` do Zig fornece um substituto drop-in para GCC/Clang com excelente suporte de compilação cruzada. Para usar Zig:
 
