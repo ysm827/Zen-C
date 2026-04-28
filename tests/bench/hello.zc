@@ -1,0 +1,12 @@
+import "../../std/time.zc"
+
+fn main() -> int {
+    let start = Time::now();
+    for (let i = 0; i < 1000; i = i + 1) {
+        // Just loop
+    }
+    let end = Time::now();
+    let duration = end - start;
+    printf("RESULT: %llu\n", duration);
+    return 0;
+}

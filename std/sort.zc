@@ -2,11 +2,25 @@ import "std/core.zc"
 
 struct Sort {}
 
-import "std/core.zc"
-
 raw {
     #define ZC_IMPL_SORT(T) \
+    static void _z_insertion_sort_##T(T* arr, int low, int high) { \
+        for (int i = low + 1; i <= high; i++) { \
+            T key = arr[i]; \
+            int j = i - 1; \
+            while (j >= low && arr[j] > key) { \
+                arr[j + 1] = arr[j]; \
+                j = j - 1; \
+            } \
+            arr[j + 1] = key; \
+        } \
+    } \
     static int _z_partition_##T(T* arr, int low, int high) { \
+        int mid = low + (high - low) / 2; \
+        if (arr[mid] < arr[low]) { T t = arr[mid]; arr[mid] = arr[low]; arr[low] = t; } \
+        if (arr[high] < arr[low]) { T t = arr[high]; arr[high] = arr[low]; arr[low] = t; } \
+        if (arr[high] < arr[mid]) { T t = arr[high]; arr[high] = arr[mid]; arr[mid] = t; } \
+        T t_pivot = arr[mid]; arr[mid] = arr[high]; arr[high] = t_pivot; \
         T pivot = arr[high]; \
         int i = low - 1; \
         for (int j = low; j < high; j++) { \
@@ -23,10 +37,20 @@ raw {
         return i + 1; \
     } \
     static void _z_quick_sort_##T(T* arr, int low, int high) { \
-        if (low < high) { \
-            int pivot_idx = _z_partition_##T(arr, low, high); \
-            _z_quick_sort_##T(arr, low, pivot_idx - 1); \
-            _z_quick_sort_##T(arr, pivot_idx + 1, high); \
+        while (low < high) { \
+            if (high - low < 16) { \
+                _z_insertion_sort_##T(arr, low, high); \
+                break; \
+            } else { \
+                int pivot_idx = _z_partition_##T(arr, low, high); \
+                if (pivot_idx - low < high - pivot_idx) { \
+                    _z_quick_sort_##T(arr, low, pivot_idx - 1); \
+                    low = pivot_idx + 1; \
+                } else { \
+                    _z_quick_sort_##T(arr, pivot_idx + 1, high); \
+                    high = pivot_idx - 1; \
+                } \
+            } \
         } \
     } \
     void sort_##T(T* arr, size_t len) { \

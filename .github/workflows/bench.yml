@@ -1,0 +1,39 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: sudo apt-get update && sudo apt-get install -y libtcc-dev
+
+    - name: Build Compiler
+      run: make ZC_HAS_JIT=1
+
+    - name: Run Benchmarks
+      run: ./tests/scripts/run_benchmarks.sh
+
+    - name: Store Benchmark Results
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        name: Zen Compiler Benchmarks
+        tool: 'customGeneric'
+        output-file-path: benchmarks_result.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+        # Show alert if performance regresses by 20%
+        alert-threshold: '120%'
+        comment-on-alert: true
+        fail-on-alert: true
