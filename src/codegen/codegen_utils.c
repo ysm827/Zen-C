@@ -1334,6 +1334,55 @@ int is_simple_enum(ParserContext *ctx, const char *enum_name)
     }
     return 1;
 }
+const char *map_to_c_type(const char *t)
+{
+    if (strcmp(t, "c_int") == 0)
+    {
+        return "int";
+    }
+    if (strcmp(t, "c_uint") == 0)
+    {
+        return "unsigned int";
+    }
+    if (strcmp(t, "c_long") == 0)
+    {
+        return "long";
+    }
+    if (strcmp(t, "c_ulong") == 0)
+    {
+        return "unsigned long";
+    }
+    if (strcmp(t, "c_longlong") == 0)
+    {
+        return "long long";
+    }
+    if (strcmp(t, "c_ulonglong") == 0)
+    {
+        return "unsigned long long";
+    }
+    if (strcmp(t, "c_short") == 0)
+    {
+        return "short";
+    }
+    if (strcmp(t, "c_ushort") == 0)
+    {
+        return "unsigned short";
+    }
+    if (strcmp(t, "c_char") == 0)
+    {
+        return "char";
+    }
+    if (strcmp(t, "c_uchar") == 0)
+    {
+        return "unsigned char";
+    }
+    if (strcmp(t, "uint") == 0)
+    {
+        return "unsigned int";
+    }
+
+    return normalize_type_name(t);
+}
 
 void handle_node_await_internal(ParserContext *ctx, ASTNode *node, FILE *out)
 {
