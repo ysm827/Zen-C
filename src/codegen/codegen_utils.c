@@ -863,6 +863,14 @@ void emit_func_signature(ParserContext *ctx, FILE *out, ASTNode *func, const cha
 
     char *ret_suffix = NULL;
 
+    const char *final_name =
+        (func->link_name) ? func->link_name : (name_override ? name_override : func->func.name);
+
+    if (strcmp(final_name, "z_plugin_init") != 0)
+    {
+        fprintf(out, "ZC_FUNC ");
+    }
+
     // Return type
     if (func->func.is_async)
     {
@@ -886,10 +894,6 @@ void emit_func_signature(ParserContext *ctx, FILE *out, ASTNode *func, const cha
 
         char *fn_ptr = strstr(ret_str, "(*)");
 
-        char *final_name = (func->link_name)
-                               ? func->link_name
-                               : (name_override ? (char *)name_override : func->func.name);
-
         if (fn_ptr)
         {
             int prefix_len = fn_ptr - ret_str + 2; // Include "(*"
@@ -905,9 +909,6 @@ void emit_func_signature(ParserContext *ctx, FILE *out, ASTNode *func, const cha
 
     if (func->func.is_async)
     {
-        char *final_name = (func->link_name)
-                               ? func->link_name
-                               : (name_override ? (char *)name_override : func->func.name);
         fprintf(out, "%s(", final_name);
     }
 

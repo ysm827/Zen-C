@@ -177,6 +177,14 @@ void emit_preamble(ParserContext *ctx, FILE *out)
             fputs("#include <pthread.h>\n", out);
             fputs("typedef struct { pthread_t thread; void *result; } Async;\n", out);
         }
+        fputs("#ifdef ZC_STATIC_PLUGIN\n"
+              "#define ZC_FUNC static\n"
+              "#define ZC_GLOBAL static\n"
+              "#else\n"
+              "#define ZC_FUNC\n"
+              "#define ZC_GLOBAL\n"
+              "#endif\n",
+              out);
         fputs("typedef struct { void *func; void *ctx; void (*drop)(void*); } z_closure_T;\n", out);
         fputs("static void *_z_closure_ctx_stash[256];\n", out);
         fputs("typedef void U0;\ntypedef int8_t I8;\ntypedef uint8_t U8;\ntypedef "
@@ -1371,6 +1379,7 @@ static void emit_globals_internal(ParserContext *ctx, ASTNode *node, FILE *out,
         }
         if (node->type == NODE_VAR_DECL || node->type == NODE_CONST)
         {
+            fprintf(out, "ZC_GLOBAL ");
             if (node->cfg_condition)
             {
                 fprintf(out, "#if %s\n", node->cfg_condition);
@@ -2033,7 +2042,7 @@ void print_type_defs(ParserContext *ctx, FILE *out, ASTNode *nodes)
         if (g_config.use_cpp)
         {
             fprintf(out,
-                    "void _z_vec_push(Vec *v, void *item) { if(v->len >= v->cap) { "
+                    "static void _z_vec_push(Vec *v, void *item) { if(v->len >= v->cap) { "
                     "v->cap = v->cap?v->cap*2:8; "
                     "v->data = static_cast<void**>(realloc(v->data, v->cap * sizeof(void*))); } "
                     "v->data[v->len++] = item; }\n");
@@ -2047,7 +2056,7 @@ void print_type_defs(ParserContext *ctx, FILE *out, ASTNode *nodes)
         }
         else
         {
-            fprintf(out, "void _z_vec_push(Vec *v, void *item) { if(v->len >= v->cap) { "
+            fprintf(out, "static void _z_vec_push(Vec *v, void *item) { if(v->len >= v->cap) { "
                          "v->cap = v->cap?v->cap*2:8; "
                          "v->data = z_realloc(v->data, v->cap * sizeof(void*)); } "
                          "v->data[v->len++] = item; }\n");
