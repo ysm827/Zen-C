@@ -604,6 +604,8 @@ ASTNode *parse_repeat(ParserContext *ctx, Lexer *l)
     char *c = rewrite_expr_methods(ctx, parse_condition_raw(ctx, l));
     ASTNode *b = parse_block(ctx, l);
     ASTNode *n = ast_create(NODE_REPEAT);
+    n->token = t;
+    n->line = t.line;
     n->repeat_stmt.count = c;
     n->repeat_stmt.body = b;
     return n;
@@ -611,10 +613,12 @@ ASTNode *parse_repeat(ParserContext *ctx, Lexer *l)
 
 ASTNode *parse_unless(ParserContext *ctx, Lexer *l)
 {
-    lexer_next(l);
+    Token t = lexer_next(l);
     ASTNode *cond = parse_expression(ctx, l);
     ASTNode *body = parse_block(ctx, l);
     ASTNode *n = ast_create(NODE_UNLESS);
+    n->token = t;
+    n->line = t.line;
     n->unless_stmt.condition = cond;
     n->unless_stmt.body = body;
     return n;

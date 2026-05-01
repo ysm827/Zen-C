@@ -1177,7 +1177,7 @@ void analyze_lambda_captures(ParserContext *ctx, ASTNode *lambda)
 
 ASTNode *parse_lambda(ParserContext *ctx, Lexer *l)
 {
-    lexer_next(l);
+    Token lambda_token = lexer_next(l);
 
     int default_capture_mode = 0; // 0=Value, 1=Reference
     char **explicit_captures = xmalloc(sizeof(char *) * 32);
@@ -1316,6 +1316,8 @@ ASTNode *parse_lambda(ParserContext *ctx, Lexer *l)
     }
 
     ASTNode *lambda = ast_create(NODE_LAMBDA);
+    lambda->token = lambda_token;
+    lambda->line = lambda_token.line;
     lambda->lambda.param_names = param_names;
     lambda->lambda.param_types = param_types;
     lambda->lambda.return_type = return_type;
@@ -2483,6 +2485,8 @@ static ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
         }
         lexer_next(l);
         node = ast_create(NODE_MATCH);
+        node->token = t; // 'match' token
+        node->line = t.line;
         node->match_stmt.expr = expr;
         node->match_stmt.cases = h;
     }
