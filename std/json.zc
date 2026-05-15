@@ -17,7 +17,6 @@ enum JsonType {
     JSON_OBJECT
 }
 
-@derive(Eq)
 struct JsonValue {
     kind: JsonType;
     string_val: char*;
@@ -29,149 +28,191 @@ struct JsonValue {
 
 alias JsonValuePtr = JsonValue*;
 
-raw {
-    Vec__JsonValuePtr Vec__JsonValuePtr__new();
-    void Vec__JsonValuePtr__push(Vec__JsonValuePtr* self, JsonValue* item);
-    Map__JsonValuePtr Map__JsonValuePtr__new();
-    void Map__JsonValuePtr__put(Map__JsonValuePtr* self, char* key, JsonValue* val);
-    
-    static void _json_skip_ws(const char** p) {
-        while (**p == ' ' || **p == '\t' || **p == '\n' || **p == '\r') (*p)++;
+fn _json_skip_ws(data: char*, pos: usize*) {
+    while (data[*pos] == ' ' || data[*pos] == '\t' ||
+           data[*pos] == '\n' || data[*pos] == '\r') {
+        *pos = *pos + 1;
     }
-    
-    static char* _json_parse_string(const char** p) {
-        if (**p != '"') return NULL;
-        (*p)++;
-        char buf[4096]; int len = 0;
-        while (**p && **p != '"') {
-            if (**p == '\\' && (*p)[1]) {
-                (*p)++;
-                char c = **p;
-                if (c == 'n') buf[len++] = '\n';
-                else if (c == 't') buf[len++] = '\t';
-                else if (c == 'r') buf[len++] = '\r';
-                else if (c == '"') buf[len++] = '"';
-                else if (c == '\\') buf[len++] = '\\';
-                else buf[len++] = c;
-            } else {
-                buf[len++] = **p;
-            }
-            (*p)++;
+}
+
+fn _json_parse_string(data: char*, pos: usize*) -> char* {
+    if (data[*pos] != '"') return NULL;
+    *pos = *pos + 1;
+    let v = Vec<char>::new();
+    while (data[*pos] != 0 && data[*pos] != '"') {
+        if (data[*pos] == '\\' && data[*pos + 1] != 0) {
+            *pos = *pos + 1;
+            let c = data[*pos];
+            if (c == 'n') v.push('\n');
+            else if (c == 't') v.push('\t');
+            else if (c == 'r') v.push('\r');
+            else if (c == '"') v.push('"');
+            else if (c == '\\') v.push('\\');
+            else if (c == '/') v.push('/');
+            else if (c == 'b') v.push('\b');
+            else if (c == 'f') v.push('\f');
+            else v.push(c);
+        } else {
+            v.push(data[*pos]);
         }
-        if (**p == '"') (*p)++;
-        buf[len] = '\0';
-        return _z_misra_strdup(buf);
+        *pos = *pos + 1;
     }
-    
-    static struct JsonValue* _json_parse_value(const char** p);
-    
-    static struct JsonValue* _json_parse_array(const char** p) {
-        if (**p != '[') return NULL;
-        (*p)++;
-        struct JsonValue* arr = (struct JsonValue*)_z_misra_malloc(sizeof(struct JsonValue));
-        arr->kind = JsonType__JSON_ARRAY();
-        arr->string_val = 0; arr->number_val = 0; arr->bool_val = 0; arr->object_val = 0;
-        arr->array_val = (Vec__JsonValuePtr*)_z_misra_malloc(sizeof(Vec__JsonValuePtr));
-        *(arr->array_val) = Vec__JsonValuePtr__new();
-        
-        _json_skip_ws(p);
-        if (**p == ']') { (*p)++; return arr; }
-        
-        while (1) {
-            _json_skip_ws(p);
-            struct JsonValue* val = _json_parse_value(p);
-            if (!val) return NULL;
-            Vec__JsonValuePtr__push(arr->array_val, val);
-            _json_skip_ws(p);
-            if (**p == ']') { (*p)++; return arr; }
-            if (**p != ',') return NULL;
-            (*p)++;
-        }
+    if (data[*pos] == '"') {
+        *pos = *pos + 1;
     }
-    
-    static struct JsonValue* _json_parse_object(const char** p) {
-        if (**p != '{') return NULL;
-        (*p)++;
-        struct JsonValue* obj = (struct JsonValue*)_z_misra_malloc(sizeof(struct JsonValue));
-        obj->kind = JsonType__JSON_OBJECT();
-        obj->string_val = 0; obj->number_val = 0; obj->bool_val = 0; obj->array_val = 0;
-        obj->object_val = (Map__JsonValuePtr*)_z_misra_malloc(sizeof(Map__JsonValuePtr));
-        *(obj->object_val) = Map__JsonValuePtr__new();
-        
-        _json_skip_ws(p);
-        if (**p == '}') { (*p)++; return obj; }
-        
-        while (1) {
-            _json_skip_ws(p);
-            char* key = _json_parse_string(p);
-            if (!key) return NULL;
-            _json_skip_ws(p);
-            if (**p != ':') { _z_misra_free(key); return NULL; }
-            (*p)++;
-            _json_skip_ws(p);
-            struct JsonValue* val = _json_parse_value(p);
-            if (!val) { _z_misra_free(key); return NULL; }
-            Map__JsonValuePtr__put(obj->object_val, key, val);
-            _z_misra_free(key);
-            _json_skip_ws(p);
-            if (**p == '}') { (*p)++; return obj; }
-            if (**p != ',') return NULL;
-            (*p)++;
-        }
+    v.push(0);
+    let result = v.data;
+    v.forget();
+    return result;
+}
+
+fn _json_parse_value(data: char*, pos: usize*) -> JsonValue*;
+fn _json_parse_array(data: char*, pos: usize*) -> JsonValue*;
+fn _json_parse_object(data: char*, pos: usize*) -> JsonValue*;
+
+fn _json_make_null() -> JsonValue* {
+    let v: JsonValue* = alloc<JsonValue>();
+    *v = JsonValue { kind: JsonType::JSON_NULL(), string_val: NULL, number_val: 0.0, bool_val: false, array_val: NULL, object_val: NULL };
+    return v;
+}
+
+fn _json_make_bool(b: bool) -> JsonValue* {
+    let v: JsonValue* = alloc<JsonValue>();
+    *v = JsonValue { kind: JsonType::JSON_BOOL(), string_val: NULL, number_val: 0.0, bool_val: b, array_val: NULL, object_val: NULL };
+    return v;
+}
+
+fn _json_make_string(s: char*) -> JsonValue* {
+    let v: JsonValue* = alloc<JsonValue>();
+    *v = JsonValue { kind: JsonType::JSON_STRING(), string_val: s, number_val: 0.0, bool_val: false, array_val: NULL, object_val: NULL };
+    return v;
+}
+
+fn _json_make_number(n: double) -> JsonValue* {
+    let v: JsonValue* = alloc<JsonValue>();
+    *v = JsonValue { kind: JsonType::JSON_NUMBER(), string_val: NULL, number_val: n, bool_val: false, array_val: NULL, object_val: NULL };
+    return v;
+}
+
+fn _json_make_array(v: Vec<JsonValue*>*) -> JsonValue* {
+    let arr: JsonValue* = alloc<JsonValue>();
+    *arr = JsonValue { kind: JsonType::JSON_ARRAY(), string_val: NULL, number_val: 0.0, bool_val: false, array_val: v, object_val: NULL };
+    return arr;
+}
+
+fn _json_make_object(m: Map<JsonValue*>*) -> JsonValue* {
+    let obj: JsonValue* = alloc<JsonValue>();
+    *obj = JsonValue { kind: JsonType::JSON_OBJECT(), string_val: NULL, number_val: 0.0, bool_val: false, array_val: NULL, object_val: m };
+    return obj;
+}
+
+fn _json_parse_value(data: char*, pos: usize*) -> JsonValue* {
+    _json_skip_ws(data, pos);
+    if (data[*pos] == 0) return NULL;
+
+    if (strncmp(data + *pos, "null", 4) == 0) {
+        *pos = *pos + 4;
+        return _json_make_null();
     }
-    
-    static struct JsonValue* _json_parse_value(const char** p) {
-        _json_skip_ws(p);
-        if (**p == '\0') return NULL;
-        
-        if (strncmp(*p, "null", 4) == 0) {
-            *p += 4;
-            struct JsonValue* v = (struct JsonValue*)_z_misra_malloc(sizeof(struct JsonValue));
-            v->kind = JsonType__JSON_NULL();
-            v->string_val = 0; v->number_val = 0; v->bool_val = 0; v->array_val = 0; v->object_val = 0;
-            return v;
-        }
-        if (strncmp(*p, "true", 4) == 0) {
-            *p += 4;
-            struct JsonValue* v = (struct JsonValue*)_z_misra_malloc(sizeof(struct JsonValue));
-            v->kind = JsonType__JSON_BOOL();
-            v->string_val = 0; v->number_val = 0; v->bool_val = 1; v->array_val = 0; v->object_val = 0;
-            return v;
-        }
-        if (strncmp(*p, "false", 5) == 0) {
-            *p += 5;
-            struct JsonValue* v = (struct JsonValue*)_z_misra_malloc(sizeof(struct JsonValue));
-            v->kind = JsonType__JSON_BOOL();
-            v->string_val = 0; v->number_val = 0; v->bool_val = 0; v->array_val = 0; v->object_val = 0;
-            return v;
-        }
-        if (**p == '"') {
-            char* s = _json_parse_string(p);
-            if (!s) return NULL;
-            struct JsonValue* v = (struct JsonValue*)_z_misra_malloc(sizeof(struct JsonValue));
-            v->kind = JsonType__JSON_STRING();
-            v->string_val = s; v->number_val = 0; v->bool_val = 0; v->array_val = 0; v->object_val = 0;
-            return v;
-        }
-        if (**p == '-' || (**p >= '0' && **p <= '9')) {
-            char* end;
-            double num = strtod(*p, &end);
-            if (end == *p) return NULL;
-            *p = end;
-            struct JsonValue* v = (struct JsonValue*)_z_misra_malloc(sizeof(struct JsonValue));
-            v->kind = JsonType__JSON_NUMBER();
-            v->string_val = 0; v->number_val = num; v->bool_val = 0; v->array_val = 0; v->object_val = 0;
-            return v;
-        }
-        if (**p == '[') return _json_parse_array(p);
-        if (**p == '{') return _json_parse_object(p);
-        return NULL;
+    if (strncmp(data + *pos, "true", 4) == 0) {
+        *pos = *pos + 4;
+        return _json_make_bool(true);
     }
-    
-    struct JsonValue* _json_do_parse(const char* json) {
-        const char* ptr = json;
-        return _json_parse_value(&ptr);
+    if (strncmp(data + *pos, "false", 5) == 0) {
+        *pos = *pos + 5;
+        return _json_make_bool(false);
     }
+    if (data[*pos] == '"') {
+        let s = _json_parse_string(data, pos);
+        if (s == NULL) return NULL;
+        return _json_make_string(s);
+    }
+    if (data[*pos] == '-' || (data[*pos] >= '0' && data[*pos] <= '9')) {
+        let end: char*;
+        let num = strtod(data + *pos, &end);
+        if (end == data + *pos) return NULL;
+        *pos = (usize)(end - data);
+        return _json_make_number(num);
+    }
+    if (data[*pos] == '[') {
+        return _json_parse_array(data, pos);
+    }
+    if (data[*pos] == '{') {
+        return _json_parse_object(data, pos);
+    }
+    return NULL;
+}
+
+fn _json_parse_array(data: char*, pos: usize*) -> JsonValue* {
+    if (data[*pos] != '[') return NULL;
+    *pos = *pos + 1;
+    let v: Vec<JsonValue*>* = alloc<Vec<JsonValue*>>();
+    *v = Vec__JsonValuePtr::new();
+
+    _json_skip_ws(data, pos);
+    if (data[*pos] == ']') {
+        *pos = *pos + 1;
+        return _json_make_array(v);
+    }
+
+    while (true) {
+        _json_skip_ws(data, pos);
+        let val = _json_parse_value(data, pos);
+        if (val == NULL) return NULL;
+        Vec__JsonValuePtr__push(v, val);
+        _json_skip_ws(data, pos);
+        if (data[*pos] == ']') {
+            *pos = *pos + 1;
+            return _json_make_array(v);
+        }
+        if (data[*pos] != ',') return NULL;
+        *pos = *pos + 1;
+    }
+}
+
+fn _json_parse_object(data: char*, pos: usize*) -> JsonValue* {
+    if (data[*pos] != '{') return NULL;
+    *pos = *pos + 1;
+    let m: Map<JsonValue*>* = alloc<Map<JsonValue*>>();
+    *m = Map__JsonValuePtr::new();
+
+    _json_skip_ws(data, pos);
+    if (data[*pos] == '}') {
+        *pos = *pos + 1;
+        return _json_make_object(m);
+    }
+
+    while (true) {
+        _json_skip_ws(data, pos);
+        let key = _json_parse_string(data, pos);
+        if (key == NULL) return NULL;
+        _json_skip_ws(data, pos);
+        if (data[*pos] != ':') {
+            dealloc<char>(key);
+            return NULL;
+        }
+        *pos = *pos + 1;
+        _json_skip_ws(data, pos);
+        let val = _json_parse_value(data, pos);
+        if (val == NULL) {
+            dealloc<char>(key);
+            return NULL;
+        }
+        Map__JsonValuePtr__put(m, key, val);
+        dealloc<char>(key);
+        _json_skip_ws(data, pos);
+        if (data[*pos] == '}') {
+            *pos = *pos + 1;
+            return _json_make_object(m);
+        }
+        if (data[*pos] != ',') return NULL;
+        *pos = *pos + 1;
+    }
+}
+
+fn _json_do_parse(json: char*) -> JsonValue* {
+    let pos: usize = 0;
+    return _json_parse_value(json, &pos);
 }
 
 impl JsonValue {
@@ -188,7 +229,12 @@ impl JsonValue {
     }
     
     fn string(s: char*) -> JsonValue {
-        return JsonValue { kind: JsonType::JSON_STRING(), string_val: _z_misra_strdup(s), number_val: 0.0, bool_val: false, array_val: NULL, object_val: NULL };
+        let len = strlen(s);
+        let dup: char* = alloc_n<char>(len + 1);
+        if (dup != NULL) {
+            memcpy(dup, s, len + 1);
+        }
+        return JsonValue { kind: JsonType::JSON_STRING(), string_val: dup, number_val: 0.0, bool_val: false, array_val: NULL, object_val: NULL };
     }
     
     fn array() -> JsonValue {
@@ -266,11 +312,8 @@ impl JsonValue {
     fn parse_val(json: char*) -> Result<JsonValue> {
         let result: JsonValue* = _json_do_parse(json);
         if (result != NULL) {
-            let val: JsonValue;
-            raw {
-                val = *result;
-            }
-            dealloc<JsonValue>(result); // Free the root container, keep children
+            let val: JsonValue = *result;
+            dealloc<JsonValue>(result);
             return Result<JsonValue>::Ok(val);
         }
         return Result<JsonValue>::Err("JSON parse error");
@@ -474,7 +517,7 @@ impl JsonValue {
             if (self.bool_val) { buf.append_c_ptr("true"); } else { buf.append_c_ptr("false"); }
         } else if (self.kind.tag == JsonType::JSON_NUMBER().tag) {
             let tmp: char[64];
-            sprintf((char*)tmp, "%.15g", self.number_val); // Use %.15g for precision
+            sprintf((char*)tmp, "%.15g", self.number_val);
             buf.append_c_ptr((char*)tmp);
         } else if (self.kind.tag == JsonType::JSON_STRING().tag) {
             buf.append_c_ptr("\"");
@@ -514,7 +557,7 @@ impl JsonValue {
                     first = false;
                     let key = m.key_at(i);
                     buf.append_c_ptr("\"");
-                    buf.append_c_ptr(key); // Assuming keys are simple for now, but really should escape them too
+                    buf.append_c_ptr(key);
                     buf.append_c_ptr("\":");
                     let val = m.val_at(i);
                     val.stringify(buf);

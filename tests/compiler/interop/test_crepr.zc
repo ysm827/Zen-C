@@ -1,0 +1,35 @@
+// compiler/interop: @crepr attribute with C struct timeval
+include <sys/time.h>
+
+@crepr("struct timeval")
+struct timeval {
+    tv_sec: i64;
+    tv_usec: i64;
+}
+
+extern fn gettimeofday(tv: timeval*, tz: void*) -> int;
+
+test "crepr_struct_timeval" {
+    let tv: timeval;
+    let ret = gettimeofday(&tv, NULL);
+    assert(ret == 0, "gettimeofday should succeed");
+    assert(tv.tv_sec > 0, "tv_sec should be positive (epoch time > 0)");
+    assert(tv.tv_usec >= 0, "tv_usec should be non-negative");
+    assert(tv.tv_usec < 1000000, "tv_usec should be < 1 second");
+}
+
+test "crepr_field_assignment_via_literal" {
+    let tv = timeval { tv_sec: 5, tv_usec: 500 };
+    assert(tv.tv_sec == 5, "tv_sec should be 5");
+    assert(tv.tv_usec == 500, "tv_usec should be 500");
+}
+
+test "crepr_time_progression" {
+    let t1: timeval;
+    let t2: timeval;
+    gettimeofday(&t1, NULL);
+    usleep(1000);
+    gettimeofday(&t2, NULL);
+    // t2 should be at or after t1 (coarse microsecond precision)
+    assert(t2.tv_sec >= t1.tv_sec, "time should not go backwards");
+}

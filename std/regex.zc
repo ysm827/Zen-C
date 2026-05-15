@@ -1,9 +1,5 @@
 include "std/third-party/tre/include/tre.h"
-raw {
-    // Include TRE implementation for static linking.
-    // This ensures linking works without precompiled libraries across all platforms (Windows/Linux/macOS).
-    #include "std/third-party/tre/tre_full.c"
-}
+@link("std/third-party/tre/tre_full.c")
 
 import "./core.zc"
 import "./string.zc"

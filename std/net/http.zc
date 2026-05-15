@@ -1,6 +1,7 @@
 
 import "../core.zc"
 import "../string.zc"
+import "../io.zc"
 import "./tcp.zc"
 import "../vec.zc"
 import "../map.zc"
@@ -162,9 +163,7 @@ impl Server {
                              response_str.append_c("Content-Length: ");
                              let len_buf: char[32];
                              let _body_len = res.body.length();
-                             raw {
-                                 snprintf(len_buf, 32, "%zu", _body_len);
-                             }
+                              format_into(&len_buf[0], 32, "%zu", _body_len);
                              response_str.append_c(&len_buf[0]);
                              
                              response_str.append_c("\r\n"); // End Content-Length line

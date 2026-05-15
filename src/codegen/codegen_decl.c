@@ -805,6 +805,24 @@ static void emit_struct_defs_internal(ParserContext *ctx, ASTNode *node, Visited
                 continue;
             }
 
+            if (node->strct.crepr_c_type)
+            {
+                // @crepr("C.type.name") — use the C type directly via typedef.
+                // Fields are documentation only; the C compiler resolves field access
+                // against the actual C struct through the typedef.
+                if (node->cfg_condition)
+                {
+                    EMIT(ctx, "#if %s\n", node->cfg_condition);
+                }
+                EMIT(ctx, "typedef %s %s;\n\n", node->strct.crepr_c_type, node->strct.name);
+                if (node->cfg_condition)
+                {
+                    EMIT(ctx, "#endif\n");
+                }
+                node = node->next;
+                continue;
+            }
+
             if (node->cfg_condition)
             {
                 EMIT(ctx, "#if %s\n", node->cfg_condition);
@@ -2129,7 +2147,7 @@ void print_type_defs(ParserContext *ctx, ASTNode *nodes)
                 // For vectors, we emit a custom typedef in emit_struct_defs.
                 // Standard 'typedef struct Name Name' would conflict.
             }
-            else if (local->strct.name)
+            else if (local->strct.name && !local->strct.crepr_c_type)
             {
                 const char *final_name = local->link_name ? local->link_name : local->strct.name;
                 const char *keyword = local->strct.is_union ? "union" : "struct";

@@ -71,7 +71,12 @@ impl BigInt {
     fn to_string(self) -> char* {
         let len = self.digits.len;
         if len == 0 {
-            return _z_misra_strdup("0");
+            let s: char* = alloc_n<char>(2);
+            if (s != NULL) {
+                s[0] = '0';
+                s[1] = 0;
+            }
+            return s;
         }
         let buf: char* = alloc_n<char>(len + 1);
         let idx: usize = 0;

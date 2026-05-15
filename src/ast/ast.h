@@ -170,6 +170,7 @@ typedef enum
     NODE_IMPL,               ///< Impl block.
     NODE_IMPL_TRAIT,         ///< Trait implementation.
     NODE_INCLUDE,            ///< Include directive.
+    NODE_LINK,               ///< Link directive (@link("path")).
     NODE_RAW_STMT,           ///< Raw statement (transpiler bypass).
     NODE_TEST,               ///< Test block.
     NODE_ASSERT,             ///< Assert statement.
@@ -506,6 +507,7 @@ struct ASTNode
             int used_struct_count;
             int is_opaque;
             char *defined_in_file; // File where the struct is defined (for privacy check)
+            char *crepr_c_type;    // @crepr("C.type") - use C type instead of redefining
         } strct;
 
         struct
@@ -541,6 +543,11 @@ struct ASTNode
             char *path;
             int is_system;
         } include;
+
+        struct
+        {
+            char *path;
+        } link;
 
         struct
         {

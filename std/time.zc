@@ -5,25 +5,26 @@ include <unistd.h>
 include <sys/time.h>
 include <stdlib.h>
 
-// Minimal raw block: required because gettimeofday() uses struct timeval
-// which can't be declared in Zen-C without type conflicts, and time()
-// has conflicting type signature (time_t* vs void*)
-raw {
-    static uint64_t _time_now_impl(void) {
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-        return (uint64_t)(tv.tv_sec) * 1000 + (uint64_t)(tv.tv_usec) / 1000;
-    }
-
-    static int64_t _z_time_time(void) {
-        return (int64_t)time(NULL);
-    }
+@crepr("struct timeval")
+struct timeval {
+    tv_sec: i64;
+    tv_usec: i64;
 }
 
+extern fn gettimeofday(tv: timeval*, tz: void*) -> int;
 extern fn srand(seed: U32);
 extern fn rand() -> int;
-extern fn _time_now_impl() -> U64;
-extern fn _z_time_time() -> I64;
+extern fn time(t: c_long*) -> c_long;
+
+fn _time_now_impl() -> U64 {
+    let tv: timeval;
+    gettimeofday(&tv, NULL);
+    return (U64)tv.tv_sec * 1000 + (U64)tv.tv_usec / 1000;
+}
+
+fn _z_time_time() -> I64 {
+    return (I64)time(NULL);
+}
 
 struct Duration {
     millis: U64;

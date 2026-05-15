@@ -136,6 +136,28 @@ DeclarationAttributes parse_attributes(ParserContext *ctx, Lexer *l)
                 zpanic_at(lexer_peek(l), "@section requires a name: @section(\"name\")");
             }
         }
+        else if (0 == strncmp(attr.start, "crepr", 5) && 5 == attr.len)
+        {
+            if (lexer_peek(l).type == TOK_LPAREN)
+            {
+                lexer_next(l);
+                Token ct = lexer_next(l);
+                if (ct.type == TOK_STRING)
+                {
+                    res.crepr_c_type = xmalloc(ct.len - 1);
+                    strncpy(res.crepr_c_type, ct.start + 1, ct.len - 2);
+                    res.crepr_c_type[ct.len - 2] = 0;
+                }
+                if (lexer_next(l).type != TOK_RPAREN)
+                {
+                    zpanic_at(lexer_peek(l), "Expected ) after crepr type name");
+                }
+            }
+            else
+            {
+                zpanic_at(lexer_peek(l), "@crepr requires a value: @crepr(\"C.type\")");
+            }
+        }
         else if (0 == strncmp(attr.start, "packed", 6) && 6 == attr.len)
         {
             res.is_packed = 1;
@@ -445,6 +467,32 @@ DeclarationAttributes parse_attributes(ParserContext *ctx, Lexer *l)
                 zpanic_at(lexer_peek(l), "@link_name requires a value: @link_name(\"name\")");
             }
         }
+        else if (0 == strncmp(attr.start, "link", 4) && 4 == attr.len)
+        {
+            if (lexer_peek(l).type == TOK_LPAREN)
+            {
+                lexer_next(l);
+                Token path_tok = lexer_next(l);
+                if (path_tok.type == TOK_STRING)
+                {
+                    res.link_path = xmalloc(path_tok.len - 1);
+                    strncpy(res.link_path, path_tok.start + 1, path_tok.len - 2);
+                    res.link_path[path_tok.len - 2] = 0;
+                }
+                else
+                {
+                    zpanic_at(path_tok, "Expected string literal in @link");
+                }
+                if (lexer_next(l).type != TOK_RPAREN)
+                {
+                    zpanic_at(lexer_peek(l), "Expected ) after @link path");
+                }
+            }
+            else
+            {
+                zpanic_at(lexer_peek(l), "@link requires a path: @link(\"path/to/file.c\")");
+            }
+        }
         else if (0 == strncmp(attr.start, "derive", 6) && 6 == attr.len)
         {
             if (lexer_peek(l).type == TOK_LPAREN)
@@ -622,6 +670,24 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
         DeclarationAttributes attrs = parse_attributes(ctx, l);
         t = lexer_peek(l);
 
+        // Standalone @link("path") directive
+        if (attrs.link_path)
+        {
+            // Push to config.c_files immediately (module AST may be freed later)
+            const char *path = attrs.link_path;
+            char *resolved = realpath(path, NULL);
+            zvec_push_Str(&ctx->config->c_files, xstrdup(resolved ? resolved : path));
+            if (resolved)
+            {
+                zfree(resolved);
+            }
+
+            s = ast_create(NODE_LINK);
+            s->link.path = attrs.link_path;
+            attrs.link_path = NULL;
+            goto add_node;
+        }
+
         if (t.type == TOK_PREPROC)
         {
             lexer_next(l);
@@ -669,6 +735,10 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
                     s->strct.is_packed = attrs.is_packed;
                     s->strct.align = attrs.align;
                     s->strct.attributes = attrs.custom_attributes;
+                    if (attrs.crepr_c_type)
+                    {
+                        s->strct.crepr_c_type = xstrdup(attrs.crepr_c_type);
+                    }
 
                     if (attrs.vector_size > 0)
                     {
@@ -979,6 +1049,7 @@ ASTNode *parse_program_nodes(ParserContext *ctx, Lexer *l)
 
         if (s)
         {
+        add_node:
             ATTACH_DOC_COMMENT(ctx, s);
             s->cfg_condition = attrs.cfg_condition;
             s->link_name = attrs.link_name;

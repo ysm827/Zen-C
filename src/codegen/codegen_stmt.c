@@ -2660,6 +2660,11 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node)
         }
         break;
     }
+
+    case NODE_LINK:
+        // @link handled during compilation setup — nothing to emit
+        break;
+
     default:
         codegen_expression(ctx, node);
         EMIT(ctx, ";\n");

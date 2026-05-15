@@ -226,6 +226,9 @@ int driver_compile(ZenCompiler *compiler)
         }
     }
 
+    // Process @link directives
+    // (Handled during parsing phase — NODE_LINK is collected there)
+
     // Semantic Analysis & Validation
     if (!compiler->config.mode_doc || compiler->config.use_typecheck)
     {

@@ -7,8 +7,7 @@ import "./option.zc";
 
 import "sys/process.zc";
 
-extern fn _z_popen(command: const char*, type: const char*) -> void*;
-extern fn _z_pclose(stream: void*) -> c_int;
+extern struct FILE;
 
 struct Output {
     std_out: String;
@@ -51,11 +50,10 @@ impl Command {
         let cmd_str = self._build_cmd();
         let cmd_c = cmd_str.c_str();
         
-        let fp = _z_popen(cmd_c, "r");
+        let fp = popen(cmd_c, "r");
         
         if (fp == NULL) {
             cmd_str.free();
-            // TODO: Better error handling...
             return Output { 
                 std_out: String::from(""), 
                 exit_code: -1 
@@ -67,7 +65,7 @@ impl Command {
         let buf = alloc_n<char>(buf_size);
         
         while (true) {
-            let fgets_res = fgets(buf, (c_int)buf_size, (FILE*)fp);
+            let fgets_res = fgets(buf, (c_int)buf_size, fp);
             if (fgets_res == NULL) break;
             
             let chunk = String::from(buf);
@@ -75,7 +73,7 @@ impl Command {
             chunk.free();
         }
         
-        let code = _z_pclose(fp);
+        let code = pclose(fp);
         dealloc<char>(buf);
         cmd_str.free();
         

@@ -165,32 +165,4 @@ fn _z_get_std_arena() -> StaticArena* {
     return &_z_internal_arena;
 }
 
-raw {
-    void* _z_misra_malloc(size_t size) {
-        #ifdef ZC_MISRA
-        // Simple 8-byte alignment
-        extern unsigned char _z_misra_static_buffer[65536];
-        static size_t _z_raw_used = 0;
-        size_t aligned = (_z_raw_used + 7) & ~7;
-        if (aligned + size > 65536) return 0;
-        void* ptr = &_z_misra_static_buffer[aligned];
-        _z_raw_used = aligned + size;
-        return ptr;
-        #else
-        return malloc(size);
-        #endif
-    }
-    
-    void _z_misra_free(void* ptr) {
-        #ifndef ZC_MISRA
-        free(ptr);
-        #endif
-    }
 
-    char* _z_misra_strdup(const char* s) {
-        size_t len = strlen(s);
-        char* d = (char*)_z_misra_malloc(len + 1);
-        if (d) strcpy(d, s);
-        return d;
-    }
-}

@@ -1,23 +1,6 @@
 include <stdio.h>
 include <stdlib.h>
 
-raw {
-    // Minimal raw block: only for opaque FILE* types
-    // popen/pclose use FILE* which conflicts with void*
-    
-    void *_z_popen(const char *command, const char *type) {
-#ifdef _WIN32
-        return (void *)_popen(command, type);
-#else
-        return (void *)popen(command, type);
-#endif
-    }
-    
-    int _z_pclose(void *stream) {
-#ifdef _WIN32
-        return _pclose((FILE *)stream);
-#else
-        return pclose((FILE *)stream);
-#endif
-    }
-}
+extern struct FILE;
+extern fn popen(command: const char*, type: const char*) -> FILE*;
+extern fn pclose(stream: FILE*) -> c_int;

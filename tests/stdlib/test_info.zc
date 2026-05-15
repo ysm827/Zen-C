@@ -1,0 +1,28 @@
+// stdlib: SysInfo::get_uname using @crepr struct utsname
+import "std/sys/info.zc"
+import "std/string.zc"
+
+test "get_uname_fields" {
+    let u = SysInfo::get_uname();
+
+    let sysname_len = u.sysname.length();
+    assert(sysname_len > 0, "sysname should not be empty");
+
+    let nodename_len = u.nodename.length();
+    assert(nodename_len > 0, "nodename should not be empty");
+
+    let release_len = u.release.length();
+    assert(release_len > 0, "release should not be empty");
+
+    let version_len = u.version.length();
+    assert(version_len > 0, "version should not be empty");
+
+    let machine_len = u.machine.length();
+    assert(machine_len > 0, "machine should not be empty");
+}
+
+test "get_uname_not_unknown" {
+    let u = SysInfo::get_uname();
+    assert(!u.sysname.eq_str("Unknown"), "sysname should not be 'Unknown'");
+    assert(!u.nodename.eq_str("Unknown"), "nodename should not be 'Unknown'");
+}

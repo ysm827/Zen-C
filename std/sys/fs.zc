@@ -5,30 +5,37 @@ include <stdlib.h>
 include <stdio.h>
 include <string.h>
 
-raw {
-    typedef struct DirEntry* DirEntryPtr;
-    
-    // DIR* wrappers - opendir/closedir/readdir use DIR* which conflicts with void*
-    void* _z_fs_opendir(const char* name) {
-        return opendir(name);
-    }
+extern struct DIR;
 
-    int _z_fs_closedir(void* dir) {
-        return closedir((DIR*)dir);
-    }
+@crepr("struct stat")
+struct fs_stat {
+    st_mode: u32;
+    st_size: i64;
+}
 
-    // struct stat access - cannot define matching Zen-C struct for stat
-    int _z_fs_get_metadata(const char* path, uint64_t* size, int* is_dir, int* is_file) {
-        struct stat st;
-        if (stat(path, &st) != 0) return -1;
-        *size = st.st_size;
-        *is_dir = S_ISDIR(st.st_mode);
-        *is_file = S_ISREG(st.st_mode);
-        return 0;
-    }
-    
-    // struct dirent access - readdir returns struct dirent*
-    int _z_fs_read_entry(void* dir, char* out_name, int buf_size, int* is_dir) {
+extern fn opendir(name: const char*) -> DIR*;
+extern fn closedir(dir: DIR*) -> int;
+extern fn stat(path: const char*, buf: fs_stat*) -> int;
+
+fn _z_fs_opendir(name: const char*) -> void* {
+    return (void*)opendir(name);
+}
+
+fn _z_fs_closedir(dir: void*) -> int {
+    return closedir((DIR*)dir);
+}
+
+fn _z_fs_get_metadata(path: const char*, size: U64*, is_dir: c_int*, is_file: c_int*) -> c_int {
+    let st: fs_stat;
+    if (stat(path, &st) != 0) return -1;
+    *size = (U64)st.st_size;
+    *is_dir = (c_int)((st.st_mode & 0xF000) == 0x4000);
+    *is_file = (c_int)((st.st_mode & 0xF000) == 0x8000);
+    return 0;
+}
+
+fn _z_fs_read_entry(dir: void*, out_name: char*, buf_size: c_int, is_dir: c_int*) -> c_int {
+    raw {
         struct dirent* ent = readdir((DIR*)dir);
         if (!ent) return 0;
         strncpy(out_name, ent->d_name, buf_size - 1);
@@ -36,17 +43,18 @@ raw {
 #if defined(_DIRENT_HAVE_D_TYPE) || defined(DT_DIR)
         *is_dir = (ent->d_type == DT_DIR);
 #else
-        *is_dir = 0; // Fallback for Windows/MinGW if d_type missing
+        *is_dir = 0;
 #endif
         return 1;
     }
- 
-    // mkdir has different signatures on Windows vs POSIX
-    int _z_fs_mkdir(const char* path) {
-        #ifdef _WIN32
-            return mkdir(path);
-        #else
-            return mkdir(path, 0777);
-        #endif
-    }
+}
+
+@cfg(windows)
+fn _z_fs_mkdir(path: const char*) -> int {
+    return mkdir(path);
+}
+
+@cfg(not(windows))
+fn _z_fs_mkdir(path: const char*) -> int {
+    return mkdir(path, 0o777);
 }

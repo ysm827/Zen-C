@@ -73,6 +73,8 @@ typedef struct DeclarationAttributes
     char **derived_traits;
     int derived_count;
     char *link_name;
+    char *crepr_c_type; // @crepr("C.type.name") attribute
+    char *link_path;    // @link("path/to/file.c")
 } DeclarationAttributes;
 
 /**

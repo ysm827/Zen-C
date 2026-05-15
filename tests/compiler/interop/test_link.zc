@@ -1,0 +1,26 @@
+// compiler/interop: @link attribute for compiling extra C files
+@link("tests/compiler/interop/test_link_helper.c")
+
+extern fn link_helper_add(a: int, b: int) -> int;
+extern fn link_helper_mul(a: double, b: double) -> double;
+extern fn link_helper_neg(x: int) -> int;
+
+test "link_add" {
+    let r = link_helper_add(10, 20);
+    assert(r == 30, "link_helper_add(10, 20) should return 30");
+}
+
+test "link_negative" {
+    let r = link_helper_add(-5, 5);
+    assert(r == 0, "link_helper_add(-5, 5) should return 0");
+}
+
+test "link_mul" {
+    let r = link_helper_mul(3.0, 4.0);
+    assert(r == 12.0, "link_helper_mul(3.0, 4.0) should return 12.0");
+}
+
+test "link_neg" {
+    let r = link_helper_neg(42);
+    assert(r == -42, "link_helper_neg(42) should return -42");
+}
