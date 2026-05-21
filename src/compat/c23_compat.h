@@ -18,11 +18,13 @@
 #include <stdbool.h>
 #endif
 
-// constexpr — C23 keyword
-#if ZEN_C23
+// constexpr — C23 keyword (GCC 13+, Clang 19+).
+// Set via Makefile probe: -DHAS_CONSTEXPR if the compiler accepts the keyword.
+// For compile-time constants usable as array sizes, use enum instead.
+#ifdef HAS_CONSTEXPR
 #define ZEN_CONSTEXPR constexpr
 #else
-#define ZEN_CONSTEXPR
+#define ZEN_CONSTEXPR static const
 #endif
 
 // nullptr — C23 keyword

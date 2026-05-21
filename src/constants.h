@@ -14,16 +14,8 @@
 #include "compat/c23_compat.h"
 #include <string.h>
 
-// Buffer sizes
-#if ZEN_C23
-constexpr int MAX_TYPE_NAME_LEN = 1024;
-constexpr int MAX_VAR_NAME_LEN = 256;
-constexpr int MAX_FUNC_NAME_LEN = 1024;
-constexpr int MAX_SHORT_MSG_LEN = 256;
-constexpr int MAX_ERROR_MSG_LEN = 2048;
-constexpr int MAX_MANGLED_NAME_LEN = 2048;
-constexpr int MAX_PATH_LEN = 4096;
-#else
+// Buffer sizes — enum for compile-time constant expression (array sizes, etc.)
+// Use ZEN_CONSTEXPR for non-array-size constants.
 enum
 {
     MAX_TYPE_NAME_LEN = 1024,
@@ -34,7 +26,6 @@ enum
     MAX_MANGLED_NAME_LEN = 2048,
     MAX_PATH_LEN = 4096
 };
-#endif
 
 // Type checking helpers
 
