@@ -227,7 +227,7 @@ void zwarn_at(Token t, const char *fmt, ...)
         {
             line_end++;
         }
-        int line_len = line_end - line_start;
+        ptrdiff_t line_len = line_end - line_start;
 
         fprintf(stderr, COLOR_BLUE "   |\n" COLOR_RESET);
         fprintf(stderr, COLOR_BLUE "%-3d| " COLOR_RESET "%.*s\n", t.line, line_len, line_start);
@@ -288,7 +288,7 @@ void zwarn_with_suggestion(Token t, const char *msg, const char *suggestion)
         {
             line_end++;
         }
-        int line_len = line_end - line_start;
+        ptrdiff_t line_len = line_end - line_start;
 
         fprintf(stderr, COLOR_BLUE "   |\n" COLOR_RESET);
         fprintf(stderr, COLOR_BLUE "%-3d| " COLOR_RESET "%.*s\n", t.line, line_len, line_start);
@@ -351,7 +351,7 @@ void zpanic_at(Token t, const char *fmt, ...)
     {
         line_end++;
     }
-    int line_len = line_end - line_start;
+    ptrdiff_t line_len = line_end - line_start;
 
     // Visual bar.
     fprintf(stderr, COLOR_BLUE "   |\n" COLOR_RESET);
@@ -425,7 +425,7 @@ void zpanic_with_suggestion(Token t, const char *msg, const char *suggestion)
     {
         line_end++;
     }
-    int line_len = line_end - line_start;
+    ptrdiff_t line_len = line_end - line_start;
 
     fprintf(stderr, COLOR_BLUE "   |\n" COLOR_RESET);
     fprintf(stderr, COLOR_BLUE "%-3d| " COLOR_RESET "%.*s\n", t.line, line_len, line_start);
@@ -512,7 +512,7 @@ void zpanic_with_hints(Token t, const char *msg, const char *const *hints)
     {
         line_end++;
     }
-    int line_len = line_end - line_start;
+    ptrdiff_t line_len = line_end - line_start;
 
     fprintf(stderr, COLOR_BLUE "   |\n" COLOR_RESET);
     fprintf(stderr, COLOR_BLUE "%-3d| " COLOR_RESET "%.*s\n", t.line, line_len, line_start);
@@ -608,7 +608,7 @@ void zerror_at(Token t, const char *fmt, ...)
         {
             line_end++;
         }
-        int line_len = line_end - line_start;
+        ptrdiff_t line_len = line_end - line_start;
 
         // Visual bar.
         fprintf(stderr, COLOR_BLUE "   |\n" COLOR_RESET);
@@ -670,7 +670,7 @@ void zerror_with_suggestion(Token t, const char *msg, const char *suggestion)
         {
             line_end++;
         }
-        int line_len = line_end - line_start;
+        ptrdiff_t line_len = line_end - line_start;
 
         fprintf(stderr, COLOR_BLUE "   |\n" COLOR_RESET);
         fprintf(stderr, COLOR_BLUE "%-3d| " COLOR_RESET "%.*s\n", t.line, line_len, line_start);
@@ -750,7 +750,7 @@ void zerror_with_hints(Token t, const char *msg, const char *const *hints)
         {
             line_end++;
         }
-        int line_len = line_end - line_start;
+        ptrdiff_t line_len = line_end - line_start;
 
         fprintf(stderr, COLOR_BLUE "   |\n" COLOR_RESET);
         fprintf(stderr, COLOR_BLUE "%-3d| " COLOR_RESET "%.*s\n", t.line, line_len, line_start);

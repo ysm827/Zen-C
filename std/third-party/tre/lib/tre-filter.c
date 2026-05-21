@@ -59,7 +59,7 @@ int tre_filter_find(const unsigned char *str, size_t len, tre_filter_t *filter)
         if (!p->ch)
         {
             DPRINT(("Found possible match at %d\n", str - str_orig));
-            return str - str_orig;
+            return (int)(str - str_orig);
         }
         else
         {

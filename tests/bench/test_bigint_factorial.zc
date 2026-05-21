@@ -1,0 +1,19 @@
+// benchmark: test_bigint_factorial
+import "../../std/time.zc"
+import "../../std/bigint.zc"
+
+fn main() {
+    let iterations = 50;
+    let start = Time::now();
+    for (let j = 0; j < iterations; j = j + 1) {
+        let mut = BigInt::from_int(1);
+        for (let i = 2; i <= 300; i = i + 1) {
+            let bi = BigInt::from_int((u64)i);
+            mut = mut.add(&bi);
+        }
+    }
+    let end = Time::now();
+    let duration = end - start;
+    printf("RESULT: %llu\n", duration);
+    return 0;
+}

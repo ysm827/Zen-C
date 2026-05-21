@@ -93,7 +93,7 @@ static unsigned int hash_void_ptr(void *ptr)
     hash = 0;
     for (i = 0; i < sizeof(ptr) * 8 / TABLE_BITS; i++)
     {
-        hash ^= (uintptr_t)ptr >> i * 8;
+        hash ^= (unsigned int)((uintptr_t)ptr >> i * 8);
         hash += i * 17;
         hash &= TABLE_MASK;
     }
@@ -134,7 +134,7 @@ static void hash_table_add(hashTable *tbl, void *ptr, size_t bytes, const char *
         tbl->table[i] = new_item;
     }
 
-    xmalloc_current += bytes;
+    xmalloc_current += (int)bytes;
     if (xmalloc_current > xmalloc_peak)
     {
         xmalloc_peak = (decltype(xmalloc_peak))xmalloc_current;
@@ -177,7 +177,7 @@ static size_t
     }
 
     bytes = item->bytes;
-    xmalloc_current -= bytes;
+    xmalloc_current -= (int)bytes;
     xmalloc_current_blocks--;
 
     if (prev != NULL)

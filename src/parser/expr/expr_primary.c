@@ -743,7 +743,7 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                             for (int i = 0; i < ctx->known_generics_count; i++)
                             {
                                 char *gname = ctx->known_generics[i];
-                                int glen = strlen(gname);
+                                size_t glen = strlen(gname);
                                 if (strncmp(acc, gname, glen) == 0 && acc[glen] == '_' &&
                                     acc[glen + 1] == '_')
                                 {
@@ -783,7 +783,7 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                                 while (gt)
                                 {
                                     char *gname = gt->name;
-                                    int glen = strlen(gname);
+                                    size_t glen = strlen(gname);
                                     if ((strncmp(acc, gname, glen) == 0 && acc[glen] == '_' &&
                                          acc[glen + 1] == '_') ||
                                         strcmp(acc, gname) == 0)
@@ -2322,7 +2322,7 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
             {
                 if (index->type == NODE_EXPR_LITERAL && index->literal.type_kind == LITERAL_INT)
                 {
-                    int idx = index->literal.int_val;
+                    int idx = (int)index->literal.int_val;
                     if (idx < 0 || idx >= node->type_info->array_size)
                     {
                         warn_array_bounds(bracket, idx, node->type_info->array_size);

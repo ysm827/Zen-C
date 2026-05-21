@@ -370,7 +370,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
         reach[i].pos = reach_next[i].pos = -2;
     }
 
-    prev_pos = pos;
+    prev_pos = (int)pos;
     GET_NEXT_WCHAR();
     pos = 0;
 
@@ -400,7 +400,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
                     }
                     DPRINT((" %d", stateid));
                     reach_next[stateid].state = trans->state;
-                    reach_next[stateid].pos = pos;
+                    reach_next[stateid].pos = (int)pos;
 
                     /* Compute tag values after this transition. */
                     for (i = 0; i < num_tags; i++)
@@ -414,7 +414,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
                         {
                             if (trans->tags[i] < num_tags)
                             {
-                                reach_next[stateid].tags[trans->tags[i]] = pos;
+                                reach_next[stateid].tags[trans->tags[i]] = (int)pos;
                             }
                         }
                     }
@@ -434,7 +434,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
                     /* If this is the final state, mark the exact match. */
                     if (trans->state == tnfa->final)
                     {
-                        match_eo = pos;
+                        match_eo = (int)pos;
                         for (i = 0; i < num_tags; i++)
                         {
                             match_tags[i] = reach_next[stateid].tags[i];
@@ -515,7 +515,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
 
             /* Copy state, position, tags, parameters, and depth. */
             reach_next[id].state = reach[id].state;
-            reach_next[id].pos = pos;
+            reach_next[id].pos = (int)pos;
             for (i = 0; i < num_tags; i++)
             {
                 reach_next[id].tags[i] = reach[id].tags[i];
@@ -569,7 +569,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
 
                 /* Pop the first item off the deque. */
                 reach_p = *deque_start;
-                id = reach_p - reach_next;
+                id = (int)(reach_p - reach_next);
                 depth = reach_p->depth;
 
                 /* Compute cost at current depth. */
@@ -633,7 +633,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
                         {
                             if (trans->tags[i] < num_tags)
                             {
-                                tmp_tags[trans->tags[i]] = pos;
+                                tmp_tags[trans->tags[i]] = (int)pos;
                             }
                         }
                     }
@@ -654,7 +654,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
 
                     /* Set state, position, tags, parameters, depth, and costs. */
                     reach_next[dest_id].state = trans->state;
-                    reach_next[dest_id].pos = pos;
+                    reach_next[dest_id].pos = (int)pos;
                     for (i = 0; i < num_tags; i++)
                     {
                         reach_next[dest_id].tags[i] = tmp_tags[i];
@@ -685,7 +685,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
                           (num_tags > 0 && tmp_tags[0] <= match_tags[0]))))
                     {
                         DPRINT(("	 setting new match at %zd, cost %d\n", pos, cost0));
-                        match_eo = pos;
+                        match_eo = (int)pos;
                         memcpy(match_costs, reach_next[dest_id].costs[0],
                                sizeof(match_costs[0]) * TRE_M_LAST);
                         for (i = 0; i < num_tags; i++)
@@ -738,7 +738,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
             }
         }
 
-        prev_pos = pos;
+        prev_pos = (int)pos;
         GET_NEXT_WCHAR();
 
         /* Swap `reach' and `reach_next'. */
@@ -840,13 +840,13 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
                     {
                         if (trans->tags[i] < num_tags)
                         {
-                            tmp_tags[trans->tags[i]] = pos;
+                            tmp_tags[trans->tags[i]] = (int)pos;
                         }
                     }
                 }
 
                 /* If another path has also reached this state, choose the
-               one with the smallest cost or best tags if costs are equal. */
+                   one with the smallest cost or best tags if costs are equal. */
                 if (reach_next[dest_id].pos == pos &&
                     (cost0 > reach_next[dest_id].costs[0][TRE_M_COST] ||
                      (cost0 == reach_next[dest_id].costs[0][TRE_M_COST] &&
@@ -861,7 +861,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
 
                 /* Set state, position, tags, and depth. */
                 reach_next[dest_id].state = trans->state;
-                reach_next[dest_id].pos = pos;
+                reach_next[dest_id].pos = (int)pos;
                 for (i = 0; i < num_tags; i++)
                 {
                     reach_next[dest_id].tags[i] = tmp_tags[i];
@@ -894,7 +894,7 @@ reg_errcode_t tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, ss
                       tmp_tags[0] <= match_tags[0])))
                 {
                     DPRINT(("    setting new match at %zd, cost %d\n", pos, cost0));
-                    match_eo = pos;
+                    match_eo = (int)pos;
                     for (i = 0; i < TRE_M_LAST; i++)
                     {
                         match_costs[i] = reach_next[dest_id].costs[0][i];

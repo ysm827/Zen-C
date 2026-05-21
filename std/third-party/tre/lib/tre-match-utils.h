@@ -68,7 +68,7 @@
                     }                                                                              \
                     else                                                                           \
                     {                                                                              \
-                        pos_add_next = w;                                                          \
+                        pos_add_next = (unsigned int)w;                                                          \
                         str_byte += w;                                                             \
                     }                                                                              \
                 }                                                                                  \

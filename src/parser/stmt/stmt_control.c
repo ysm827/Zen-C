@@ -562,7 +562,7 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
                         char *t_end = strrchr(coll_type, '>');
                         if (t_end)
                         {
-                            int len = t_end - t_start - 1;
+                            ptrdiff_t len = t_end - t_start - 1;
                             inner = xmalloc(len + 1);
                             strncpy(inner, t_start + 1, len);
                             inner[len] = 0;
@@ -579,9 +579,9 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
                             {
                                 m_end = m_start + strlen(m_start);
                             }
-                            int len = m_end - m_start;
-                            inner = xmalloc(len + 1);
-                            strncpy(inner, m_start, len);
+                            ptrdiff_t len = m_end - m_start;
+                            inner = xmalloc((size_t)len + 1);
+                            strncpy(inner, m_start, (size_t)len);
                             inner[len] = 0;
                         }
                     }
@@ -644,9 +644,9 @@ ASTNode *parse_for(ParserContext *ctx, Lexer *l)
                         char *end = strrchr(slice_t, '>');
                         if (end)
                         {
-                            int len = end - start - 1;
-                            char *elem = xmalloc(len + 1);
-                            strncpy(elem, start + 1, len);
+                            ptrdiff_t len = end - start - 1;
+                            char *elem = xmalloc((size_t)len + 1);
+                            strncpy(elem, start + 1, (size_t)len);
                             elem[len] = 0;
 
                             u_type = xmalloc(len + 8);

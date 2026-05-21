@@ -37,7 +37,7 @@ char *parse_condition_raw(ParserContext *ctx, Lexer *l)
             }
         }
         const char *cs = s + 1;
-        int len = t.start - cs;
+        ptrdiff_t len = t.start - cs;
         char *c = xmalloc(len + 1);
         strncpy(c, cs, len);
         c[len] = 0;
@@ -55,7 +55,7 @@ char *parse_condition_raw(ParserContext *ctx, Lexer *l)
             }
             lexer_next(l);
         }
-        int len = (l->src + l->pos) - start;
+        ptrdiff_t len = (l->src + l->pos) - start;
         if (len == 0)
         {
             zpanic_at(lexer_peek(l), "Empty condition or missing body");
@@ -758,7 +758,7 @@ char *parse_and_convert_args(ParserContext *ctx, Lexer *l, char ***defaults_out,
                 else if (fn_ptr)
                 {
                     // Inject name into function pointer: int (*)(int) -> int (*name)(int)
-                    int prefix_len = fn_ptr - type_str;
+                    ptrdiff_t prefix_len = fn_ptr - type_str;
                     strncat(buf, type_str, prefix_len);
                     strcat(buf, " (*");
                     strcat(buf, name);

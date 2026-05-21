@@ -75,13 +75,13 @@ static void emit_c_decl(ParserContext *ctx, const char *type_str, const char *na
         char *end_paren = strchr(fn_ptr, ')');
         if (end_paren)
         {
-            int prefix_len = end_paren - type_str;
+            ptrdiff_t prefix_len = end_paren - type_str;
             EMIT(ctx, "%.*s%s%s", prefix_len, type_str, name, end_paren);
         }
         else
         {
             // Fallback if malformed (shouldn't happen)
-            int prefix_len = fn_ptr - type_str + 2;
+            ptrdiff_t prefix_len = fn_ptr - type_str + 2;
             EMIT(ctx, "%.*s%s%s", prefix_len, type_str, name, fn_ptr + 2);
         }
     }
@@ -93,14 +93,14 @@ static void emit_c_decl(ParserContext *ctx, const char *type_str, const char *na
 
         if (gt)
         {
-            int base_len = generic - type_str;
-            int arg_len = gt - generic - 1;
+            ptrdiff_t base_len = generic - type_str;
+            ptrdiff_t arg_len = gt - generic - 1;
 
             // Limit check
             if (base_len + arg_len + 2 < 256)
             {
-                snprintf(mangled_candidate, 256, "%.*s__%.*s", base_len, type_str, arg_len,
-                         generic + 1);
+                snprintf(mangled_candidate, 256, "%.*s__%.*s", (int)base_len, type_str,
+                         (int)arg_len, generic + 1);
 
                 if (find_struct_def(ctx, mangled_candidate))
                 {
@@ -112,7 +112,7 @@ static void emit_c_decl(ParserContext *ctx, const char *type_str, const char *na
 
         if (!success)
         {
-            int base_len = generic - type_str;
+            ptrdiff_t base_len = generic - type_str;
             EMIT(ctx, "%.*s %s", base_len, type_str, name);
         }
         else if (gt[1] == '*')
@@ -127,8 +127,8 @@ static void emit_c_decl(ParserContext *ctx, const char *type_str, const char *na
     }
     else if (bracket)
     {
-        int base_len = bracket - type_str;
-        EMIT(ctx, "%.*s %s%s", base_len, type_str, name, bracket);
+        ptrdiff_t base_len = bracket - type_str;
+        EMIT(ctx, "%.*s %s%s", (int)base_len, type_str, name, bracket);
     }
     else
     {
@@ -246,7 +246,7 @@ void emit_func_signature(ParserContext *ctx, ASTNode *func, const char *name_ove
 
         if (fn_ptr)
         {
-            int prefix_len = fn_ptr - ret_str + 2; // Include "(*"
+            ptrdiff_t prefix_len = fn_ptr - ret_str + 2; // Include "(*"
             EMIT(ctx, "%.*s%s(", prefix_len, ret_str, final_name);
             ret_suffix = xstrdup(fn_ptr + 2);
         }

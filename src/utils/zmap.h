@@ -638,7 +638,7 @@ extern "C"
             m->buckets = new_buckets;                                                              \
             m->capacity = new_cap;                                                                 \
             m->bits = new_bits;                                                                    \
-            m->threshold = (size_t)(new_cap * m->load_factor);                                     \
+            m->threshold = (size_t)((float)new_cap * m->load_factor);                              \
             return Z_OK;                                                                           \
         }                                                                                          \
         catch (...)                                                                                \
@@ -765,7 +765,7 @@ extern "C"
             m->buckets = new_buckets;                                                              \
             m->capacity = new_cap;                                                                 \
             m->bits = new_bits;                                                                    \
-            m->threshold = (size_t)(new_cap * m->load_factor);                                     \
+            m->threshold = (size_t)((float)new_cap * m->load_factor);                              \
             return Z_OK;                                                                           \
         }                                                                                          \
         catch (...)                                                                                \
@@ -900,7 +900,7 @@ extern "C"
         m->buckets = new_buckets;                                                                  \
         m->capacity = new_cap;                                                                     \
         m->bits = new_bits;                                                                        \
-        m->threshold = (size_t)(new_cap * m->load_factor);                                         \
+        m->threshold = (size_t)((float)new_cap * m->load_factor);                                  \
         return Z_OK;                                                                               \
     }                                                                                              \
                                                                                                    \
@@ -1015,7 +1015,7 @@ extern "C"
         m->buckets = new_buckets;                                                                  \
         m->capacity = new_cap;                                                                     \
         m->bits = new_bits;                                                                        \
-        m->threshold = (size_t)(new_cap * m->load_factor);                                         \
+        m->threshold = (size_t)((float)new_cap * m->load_factor);                                  \
         return Z_OK;                                                                               \
     }                                                                                              \
                                                                                                    \

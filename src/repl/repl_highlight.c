@@ -62,8 +62,8 @@ static int find_matching_brace(const char *buf, int pos)
 
     int depth = 1;
     int p = pos + dir;
-    int len = strlen(buf);
-    while (p >= 0 && p < len)
+    size_t len = strlen(buf);
+    while (p >= 0 && (size_t)p < len)
     {
         if (buf[p] == c)
         {
@@ -283,7 +283,7 @@ void repl_highlight(const char *buf, int cursor_pos)
             {
                 p++;
             }
-            int len = p - start;
+            ptrdiff_t len = p - start;
             char word[MAX_VAR_NAME_LEN];
             if (len < 256)
             {
@@ -377,7 +377,7 @@ void repl_highlight(const char *buf, int cursor_pos)
             }
             else
             {
-                printf("%.*s", len, start);
+                printf("%.*s", (int)len, start);
             }
         }
         else

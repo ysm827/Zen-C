@@ -604,7 +604,7 @@ static char *type_to_string_impl(Type *t)
         }
 
         char *inner = type_to_string(base);
-        int total_len = strlen(inner) + 1;
+        size_t total_len = strlen(inner) + 1;
         for (int i = 0; i < dims_count; i++)
         {
             total_len += 20;
@@ -941,7 +941,7 @@ static char *type_to_c_string_impl(Type *t)
         }
 
         char *inner = type_to_c_string(base);
-        int total_len = strlen(inner) + 1;
+        size_t total_len = strlen(inner) + 1;
         for (int i = 0; i < dims_count; i++)
         {
             total_len += 20;
@@ -1246,7 +1246,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
                 char *end = strrchr(inner_type, '>');
                 if (end && end > start)
                 {
-                    int len = end - start;
+                    ptrdiff_t len = end - start;
                     char *extracted = xmalloc(len + 1);
                     strncpy(extracted, start, len);
                     extracted[len] = 0;
@@ -1394,7 +1394,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
             char *ptr = strrchr(array_type, '*');
             if (ptr)
             {
-                int len = ptr - array_type;
+                ptrdiff_t len = ptr - array_type;
                 char *buf = xmalloc(len + 1);
                 strncpy(buf, array_type, len);
                 buf[len] = 0;
@@ -1447,7 +1447,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
                 if (ptr)
                 {
                     // Return base type (naive)
-                    int len = ptr - inner;
+                    ptrdiff_t len = ptr - inner;
                     char *dup = xmalloc(len + 1);
                     strncpy(dup, inner, len);
                     dup[len] = 0;
@@ -1472,7 +1472,7 @@ char *infer_type(ParserContext *ctx, ASTNode *node)
                 char *end = strrchr(op_type, '>');
                 if (end && end > start)
                 {
-                    int len = end - start;
+                    ptrdiff_t len = end - start;
                     char *extracted = xmalloc(len + 1);
                     strncpy(extracted, start, len);
                     extracted[len] = 0;

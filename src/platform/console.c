@@ -116,7 +116,7 @@ void repl_enable_raw_mode(void)
 
 int repl_read_char(char *c)
 {
-    int nread = read(STDIN_FILENO, c, 1);
+    ssize_t nread = read(STDIN_FILENO, c, 1);
     return nread == 1;
 }
 

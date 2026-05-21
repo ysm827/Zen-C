@@ -433,7 +433,7 @@ static void expand_env_vars(char *dest, size_t dest_size, const char *src)
             if (end)
             {
                 char var_name[MAX_VAR_NAME_LEN];
-                int len = end - (s + 2);
+                ptrdiff_t len = end - (s + 2);
                 if (len < MAX_VAR_NAME_LEN - 1)
                 {
                     strncpy(var_name, s + 2, len);
@@ -520,7 +520,7 @@ void scan_build_directives(ParserContext *ctx, const char *src)
             raw_line[len] = 0;
 
             // Strip trailing \r (Windows CRLF)
-            int rlen = strlen(raw_line);
+            size_t rlen = strlen(raw_line);
             while (rlen > 0 && (raw_line[rlen - 1] == '\r' || raw_line[rlen - 1] == '\n' ||
                                 isspace((unsigned char)raw_line[rlen - 1])))
             {
@@ -860,11 +860,11 @@ void scan_build_directives(ParserContext *ctx, const char *src)
 // Levenshtein distance for "did you mean?" suggestions.
 int levenshtein(const char *s1, const char *s2)
 {
-    int len1 = strlen(s1);
-    int len2 = strlen(s2);
+    size_t len1 = strlen(s1);
+    size_t len2 = strlen(s2);
 
     // Quick optimization.
-    if (abs(len1 - len2) > 3)
+    if (len1 > len2 ? len1 - len2 > 3 : len2 - len1 > 3)
     {
         return 999;
     }
@@ -878,18 +878,18 @@ int levenshtein(const char *s1, const char *s2)
 
 #define MATRIX(i, j) matrix[(i) * (len2 + 1) + (j)]
 
-    for (int i = 0; i <= len1; i++)
+    for (size_t i = 0; i <= len1; i++)
     {
-        MATRIX(i, 0) = i;
+        MATRIX(i, 0) = (int)i;
     }
-    for (int j = 0; j <= len2; j++)
+    for (size_t j = 0; j <= len2; j++)
     {
-        MATRIX(0, j) = j;
+        MATRIX(0, j) = (int)j;
     }
 
-    for (int i = 1; i <= len1; i++)
+    for (size_t i = 1; i <= len1; i++)
     {
-        for (int j = 1; j <= len2; j++)
+        for (size_t j = 1; j <= len2; j++)
         {
             int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
             int del = MATRIX(i - 1, j) + 1;

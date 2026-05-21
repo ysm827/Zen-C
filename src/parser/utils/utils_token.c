@@ -231,8 +231,8 @@ char *ast_to_string_recursive(ASTNode *node, int depth)
 
 int is_token(Token t, const char *s)
 {
-    int len = strlen(s);
-    return (t.len == len && strncmp(t.start, s, len) == 0);
+    size_t len = strlen(s);
+    return ((size_t)t.len == len && strncmp(t.start, s, len) == 0);
 }
 
 char *token_strdup(Token t)
@@ -359,7 +359,7 @@ char *consume_until_semicolon(Lexer *l)
 
         if (d == 0 && t.type == TOK_SEMICOLON)
         {
-            int len = t.start - s;
+            ptrdiff_t len = t.start - s;
             char *r = xmalloc(len + 1);
             strncpy(r, s, len);
             r[len] = 0;

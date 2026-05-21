@@ -86,8 +86,8 @@ static char *replace_in_string(const char *src, const char *old_w, const char *n
 
     char *result;
     int i, cnt = 0;
-    int newWlen = strlen(new_w);
-    int oldWlen = strlen(old_w);
+    size_t newWlen = strlen(new_w);
+    size_t oldWlen = strlen(old_w);
 
     // Pass 1: Count replacements
     int in_string = 0;
@@ -114,13 +114,13 @@ static char *replace_in_string(const char *src, const char *old_w, const char *n
             if (valid)
             {
                 cnt++;
-                i += oldWlen - 1;
+                i = i + (int)oldWlen - 1;
             }
         }
     }
 
     // Allocate result buffer
-    result = (char *)xmalloc(i + cnt * (newWlen - oldWlen) + 1);
+    result = (char *)xmalloc((size_t)i + (size_t)cnt * (newWlen - oldWlen) + 1);
 
     // Pass 2: Perform replacement
     int j = 0;
@@ -151,8 +151,8 @@ static char *replace_in_string(const char *src, const char *old_w, const char *n
             if (valid)
             {
                 strcpy(&result[j], new_w);
-                j += newWlen;
-                src_idx += oldWlen;
+                j = j + (int)newWlen;
+                src_idx = src_idx + (int)oldWlen;
                 replaced = 1;
             }
         }
@@ -651,8 +651,8 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
             size_t slen = strlen(p_suffix);
 
             int match = 0;
-            int found_slen = 0;
-            int num_ptr_suffixes = 0;
+            size_t found_slen = 0;
+            size_t num_ptr_suffixes = 0;
             if (nlen >= slen && strcmp(t->name + nlen - slen, p_suffix) == 0)
             {
                 match = 1;
@@ -749,7 +749,7 @@ Type *replace_type_formal(Type *t, const char *p, const char *c, const char *os,
                 strcat(new_name, c_suffix);
 
                 // Restore Ptr suffixes
-                for (int k = 0; k < num_ptr_suffixes; k++)
+                for (size_t k = 0; k < num_ptr_suffixes; k++)
                 {
                     strcat(new_name, "Ptr");
                 }
@@ -1117,8 +1117,8 @@ ASTNode *copy_ast_replacing(ASTNode *n, const char *p, const char *c, const char
 
         if (os && ns)
         {
-            int os_len = strlen(os);
-            int ns_len = strlen(ns);
+            size_t os_len = strlen(os);
+            size_t ns_len = strlen(ns);
             // Only replace if it starts with os__ and DOES NOT already start with ns__
             if (strncmp(n1, os, os_len) == 0 && n1[os_len] == '_' && n1[os_len + 1] == '_' &&
                 strncmp(n1, ns, ns_len) != 0)

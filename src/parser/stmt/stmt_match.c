@@ -276,7 +276,7 @@ ASTNode *parse_match(ParserContext *ctx, Lexer *l)
                     ASTNode *v = enum_def->enm.variants;
                     while (v)
                     {
-                        int size = strlen(vreg->enum_name) + strlen(v->variant.name) + 2;
+                        size_t size = strlen(vreg->enum_name) + strlen(v->variant.name) + 2;
                         char *v_full = xmalloc(size + 1);
                         snprintf(v_full, size + 1, "%s__%s", vreg->enum_name, v->variant.name);
                         if (strcmp(v_full, pattern) == 0 && v->variant.payload)

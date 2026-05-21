@@ -77,15 +77,15 @@ int zvfprintf(FILE *stream, const char *format, va_list args)
     }
 
     strip_ansi_codes(work_buf);
-    int stripped_len = strlen(work_buf);
-    int ret = fwrite(work_buf, 1, stripped_len, stream);
+    size_t stripped_len = strlen(work_buf);
+    size_t written = fwrite(work_buf, 1, stripped_len, stream);
 
     if (work_buf != stack_buf)
     {
         zfree(work_buf);
     }
 
-    return ret >= 0 ? stripped_len : -1;
+    return written == stripped_len ? (int)stripped_len : -1;
 }
 
 int zfprintf(FILE *stream, const char *format, ...)

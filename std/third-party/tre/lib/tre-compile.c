@@ -737,7 +737,7 @@ static reg_errcode_t tre_copy_ast(tre_mem_t mem, tre_stack_t *stack, tre_ast_nod
                     tag_directions[max] = TRE_TAG_MAXIMIZE;
                     first_tag = 0;
                 }
-                *result = tre_ast_new_literal(mem, min, max);
+                *result = tre_ast_new_literal(mem, (int)min, (int)max);
                 if (*result == NULL)
                 {
                     status = REG_ESPACE;
@@ -1149,8 +1149,8 @@ static tre_pos_and_tags_t *tre_set_one(tre_mem_t mem, int position, long code_mi
     }
 
     new_set[0].position = position;
-    new_set[0].code_min = code_min;
-    new_set[0].code_max = code_max;
+    new_set[0].code_min = (int)code_min;
+    new_set[0].code_max = (int)code_max;
     new_set[0].char_class = char_class;
     new_set[0].neg_classes = neg_classes;
     new_set[0].backref = backref;
@@ -1356,7 +1356,7 @@ static reg_errcode_t tre_match_empty(tre_stack_t *stack, tre_ast_node_t *node, i
                         }
                         if (tags[i] < 0)
                         {
-                            tags[i] = lit->code_max;
+                            tags[i] = (int)lit->code_max;
                             tags[i + 1] = -1;
                         }
                     }
@@ -1370,7 +1370,7 @@ static reg_errcode_t tre_match_empty(tre_stack_t *stack, tre_ast_node_t *node, i
                 assert(lit->code_max >= 1 && lit->code_max <= ASSERT_LAST);
                 if (assertions != NULL)
                 {
-                    *assertions |= lit->code_max;
+                    *assertions |= (int)lit->code_max;
                 }
                 break;
             case PARAMETER:
@@ -1488,7 +1488,7 @@ static reg_errcode_t tre_compute_npfl(tre_mem_t mem, tre_stack_t *stack, tre_ast
                         return REG_ESPACE;
                     }
                     node->lastpos =
-                        tre_set_one(mem, lit->position, 0, TRE_CHAR_MAX, 0, NULL, lit->code_max);
+                        tre_set_one(mem, lit->position, 0, TRE_CHAR_MAX, 0, NULL, (int)lit->code_max);
                     if (!node->lastpos)
                     {
                         return REG_ESPACE;
@@ -2105,7 +2105,7 @@ int tre_compile(regex_t *preg, const tre_char_t *regex, size_t n, int cflags)
     parse_ctx.cflags = cflags;
     parse_ctx.max_backref = -1;
     /* Use 8-bit optimizations in 8-bit mode */
-    parse_ctx.mb_cur_max = (cflags & REG_USEBYTES) ? 1 : TRE_MB_CUR_MAX;
+    parse_ctx.mb_cur_max = (cflags & REG_USEBYTES) ? 1 : (int)TRE_MB_CUR_MAX;
     DPRINT(("tre_compile: parsing '%.*" STRF "'\n", (int)n, regex));
     errcode = tre_parse(&parse_ctx);
     if (errcode != REG_OK)

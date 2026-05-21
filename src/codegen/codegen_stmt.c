@@ -391,7 +391,7 @@ void codegen_node_single(ParserContext *ctx, ASTNode *node)
                 if (end)
                 {
                     // Extract variable name
-                    int var_len = end - p - 1;
+                    ptrdiff_t var_len = end - p - 1;
                     char var_name[64];
                     strncpy(var_name, p + 1, var_len);
                     var_name[var_len] = 0;

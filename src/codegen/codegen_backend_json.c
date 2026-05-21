@@ -275,10 +275,11 @@ static void json_emit_raw_content(ParserContext *ctx, const char *content)
     }
     else
     {
-        int len = strlen(content);
+        size_t len = strlen(content);
         char preview[44];
-        int slen = len < 40 ? len : 40;
-        snprintf(preview, sizeof(preview), "%.*s%s", slen, content, slen < len ? "..." : "");
+        int slen = (int)(len < 40 ? len : 40);
+        snprintf(preview, sizeof(preview), "%.*s%s", slen, content,
+                 (size_t)slen < len ? "..." : "");
         emitter_printf(&ctx->cg.emitter, ",\"preview\":");
         json_escape(ctx, preview);
     }

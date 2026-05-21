@@ -197,7 +197,7 @@ static void codegen_var_expr(ParserContext *ctx, ASTNode *node)
     if (sep)
     {
         // Extract type name and method name
-        int type_len = sep - node->var_ref.name;
+        ptrdiff_t type_len = sep - node->var_ref.name;
         char *type_name = xmalloc(type_len + 1);
         strncpy(type_name, node->var_ref.name, type_len);
         type_name[type_len] = 0;

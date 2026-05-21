@@ -323,7 +323,7 @@ reg_errcode_t tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, 
                         {
                             if (*tag_i < num_tags)
                             {
-                                reach_next_i->tags[*tag_i] = pos;
+                                reach_next_i->tags[*tag_i] = (int)pos;
                             }
                             tag_i++;
                         }
@@ -331,14 +331,14 @@ reg_errcode_t tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, 
                     if (reach_next_i->state == tnfa->final)
                     {
                         DPRINT(("	 found empty match\n"));
-                        match_eo = pos;
+                        match_eo = (int)pos;
                         new_match = 1;
                         for (i = 0; i < num_tags; i++)
                         {
                             match_tags[i] = reach_next_i->tags[i];
                         }
                     }
-                    reach_pos[trans_i->state_id].pos = pos;
+                    reach_pos[trans_i->state_id].pos = (int)pos;
                     reach_pos[trans_i->state_id].tags = &reach_next_i->tags;
                     reach_next_i++;
                 }
@@ -470,7 +470,7 @@ reg_errcode_t tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, 
                         {
                             if (*tag_i < num_tags)
                             {
-                                tmp_tags[*tag_i] = pos;
+                                tmp_tags[*tag_i] = (int)pos;
                             }
                             tag_i++;
                         }
@@ -483,7 +483,7 @@ reg_errcode_t tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, 
                         tmp_iptr = reach_next_i->tags;
                         reach_next_i->tags = tmp_tags;
                         tmp_tags = tmp_iptr;
-                        reach_pos[trans_i->state_id].pos = pos;
+                        reach_pos[trans_i->state_id].pos = (int)pos;
                         reach_pos[trans_i->state_id].tags = &reach_next_i->tags;
 
                         if (reach_next_i->state == tnfa->final &&
@@ -491,7 +491,7 @@ reg_errcode_t tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, 
                              (num_tags > 0 && reach_next_i->tags[0] <= match_tags[0])))
                         {
                             DPRINT(("  found match %p\n", trans_i->state));
-                            match_eo = pos;
+                            match_eo = (int)pos;
                             new_match = 1;
                             for (i = 0; i < num_tags; i++)
                             {
@@ -515,7 +515,7 @@ reg_errcode_t tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, 
                             if (trans_i->state == tnfa->final)
                             {
                                 DPRINT(("	 found better match\n"));
-                                match_eo = pos;
+                                match_eo = (int)pos;
                                 new_match = 1;
                                 for (i = 0; i < num_tags; i++)
                                 {

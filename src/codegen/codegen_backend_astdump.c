@@ -200,10 +200,10 @@ static void emit_label(ParserContext *ctx, ASTNode *node)
             else
             {
                 char preview[44];
-                int len = strlen(node->raw_stmt.content);
-                int slen = len < 40 ? len : 40;
+                size_t len = strlen(node->raw_stmt.content);
+                int slen = (int)(len < 40 ? len : 40);
                 snprintf(preview, sizeof(preview), "%.*s%s", slen, node->raw_stmt.content,
-                         slen < len ? "..." : "");
+                         (size_t)slen < len ? "..." : "");
                 emitter_printf(&ctx->cg.emitter, " '%s'", preview);
             }
         }

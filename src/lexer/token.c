@@ -13,18 +13,18 @@ void lexer_init(Lexer *l, const char *src, CompilerConfig *cfg, const char *file
     l->filename = filename;
 }
 
-static int is_ident_start(char c)
+static __attribute__((unused)) int is_ident_start(char c)
 {
     return isalpha(c) || c == '_';
 }
 
-static int is_ident_char(char c)
+static __attribute__((unused)) int is_ident_char(char c)
 {
     return isalnum(c) || c == '_';
 }
 
-static int lexer_scan_string_internal(Lexer *l, const char *s, char quote, int is_raw,
-                                      int prefix_len)
+static __attribute__((unused)) int lexer_scan_string_internal(Lexer *l, const char *s, char quote,
+                                                              int is_raw, int prefix_len)
 {
     int is_multi = 0;
     if (quote == '"' && s[prefix_len + 1] == '"' && s[prefix_len + 2] == '"')
@@ -178,7 +178,7 @@ Token lexer_next(Lexer *l)
                 // Check for nested /* or //
                 if ((s[0] == '/' && s[1] == '*') || (s[0] == '/' && s[1] == '/'))
                 {
-                    zerror_at((Token){TOK_COMMENT, comment_start, (size_t)(s - comment_start) + 2,
+                    zerror_at((Token){TOK_COMMENT, comment_start, (int)(s - comment_start) + 2,
                                       start_line, start_col, l->filename},
                               "MISRA Rule 3.1: '/*' or '//' within a comment");
                 }
@@ -209,8 +209,9 @@ Token lexer_next(Lexer *l)
 
         if (l->emit_comments)
         {
-            size_t len = s - comment_start;
-            return (Token){TOK_COMMENT, comment_start, len, start_line, start_col, l->filename};
+            size_t len = (size_t)(s - comment_start);
+            return (Token){TOK_COMMENT, comment_start, (int)len,
+                           start_line,  start_col,     l->filename};
         }
 
         return lexer_next(l);

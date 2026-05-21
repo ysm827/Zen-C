@@ -270,7 +270,7 @@ static void scan_c_header_contents(ParserContext *ctx, const char *path, int dep
             line_end++;
         }
 
-        int len = line_end - line_start;
+        ptrdiff_t len = line_end - line_start;
         if (len > 0)
         {
             char stack_buf[4096];

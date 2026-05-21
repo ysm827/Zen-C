@@ -1,0 +1,23 @@
+// benchmark: test_hashmap
+import "../../std/time.zc"
+import "../../std/map.zc"
+
+fn main() {
+    let iterations = 500;
+    let size = 1000;
+    let start = Time::now();
+
+    for (let i = 0; i < iterations; i = i + 1) {
+        let m = Map<int>::new();
+        for (let j: usize = 0; j < size; j = j + 1) {
+            let key_buf: char[16];
+            snprintf(key_buf, 16, "key_%d", (int)j);
+            m.put(key_buf, (int)j);
+        }
+    }
+
+    let end = Time::now();
+    let duration = end - start;
+    printf("RESULT: %llu\n", duration);
+    return 0;
+}

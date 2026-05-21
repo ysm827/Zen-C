@@ -395,7 +395,7 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
                             char *end = strrchr(var_type, '>');
                             if (end && end > start)
                             {
-                                int len = end - start;
+                                ptrdiff_t len = end - start;
                                 char *inner_type = xmalloc(len + 1);
                                 strncpy(inner_type, start, len);
                                 inner_type[len] = 0;
@@ -1632,7 +1632,7 @@ static ASTNode *parse_expr_prec_impl(ParserContext *ctx, Lexer *l, Precedence mi
                 {
                     if (start->type == NODE_EXPR_LITERAL && start->literal.type_kind == LITERAL_INT)
                     {
-                        int idx = start->literal.int_val;
+                        int idx = (int)start->literal.int_val;
                         if (idx < 0 || idx >= lhs->type_info->array_size)
                         {
                             warn_array_bounds(op, idx, lhs->type_info->array_size);

@@ -354,7 +354,7 @@ static void emit_protos_internal(ParserContext *ctx, ASTNode *node, VisitedModul
 
                 // Build proto: if fname starts with sname__, replace with effective_name__
                 char *proto = NULL;
-                int slen = strlen(sname);
+                size_t slen = strlen(sname);
                 if (strncmp(fname, sname, slen) == 0 && fname[slen] == '_' &&
                     fname[slen + 1] == '_')
                 {

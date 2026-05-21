@@ -66,7 +66,7 @@ char *parse_array_literal(ParserContext *ctx, Lexer *l, const char *st)
             lexer_next(l);
         }
 
-        int len = (l->src + l->pos) - s;
+        ptrdiff_t len = (l->src + l->pos) - s;
         if (strlen(c) + len + 5 > cap)
         {
             cap *= 2;
@@ -176,7 +176,7 @@ char *parse_tuple_literal(ParserContext *ctx, Lexer *l, const char *tn)
             lexer_next(l);
         }
 
-        int len = (l->src + l->pos) - s;
+        ptrdiff_t len = (l->src + l->pos) - s;
         if (strlen(c) + len + 5 > cap)
         {
             cap *= 2;

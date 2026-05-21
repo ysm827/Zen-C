@@ -36,7 +36,7 @@ void parser_audit_preprocessor(ParserContext *ctx, Token tok)
             {
                 id_end++;
             }
-            int id_len = id_end - id_start;
+            ptrdiff_t id_len = id_end - id_start;
             if (id_len > 0)
             {
                 char id[128];
@@ -111,7 +111,7 @@ void parser_audit_preprocessor(ParserContext *ctx, Token tok)
                     expr_start++;
                 }
 
-                int expr_len = (tok.start + tok.len) - expr_start;
+                ptrdiff_t expr_len = (tok.start + tok.len) - expr_start;
                 if (expr_len > 0)
                 {
                     char *expr_buf = xmalloc(expr_len + 1);
@@ -169,11 +169,11 @@ void parser_audit_preprocessor(ParserContext *ctx, Token tok)
                 {
                     id_end++;
                 }
-                int id_len = id_end - id_start;
+                ptrdiff_t id_len = id_end - id_start;
                 if (id_len > 0)
                 {
                     char id[128];
-                    if (id_len >= 128)
+                    if ((size_t)id_len >= sizeof(id))
                     {
                         id_len = 127;
                     }
@@ -283,7 +283,7 @@ void try_parse_macro_const(ParserContext *ctx, const char *content)
                     {
                         pm++;
                     }
-                    int len = pm - p_start;
+                    ptrdiff_t len = pm - p_start;
                     params[param_count] = xmalloc(len + 1);
                     strncpy(params[param_count], p_start, len);
                     params[param_count][len] = 0;
@@ -328,7 +328,7 @@ void try_parse_macro_const(ParserContext *ctx, const char *content)
                             {
                                 pb++;
                             }
-                            int id_len = pb - id_start;
+                            ptrdiff_t id_len = pb - id_start;
                             for (int i = 0; i < param_count; i++)
                             {
                                 if (id_len == (int)strlen(params[i]) &&
@@ -360,7 +360,7 @@ void try_parse_macro_const(ParserContext *ctx, const char *content)
                         {
                             pb++;
                         }
-                        int id_len = pb - id_start;
+                        ptrdiff_t id_len = pb - id_start;
                         const char *pafter = pb;
                         while (isspace(*pafter))
                         {

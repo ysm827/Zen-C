@@ -164,7 +164,7 @@ typedef struct tre_backtrack_struct
         }                                                                                          \
         else                                                                                       \
             stack = stack->next;                                                                   \
-        stack->item.pos = (_pos);                                                                  \
+        stack->item.pos = (int)(_pos);                                                                  \
         stack->item.str_byte = (_str_byte);                                                        \
         BT_STACK_WIDE_IN(_str_wide);                                                               \
         stack->item.state = (_state);                                                              \
@@ -336,7 +336,7 @@ retry:
         str_source->rewind(pos + pos_add_next, str_source->context);
     }
     GET_NEXT_WCHAR();
-    pos_start = pos;
+    pos_start = (int)pos;
     next_c_start = next_c;
     str_byte_start = str_byte;
 #ifdef TRE_WCHAR
@@ -374,7 +374,7 @@ retry:
                 {
                     while (*tmp >= 0)
                     {
-                        stack->item.tags[*tmp++] = pos;
+                        stack->item.tags[*tmp++] = (int)pos;
                     }
                 }
             }
@@ -385,7 +385,7 @@ retry:
     {
         for (; *next_tags >= 0; next_tags++)
         {
-            tags[*next_tags] = pos;
+            tags[*next_tags] = (int)pos;
         }
     }
 
@@ -414,7 +414,7 @@ retry:
                 int i;
                 /* This match wins the previous match. */
                 DPRINT(("	 win previous\n"));
-                match_eo = pos;
+                match_eo = (int)pos;
                 if (match_tags)
                 {
                     for (i = 0; i < tnfa->num_tags; i++)
@@ -455,7 +455,7 @@ retry:
             DPRINT(("  should match back reference %d\n", bt));
             /* Get the substring we need to match against.  Remember to
                turn off REG_NOSUB temporarily. */
-            tre_fill_pmatch(bt + 1, pmatch, tnfa->cflags & ~REG_NOSUB, tnfa, tags, pos);
+            tre_fill_pmatch(bt + 1, pmatch, tnfa->cflags & ~REG_NOSUB, tnfa, tags, (int)pos);
             so = pmatch[bt].rm_so;
             eo = pmatch[bt].rm_eo;
             bt_len = eo - so;
@@ -617,7 +617,7 @@ retry:
                         int *tmp;
                         for (tmp = trans_i->tags; tmp && *tmp >= 0; tmp++)
                         {
-                            stack->item.tags[*tmp] = pos;
+                            stack->item.tags[*tmp] = (int)pos;
                         }
                     }
 #if 0 /* XXX - it's important not to look at all transitions here to keep                          \
@@ -638,7 +638,7 @@ retry:
             {
                 while (*next_tags >= 0)
                 {
-                    tags[*next_tags++] = pos;
+                    tags[*next_tags++] = (int)pos;
                 }
             }
         }

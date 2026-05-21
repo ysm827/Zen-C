@@ -1190,7 +1190,7 @@ void misra_check_preprocessor_expression_parser(struct ParserContext *ctx, Token
         {
             p++;
         }
-        int len = p - start;
+        ptrdiff_t len = p - start;
 
         char name[128];
         if (len >= 128)
@@ -1576,7 +1576,7 @@ static void canonicalize_ambiguous_chars(const char *src, char *dst, size_t dest
         {
             c = '8';
         }
-        dst[i] = tolower((unsigned char)c);
+        dst[i] = (char)tolower((unsigned char)c);
         i++;
     }
     dst[i] = '\0';

@@ -221,8 +221,8 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                         {
                             zfree(buf);
                             buf = xstrdup(state->history[history_idx]);
-                            buf_size = strlen(buf) + 1;
-                            len = strlen(buf);
+                            buf_size = (int)strlen(buf) + 1;
+                            len = (int)strlen(buf);
                             pos = len;
                         }
                     }
@@ -248,8 +248,8 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                         {
                             buf = xstrdup(state->history[history_idx]);
                         }
-                        buf_size = strlen(buf) + 1;
-                        len = strlen(buf);
+                        buf_size = (int)strlen(buf) + 1;
+                        len = (int)strlen(buf);
                         pos = len;
                     }
                 }
@@ -335,7 +335,7 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
             char *completion = repl_complete(state, buf, pos);
             if (completion)
             {
-                int clen = strlen(completion);
+                int clen = (int)strlen(completion);
                 if (len + clen < buf_size - 1)
                 {
                     // Insert completion
@@ -377,8 +377,8 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                 search_match_idx = found;
                 zfree(buf);
                 buf = xstrdup(state->history[found]);
-                buf_size = strlen(buf) + 1;
-                len = strlen(buf);
+                buf_size = (int)strlen(buf) + 1;
+                len = (int)strlen(buf);
                 pos = len;
                 history_idx = found; // Sync history navigation
             }
@@ -387,7 +387,7 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
         {
             if (c == 127 || c == 8) // Backspace
             {
-                int sl = strlen(search_buf);
+                int sl = (int)strlen(search_buf);
                 if (sl > 0)
                 {
                     search_buf[sl - 1] = 0;
@@ -406,8 +406,8 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                         search_match_idx = found;
                         zfree(buf);
                         buf = xstrdup(state->history[found]);
-                        buf_size = strlen(buf) + 1;
-                        len = strlen(buf);
+                        buf_size = (int)strlen(buf) + 1;
+                        len = (int)strlen(buf);
                         pos = len;
                         history_idx = found;
                     }
@@ -439,7 +439,7 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
             }
             else if (!iscntrl(c))
             {
-                int sl = strlen(search_buf);
+                int sl = (int)strlen(search_buf);
                 if (sl < 255)
                 {
                     search_buf[sl] = c;
@@ -459,8 +459,8 @@ char *repl_readline(ReplState *state, const char *prompt, int indent_level)
                         search_match_idx = found;
                         zfree(buf);
                         buf = xstrdup(state->history[found]);
-                        buf_size = strlen(buf) + 1;
-                        len = strlen(buf);
+                        buf_size = (int)strlen(buf) + 1;
+                        len = (int)strlen(buf);
                         pos = len;
                         history_idx = found;
                     }

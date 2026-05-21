@@ -762,7 +762,7 @@ void handle_expr_call(ParserContext *ctx, ASTNode *node)
                 char *gt = strrchr(base, '>');
                 if (gt)
                 {
-                    int prefix_len = lt - base;
+                    ptrdiff_t prefix_len = lt - base;
                     char prefix[MAX_TYPE_NAME_LEN];
                     if (prefix_len >= 255)
                     {
@@ -812,7 +812,7 @@ void handle_expr_call(ParserContext *ctx, ASTNode *node)
                     char *t_gt = strrchr(type, '>');
                     if (t_gt)
                     {
-                        int p_len = t_lt - type;
+                        ptrdiff_t p_len = t_lt - type;
                         char prefix[MAX_TYPE_NAME_LEN];
                         if (p_len >= 255)
                         {

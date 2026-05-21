@@ -65,7 +65,7 @@ tre_ast_node_t *tre_ast_new_iter(tre_mem_t mem, tre_ast_node_t *arg, int min, in
     iter->arg = arg;
     iter->min = min;
     iter->max = max;
-    iter->minimal = minimal;
+    iter->minimal = (unsigned char)(minimal ? 1 : 0);
     node->num_submatches = arg->num_submatches;
 
     return node;

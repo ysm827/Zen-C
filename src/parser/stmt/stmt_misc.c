@@ -142,10 +142,10 @@ char *process_printf_sugar(ParserContext *ctx, Token srctoken, const char *conte
                 append_to_gen_fmt(&gen, &gen_cap, "fprintf(%s, \"%%s\", \"", target);
             }
 
-            int seg_len = brace - cur;
-            char *txt = xmalloc(seg_len + 1);
+            ptrdiff_t seg_len = brace - cur;
+            char *txt = xmalloc((size_t)seg_len + 1);
             int write_idx = 0;
-            for (int i = 0; i < seg_len; i++)
+            for (ptrdiff_t i = 0; i < seg_len; i++)
             {
                 if (cur[i] == '{' && cur[i + 1] == '{')
                 {
@@ -1010,12 +1010,12 @@ ASTNode *parse_comptime_body(ParserContext *ctx, Lexer *l)
             depth--;
         }
     }
-    int len = (l->src + l->pos - 1) - start;
+    ptrdiff_t len = (l->src + l->pos - 1) - start;
     char *code = xmalloc(len + 1);
     strncpy(code, start, len);
     code[len] = 0;
 
-    int wrapped_len = len + 4;
+    size_t wrapped_len = (size_t)len + 4;
     char *wrapped = xmalloc(wrapped_len + 1);
     sprintf(wrapped, "{ %s }", code);
     zfree(code);

@@ -17,7 +17,7 @@ char *strip_template_suffix(const char *name)
     char *lt = strchr(name, '<');
     if (lt)
     {
-        int len = lt - name;
+        ptrdiff_t len = lt - name;
         char *buf = xmalloc(len + 1);
         strncpy(buf, name, len);
         buf[len] = 0;

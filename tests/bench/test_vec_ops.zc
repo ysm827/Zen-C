@@ -1,0 +1,21 @@
+// benchmark: test_vec_ops
+import "../../std/time.zc"
+import "../../std/vec.zc"
+
+fn main() {
+    let iterations = 500;
+    let size = 10000;
+    let start = Time::now();
+
+    for (let i = 0; i < iterations; i = i + 1) {
+        let v = Vec<int>::new();
+        for (let j = 0; j < size; j = j + 1) {
+            v.push((int)j);
+        }
+    }
+
+    let end = Time::now();
+    let duration = end - start;
+    printf("RESULT: %llu\n", duration);
+    return 0;
+}

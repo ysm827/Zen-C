@@ -1,0 +1,40 @@
+// benchmark: test_mandelbrot
+import "../../std/time.zc"
+
+fn mandel_pixel(x: f64, y: f64, max_iter: int, iter: int, zx: f64, zy: f64) -> int {
+    if (iter >= max_iter) {
+        return iter;
+    }
+    let zx2 = zx * zx;
+    let zy2 = zy * zy;
+    if (zx2 + zy2 > 4.0) {
+        return iter;
+    }
+    let new_zy = 2.0 * zx * zy + y;
+    let new_zx = zx2 - zy2 + x;
+    return mandel_pixel(x, y, max_iter, iter + 1, new_zx, new_zy);
+}
+
+fn mandelbrot_pixel(x: f64, y: f64, max_iter: int) -> int {
+    return mandel_pixel(x, y, max_iter, 0, 0.0, 0.0);
+}
+
+fn main() {
+    let width = 200;
+    let height = 200;
+    let max_iter = 100;
+    let start = Time::now();
+
+    for (let py = 0; py < height; py = py + 1) {
+        let y = ((f64)py / (f64)height) * 2.0 - 1.0;
+        for (let px = 0; px < width; px = px + 1) {
+            let x = ((f64)px / (f64)width) * 2.0 - 1.5;
+            let _r = mandelbrot_pixel(x, y, max_iter);
+        }
+    }
+
+    let end = Time::now();
+    let duration = end - start;
+    printf("RESULT: %llu\n", duration);
+    return 0;
+}

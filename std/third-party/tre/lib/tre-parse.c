@@ -618,7 +618,7 @@ static reg_errcode_t tre_parse_bracket(tre_parse_ctx_t *ctx, tre_ast_node_t **re
     {
         int k;
         DPRINT(("final: creating %ld - %ld\n", curr_min, (long)TRE_CHAR_MAX));
-        n = tre_ast_new_literal(ctx->mem, curr_min, TRE_CHAR_MAX);
+        n = tre_ast_new_literal(ctx->mem, (int)curr_min, TRE_CHAR_MAX);
         if (n == NULL)
         {
             status = REG_ESPACE;

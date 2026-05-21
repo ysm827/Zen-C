@@ -1,0 +1,18 @@
+// benchmark: test_fib_recursive
+import "../../std/time.zc"
+
+fn fib(n: int) -> int {
+    if (n <= 1) {
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+
+fn main() {
+    let start = Time::now();
+    let _result = fib(35);
+    let end = Time::now();
+    let duration = end - start;
+    printf("RESULT: %llu\n", duration);
+    return 0;
+}

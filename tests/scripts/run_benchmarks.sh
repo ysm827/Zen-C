@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # Zen-C Benchmarking Script
-# Outputs JSON format compatible with github-action-benchmark
+# Runs N iterations of each benchmark, reports median + MAD.
+# Outputs JSON format compatible with github-action-benchmark.
 
+ITERATIONS=5
 ZC="./zc"
 if [ ! -f "$ZC" ]; then
     ZC="./build/zc"
 fi
-
 if [ ! -f "$ZC" ]; then
     echo "Error: zc binary not found."
     exit 1
@@ -27,45 +28,103 @@ add_result() {
     fi
 }
 
-echo "--- Benchmarking Compiler Performance ---"
-# Measure time to transpile all tests (stress test for frontend + codegen)
-FILE_COUNT=$(find tests -name "*.zc" -not -name "_*.zc" | wc -l)
-START=$(date +%s%3N)
-find tests -name "*.zc" -not -name "_*.zc" | xargs -L 1 $ZC transpile -o .bench_temp.c -w > /dev/null 2>&1
-END=$(date +%s%3N)
-rm -f .bench_temp.c
-COMP_TIME=$((END - START))
-AVG_TIME=$((COMP_TIME / FILE_COUNT))
-echo "Compiler (Full Suite Transpilation): $COMP_TIME ms ($FILE_COUNT files, avg $AVG_TIME ms/file)"
-add_result "Compiler (Full Suite Transpilation)" "$COMP_TIME" "ms"
-add_result "Compiler (Avg per file)" "$AVG_TIME" "ms"
+# Compute median from sorted list of numbers
+median_of() {
+    local arr=("$@")
+    local len=${#arr[@]}
+    local mid=$((len / 2))
+    if ((len % 2 == 0)); then
+        echo $(( (arr[mid-1] + arr[mid]) / 2 ))
+    else
+        echo "${arr[mid]}"
+    fi
+}
 
-echo "--- Benchmarking Runtime Performance ---"
+# Compute median absolute deviation
+mad_of() {
+    local arr=("$@")
+    local med="$1"
+    local devs=()
+    for v in "${arr[@]}"; do
+        d=$(( v > med ? v - med : med - v ))
+        devs+=($d)
+    done
+    IFS=$'\n' devs_sorted=($(sort -n <<<"${devs[*]}")); unset IFS
+    local len=${#devs_sorted[@]}
+    local mid=$((len / 2))
+    if ((len % 2 == 0)); then
+        echo $(( (devs_sorted[mid-1] + devs_sorted[mid]) / 2 ))
+    else
+        echo "${devs_sorted[mid]}"
+    fi
+}
+
+echo "=== Compiler Benchmark: Full Suite Transpilation ==="
+FILE_COUNT=$(find tests -name "*.zc" -not -name "_*.zc" | wc -l)
+for iter in $(seq 1 $ITERANCES); do
+    START=$(date +%s%3N)
+    find tests -name "*.zc" -not -name "_*.zc" | xargs -L 1 $ZC transpile -o .bench_comp_temp.c -w > /dev/null 2>&1
+    END=$(date +%s%3N)
+    comp_times+=($((END - START)))
+done
+rm -f .bench_comp_temp.c
+IFS=$'\n' comp_sorted=($(sort -n <<<"${comp_times[*]}")); unset IFS
+COMP_MED=$(median_of "${comp_sorted[@]}")
+COMP_MAD=$(mad_of "${comp_sorted[@]}")
+COMP_AVG=$((COMP_MED / FILE_COUNT))
+echo "Compiler: median=$COMP_MED ms, MAD=$COMP_MAD ms ($FILE_COUNT files, avg $COMP_AVG ms/file)"
+add_result "Compiler (Full Suite Transpilation)" "$COMP_MED" "ms"
+
+echo ""
+echo "=== Runtime Benchmarks ==="
+echo "(Warmup + $ITERATIONS iterations, reporting median)"
 
 for bench in tests/bench/*.zc; do
     name=$(basename "$bench" .zc)
-    echo "Running $name..."
-    
-    # Compile benchmark
-    $ZC build "$bench" -o "bench_$name" -w
+    echo -n "Compiling $name... "
+
+    COMP_START=$(date +%s%3N)
+    $ZC build "$bench" -o "bench_$name" -w > /dev/null 2>&1
     if [ $? -ne 0 ]; then
-        echo "Failed to compile $bench"
+        echo "FAILED"
         continue
     fi
-    
-    # Run benchmark and capture RESULT
-    output=$(./bench_$name)
-    result=$(echo "$output" | grep "RESULT:" | cut -d' ' -f2)
-    
-    if [ -n "$result" ]; then
-        echo "$name: $result ms"
-        add_result "Runtime ($name)" "$result" "ms"
-    else
-        echo "Failed to get result for $name"
+    COMP_END=$(date +%s%3N)
+    COMP_TIME=$((COMP_END - COMP_START))
+    echo "compiled in ${COMP_TIME}ms"
+
+    # Warmup run (discarded)
+    ./bench_$name > /dev/null 2>&1
+
+    # Measure N iterations
+    results=()
+    echo -n "  runs:"
+    for iter in $(seq 1 $ITERATIONS); do
+        output=$(./bench_$name 2>/dev/null)
+        val=$(echo "$output" | grep "RESULT:" | cut -d' ' -f2)
+        if [ -n "$val" ]; then
+            results+=($val)
+            echo -n " $val"
+        fi
+    done
+    echo ""
+
+    if [ ${#results[@]} -eq 0 ]; then
+        echo "  No valid results for $name"
+        rm "bench_$name"
+        continue
     fi
-    
+
+    IFS=$'\n' sorted=($(sort -n <<<"${results[*]}")); unset IFS
+    MED=$(median_of "${sorted[@]}")
+    MAD=$(mad_of "${sorted[@]}")
+    echo "  median=$MED ms, MAD=$MAD ms"
+    add_result "Runtime ($name)" "$MED" "ms"
+    add_result "Compile ($name)" "$COMP_TIME" "ms"
+
     rm "bench_$name"
 done
 
 echo "$RESULTS" > benchmarks_result.json
+echo ""
 echo "Results saved to benchmarks_result.json"

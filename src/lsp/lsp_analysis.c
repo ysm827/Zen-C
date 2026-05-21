@@ -1623,7 +1623,7 @@ void lsp_signature_help(const char *uri, int line, int col, int id)
             }
             ident_start++;
 
-            int len = ident_end - ident_start + 1;
+            ptrdiff_t len = ident_end - ident_start + 1;
             if (len > 0 && len < MAX_FUNC_NAME_LEN - 1)
             {
                 char func_name[MAX_FUNC_NAME_LEN];
@@ -1679,7 +1679,7 @@ void lsp_signature_help(const char *uri, int line, int col, int id)
                             char param_label[MAX_VAR_NAME_LEN];
                             if (p_end)
                             {
-                                int p_len = p_end - p_ptr;
+                                ptrdiff_t p_len = p_end - p_ptr;
                                 if (p_len > 255)
                                 {
                                     p_len = 255;

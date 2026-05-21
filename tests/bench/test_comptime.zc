@@ -1,0 +1,19 @@
+// benchmark: test_comptime
+// Heavy comptime evaluation (compilation time is measured by runner)
+import "../../std/time.zc"
+
+comptime {
+    let sum: int = 0;
+    for (let j: int = 0; j < 10000; j = j + 1) {
+        sum = sum + j;
+    }
+}
+
+fn main() {
+    let start = Time::now();
+    let _x = 42;
+    let end = Time::now();
+    let duration = end - start;
+    printf("RESULT: %llu\n", duration);
+    return 0;
+}

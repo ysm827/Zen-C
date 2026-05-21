@@ -113,7 +113,7 @@ void handle_node_impl(ParserContext *ctx, ASTNode *node)
 
     if (resolved)
     {
-        int slen = strlen(sname);
+        size_t slen = strlen(sname);
         ASTNode *m = node->impl.methods;
         while (m)
         {
@@ -585,7 +585,7 @@ void handle_node_impl_trait(ParserContext *ctx, ASTNode *node)
 
     if (resolved)
     {
-        int slen = strlen(sname);
+        size_t slen = strlen(sname);
         ASTNode *m = node->impl_trait.methods;
         while (m)
         {
