@@ -34,27 +34,41 @@
 #define ZEN_NULL NULL
 #endif
 
-// Standard attributes via __has_c_attribute (GCC 14+, Clang 16+)
+// Standard attributes via __has_c_attribute (C23, GCC 14+, Clang 16+).
 // Fallback to GNU __attribute__ or nothing.
+// Note: __has_c_attribute is a C23 feature; compilers that don't define it
+// (e.g. TCC) skip the C23 attribute path entirely.
 
+#ifdef __has_c_attribute
 #if __has_c_attribute(maybe_unused)
 #define ZEN_MAYBE_UNUSED [[maybe_unused]]
+#else
+#define ZEN_MAYBE_UNUSED __attribute__((unused))
+#endif
 #elif defined(__GNUC__) || defined(__clang__)
 #define ZEN_MAYBE_UNUSED __attribute__((unused))
 #else
 #define ZEN_MAYBE_UNUSED
 #endif
 
+#ifdef __has_c_attribute
 #if __has_c_attribute(nodiscard)
 #define ZEN_NODISCARD [[nodiscard]]
+#else
+#define ZEN_NODISCARD __attribute__((warn_unused_result))
+#endif
 #elif defined(__GNUC__) || defined(__clang__)
 #define ZEN_NODISCARD __attribute__((warn_unused_result))
 #else
 #define ZEN_NODISCARD
 #endif
 
+#ifdef __has_c_attribute
 #if __has_c_attribute(fallthrough)
 #define ZEN_FALLTHROUGH [[fallthrough]]
+#else
+#define ZEN_FALLTHROUGH ((void)0)
+#endif
 #else
 #define ZEN_FALLTHROUGH ((void)0)
 #endif

@@ -374,9 +374,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install libtcc-dev
-      run: sudo apt-get update && sudo apt-get install -y libtcc-dev gcc-14
+      run: sudo apt-get update && sudo apt-get install -y libtcc-dev
     - name: Build with MemorySanitizer
-      run: make CC=gcc-14 msan ZC_HAS_JIT=0
+      run: make msan ZC_HAS_JIT=0
 
   build-analyzer:
     name: GCC Static Analyzer

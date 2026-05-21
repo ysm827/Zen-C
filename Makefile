@@ -32,10 +32,11 @@ endif
 SHAREDIR ?= /usr/local/share/zenc
 DEFINES = -DZEN_VERSION=\"$(GIT_VERSION)\" -DZEN_SHARE_DIR=\"$(SHAREDIR)\" -DZC_ALLOW_INTERNAL
 WERROR ?= 0
-# TCC does not support -MMD -MP and may not search /usr/local/include
+# TCC does not support -MMD -MP, may not search /usr/local/include, and maxes out at C11
 ifeq ($(findstring tcc,$(CC)),tcc)
     DEPFLAGS =
     TCC_EXTRA = -I/usr/local/include -L/usr/local/lib
+    override C_STD := gnu11
 else
     DEPFLAGS = -MMD -MP
     TCC_EXTRA =
