@@ -396,7 +396,7 @@ jobs:
     - name: Install Dependencies
       run: sudo apt-get update && sudo apt-get install -y libtcc-dev lcov gcc-14
     - name: Build and Test with Coverage
-      run: make coverage ZC_HAS_JIT=0
+      run: make CC=gcc-14 coverage ZC_HAS_JIT=0
     - name: Generate HTML Report
       run: make GCOV=gcov-14 coverage-report
     - name: Upload Coverage Report
