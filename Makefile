@@ -527,7 +527,7 @@ coverage: $(TARGET) $(PLUGINS)
 
 coverage-report: coverage
 	lcov --capture --directory obj --output-file coverage.info \
-	     --gcov-tool $(GCOV) --no-external --ignore-errors mismatch
+	     --gcov-tool $(GCOV) --include '*/src/*' --ignore-errors mismatch
 	genhtml coverage.info --output-directory coverage-report --ignore-errors empty
 	@echo "=> Coverage report: coverage-report/index.html"
 
