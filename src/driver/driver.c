@@ -170,7 +170,7 @@ int driver_compile(ZenCompiler *compiler)
         if (primary_real)
         {
             mark_file_imported(&ctx, primary_real);
-            zfree(primary_real);
+            free(primary_real);
         }
 
         for (size_t ef = 0; ef < compiler->config.extra_files.length; ef++)
@@ -185,7 +185,7 @@ int driver_compile(ZenCompiler *compiler)
                 zvec_push_Str(&compiler->config.c_files, xstrdup(path));
                 if (real_path)
                 {
-                    zfree(real_path);
+                    free(real_path);
                 }
                 continue;
             }
@@ -194,7 +194,7 @@ int driver_compile(ZenCompiler *compiler)
             {
                 if (real_path)
                 {
-                    zfree(real_path);
+                    free(real_path);
                 }
                 continue;
             }
