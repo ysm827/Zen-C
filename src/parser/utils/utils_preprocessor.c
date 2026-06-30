@@ -334,7 +334,7 @@ void try_parse_macro_const(ParserContext *ctx, const char *content)
                                 if (id_len == (int)strlen(params[i]) &&
                                     strncmp(id_start, params[i], (size_t)(id_len)) == 0)
                                 {
-                                    used_op |= (1 << i);
+                                    used_op |= (1u << i);
                                     if (!is_concat)
                                     {
                                         const char *pafter = pb;
@@ -375,11 +375,11 @@ void try_parse_macro_const(ParserContext *ctx, const char *content)
                             {
                                 if (follows_concat)
                                 {
-                                    used_op |= (1 << i);
+                                    used_op |= (1u << i);
                                 }
                                 else
                                 {
-                                    used_norm |= (1 << i);
+                                    used_norm |= (1u << i);
                                 }
                             }
                         }
