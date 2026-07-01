@@ -326,6 +326,7 @@ obj-ape/plugins/%.o: obj-ape/plugins/%.c
 	@$(MKDIR) $(@D)
 	@psafe=$$(echo $* | sed 's/[^a-zA-Z0-9]/_/g'); \
 	$(COSMOCC) $(CFLAGS) \
+		-fno-stack-protector \
 		-DZC_STATIC_PLUGIN -Dz_plugin_init=z_plugin_init_$$psafe -c $< -o $@
 
 $(ZC_COM): $(ZC_COM_BIN)
