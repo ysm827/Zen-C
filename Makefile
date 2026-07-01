@@ -59,7 +59,7 @@ CFLAGS = -std=$(C_STD) -g -Wall -Wextra -Wshadow -Wformat=2 -Wmissing-prototypes
 # 145 of 191 TRE warnings were fixed directly in source. The remaining 46 come from macro
 # expansions (ALIGN, IS_WORD_CHAR) and explicit sign-conversion casts in vendored code.
 obj/std/third-party/tre/%.o: CFLAGS += -Wno-sign-conversion -Wno-sign-compare -Wno-switch-default -Wno-cast-align -Wno-implicit-fallthrough -Wno-redundant-decls $(if $(filter 1,$(CC_IS_CLANG)),,-Wno-analyzer-null-dereference -Wno-analyzer-out-of-bounds -Wno-analyzer-malloc-leak -Wno-analyzer-file-leak)
-obj-ape/std/third-party/tre/%.o: CFLAGS += -Wno-sign-conversion -Wno-sign-compare -Wno-switch-default -Wno-cast-align -Wno-implicit-fallthrough -Wno-redundant-decls $(if $(filter 1,$(CC_IS_CLANG)),,-Wno-analyzer-null-dereference -Wno-analyzer-out-of-bounds -Wno-analyzer-malloc-leak -Wno-analyzer-file-leak)
+
 
 # Detect Clang by macro (works even when CC=cc on macOS, or CC=clang on Linux)
 # Uses recursive = so it re-evaluates with target-specific CC overrides (e.g. msan: CC=clang)
@@ -292,7 +292,7 @@ $(ZC_COM_BIN): $(ZC_ENTRY_O) $(SRCS) src/plugins/static_plugins.c $(PLUGIN_APE_O
 		ZC_HAS_JIT=0 \
 		CC=$(COSMOCC) \
 		OBJ_DIR=obj-ape \
-		CFLAGS='$(CFLAGS) -fno-stack-protector' \
+		CFLAGS='$(CFLAGS) -fno-stack-protector -Wno-redundant-decls -Wno-switch-default -Wno-sign-conversion -Wno-sign-compare -Wno-cast-align -Wno-implicit-fallthrough' \
 		DEFINES='$(DEFINES) -DZC_STATIC_PLUGINS' \
 		LIBS="$(abspath $(ZC_ENTRY_O)) $(PLUGIN_APE_OBJS) -Wl,--wrap=main" \
 		SRCS="$(SRCS)" \
