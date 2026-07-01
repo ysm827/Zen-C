@@ -5,12 +5,12 @@ include <stdio.h>
 include <stdbool.h>
 include <stdarg.h>
 
-fn __zenc_panic_impl(file: const char*, line: int, func: const char*, msg: const char*) {
+@unused fn __zenc_panic_impl(file: const char*, line: int, func: const char*, msg: const char*) {
     fprintf(stderr, "panic: %s\n  at %s:%d in %s()\n", msg, file, line, func);
     exit(1);
 }
 
-fn __zenc_todo_impl(file: const char*, line: int, func: const char*, msg: const char*) {
+@unused fn __zenc_todo_impl(file: const char*, line: int, func: const char*, msg: const char*) {
     fprintf(stderr, "todo: %s\n  at %s:%d in %s()\n", msg, file, line, func);
     exit(1);
 }

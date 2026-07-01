@@ -211,6 +211,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     f->cfg_condition = attrs.cfg_condition;
                 }
                 f->func.pure = attrs.is_pure;
+                f->func.unused = attrs.is_unused;
                 f->link_name = attrs.link_name;
 
                 // Register function for lookup
@@ -256,6 +257,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                     f->link_name = attrs.link_name;
                     f->cfg_condition = attrs.cfg_condition;
                     f->func.pure = attrs.is_pure;
+                    f->func.unused = attrs.is_unused;
 
                     // Register function for lookup
                     if (f->func.generic_params)
@@ -415,6 +417,14 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
 
                     patch_and_fix_self(ctx, f, full_struct_name);
 
+                    if (attrs.cfg_condition)
+                    {
+                        f->cfg_condition = attrs.cfg_condition;
+                    }
+                    f->func.pure = attrs.is_pure;
+                    f->func.unused = attrs.is_unused;
+                    f->link_name = attrs.link_name;
+
                     // Manual Type construction for self: Foo<T>*
                     if (f->func.arg_count > 0 && f->func.param_names &&
                         strcmp(f->func.param_names[0], "self") == 0)
@@ -458,6 +468,14 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                         }
 
                         patch_and_fix_self(ctx, f, full_struct_name);
+
+                        if (attrs.cfg_condition)
+                        {
+                            f->cfg_condition = attrs.cfg_condition;
+                        }
+                        f->func.pure = attrs.is_pure;
+                        f->func.unused = attrs.is_unused;
+                        f->link_name = attrs.link_name;
 
                         if (f->func.arg_count > 0 && f->func.param_names &&
                             strcmp(f->func.param_names[0], "self") == 0)
@@ -558,6 +576,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                         f->cfg_condition = attrs.cfg_condition;
                     }
                     f->func.pure = attrs.is_pure;
+                    f->func.unused = attrs.is_unused;
                     f->link_name = attrs.link_name;
 
                     if (f->func.generic_params)
@@ -603,6 +622,7 @@ ASTNode *parse_impl(ParserContext *ctx, Lexer *l)
                             f->cfg_condition = attrs.cfg_condition;
                         }
                         f->func.pure = attrs.is_pure;
+                        f->func.unused = attrs.is_unused;
                         f->link_name = attrs.link_name;
 
                         if (f->func.generic_params)
