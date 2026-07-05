@@ -66,3 +66,7 @@ benchmarks_result.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Nested repos (this is me, Zuhaitz, I like having these two close)
+docs/
+www/
