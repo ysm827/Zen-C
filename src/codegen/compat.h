@@ -96,7 +96,8 @@ static const char ZC_EXT_SO[] = ".so";
     "unsigned short: \"%u\", int: \"%d\", unsigned int: \"%u\", "                                  \
     "long: \"%ld\", unsigned long: \"%lu\", long long: \"%lld\", "                                 \
     "unsigned long long: \"%llu\", float: \"%f\", double: \"%f\", "                                \
-    "char*: \"%s\", const char*: \"%s\", void*: \"%p\" _z_128_map _z_objc_map)\n"
+    "char*: \"%s\", const char*: \"%s\", void*: \"%p\", "                                          \
+    "default: \"%s\" _z_128_map _z_objc_map)\n"
 
 #define ZC_C_ARG_GENERIC_STR                                                                       \
     "#ifdef __SIZEOF_INT128__\n"                                                                   \

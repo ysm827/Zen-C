@@ -56,7 +56,7 @@ static void emit_freestanding_preamble(ParserContext *ctx)
          "unsigned char: \"%u\", short: \"%d\", unsigned short: \"%u\", int: \"%d\", unsigned int: "
          "\"%u\", long: \"%ld\", unsigned long: \"%lu\", long long: \"%lld\", unsigned long long: "
          "\"%llu\", float: \"%f\", double: \"%f\", char*: \"%s\", const char*: \"%s\", void*: "
-         "\"%p\" _z_128_map)\n");
+         "\"%p\", default: \"%s\" _z_128_map)\n");
     EMIT(ctx, "%s",
          "#define _z_safe_bool(x) _Generic((x), _Bool: (x), default: (_Bool)0)\n#define _z_arg(x) "
          "_Generic((x), _Bool: _z_bool_str(_z_safe_bool(x)) _z_128_arg_map(x), default: (x))\n");
@@ -88,6 +88,7 @@ void emit_preamble(ParserContext *ctx)
         EMIT(ctx, "%s",
              "#include <stdio.h>\n#include <stdlib.h>\n#include <stddef.h>\n#include <string.h>\n");
         EMIT(ctx, "%s", "#include <stdarg.h>\n#include <stdint.h>\n#include <stdbool.h>\n");
+        EMIT(ctx, "%s", "#define null NULL\n");
         EMIT(ctx, "%s",
              "#ifdef __has_builtin\n#if __has_builtin(__builtin_pow)\n#define _zc_pow "
              "__builtin_pow\n#endif\n#endif\n#ifndef _zc_pow\nextern double pow(double, "
