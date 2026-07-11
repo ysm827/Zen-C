@@ -456,3 +456,96 @@ int should_suppress_undef_warning(ParserContext *ctx, const char *name)
 
     return 0;
 }
+
+static char *find_last_sep(const char *s)
+{
+    const char *last = NULL;
+    while ((s = strstr(s, "__")) != NULL)
+    {
+        last = s;
+        s += 2;
+    }
+    return (char *)last;
+}
+
+char *find_method_owner_type(ParserContext *ctx, const char *method_name)
+{
+    Scope *scopes[2];
+    int scope_count = 0;
+    if (ctx->global_scope) scopes[scope_count++] = ctx->global_scope;
+    if (ctx->current_scope && ctx->current_scope != ctx->global_scope)
+        scopes[scope_count++] = ctx->current_scope;
+
+    for (int si = 0; si < scope_count; si++)
+    {
+        for (ZenSymbol *sym = scopes[si]->symbols; sym; sym = sym->next)
+        {
+            if (!sym->name) continue;
+            char *last_sep = find_last_sep(sym->name);
+            if (!last_sep) continue;
+            if (strcmp(last_sep + 2, method_name) == 0)
+            {
+                size_t prefix_len = (size_t)(last_sep - sym->name);
+                char *type_name = xmalloc(prefix_len + 1);
+                strncpy(type_name, sym->name, prefix_len);
+                type_name[prefix_len] = 0;
+                return type_name;
+            }
+        }
+    }
+
+    for (FuncSig *f = ctx->func_registry; f; f = f->next)
+    {
+        if (!f->name) continue;
+        char *last_sep = find_last_sep(f->name);
+        if (!last_sep) continue;
+        if (strcmp(last_sep + 2, method_name) == 0)
+        {
+            size_t prefix_len = (size_t)(last_sep - f->name);
+            char *type_name = xmalloc(prefix_len + 1);
+            strncpy(type_name, f->name, prefix_len);
+            type_name[prefix_len] = 0;
+            return type_name;
+        }
+    }
+
+    return NULL;
+}
+
+char *find_method_owner_type_scoped(ParserContext *ctx, const char *struct_name,
+                                    const char *method_name)
+{
+    size_t prefix_len = strlen(struct_name);
+
+    for (FuncSig *f = ctx->func_registry; f; f = f->next)
+    {
+        if (!f->name) continue;
+
+        const char *p = f->name;
+        if (*p == '_') p++;
+        if (strncasecmp(p, struct_name, prefix_len) != 0) continue;
+
+        char *last_sep = find_last_sep(f->name);
+        if (!last_sep) continue;
+        if (strcmp(last_sep + 2, method_name) != 0) continue;
+
+        size_t concrete_len = (size_t)(last_sep - f->name);
+        char *concrete_type = xmalloc(concrete_len + 1);
+        strncpy(concrete_type, f->name, concrete_len);
+        concrete_type[concrete_len] = 0;
+
+        if (ctx->cg.expected_init_type)
+        {
+            if (strcmp(concrete_type, ctx->cg.expected_init_type) == 0)
+            {
+                return concrete_type;
+            }
+            zfree(concrete_type);
+            continue;
+        }
+
+        return concrete_type;
+    }
+
+    return NULL;
+}

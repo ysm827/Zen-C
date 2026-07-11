@@ -454,6 +454,7 @@ struct ParserContext
         ASTNode *current_lambda;      ///< Current lambda being generated.
         char *current_func_ret_type;  ///< Return type of current function.
         Type *current_func_ret_type_info;
+        char *expected_init_type;      ///< Expected type for initializer (from let declaration).
         int loop_defer_boundary[64];   ///< Defer stack index at start of each loop (max 64).
         int loop_depth;                ///< Current loop nesting depth.
         int func_defer_boundary;       ///< Defer stack index at function entry.
@@ -672,6 +673,9 @@ ZenSymbol *find_symbol_entry(ParserContext *ctx, const char *n);
  */
 ZenSymbol *find_symbol_in_all(ParserContext *ctx, const char *n);
 char *find_similar_symbol(ParserContext *ctx, const char *name);
+char *find_method_owner_type(ParserContext *ctx, const char *method_name);
+char *find_method_owner_type_scoped(ParserContext *ctx, const char *struct_name,
+                                    const char *method_name);
 
 /**
  * @brief Normalizes a type name (e.g., "int" -> "int32_t").

@@ -610,9 +610,15 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                             else
                             {
                                 char tmp2_raw[MAX_MANGLED_NAME_LEN];
-                                sprintf(tmp2_raw, "%s__%.*s", mod->base_name,
-                                        (int)suffix.len, /* TODO: check buffer size */
-                                        suffix.start);
+                                char *type_name = find_method_owner_type_scoped(ctx, mod->base_name, sbuf);
+                                if (type_name)
+                                {
+                                    sprintf(tmp2_raw, "%s__%s", type_name, sbuf);
+                                }
+                                else
+                                {
+                                    sprintf(tmp2_raw, "%s__%s", mod->base_name, sbuf);
+                                }
                                 char *tmp2 = merge_underscores(tmp2_raw);
                                 zfree(acc);
                                 acc = tmp2;
@@ -692,9 +698,36 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                                 snprintf(v_mangled_raw, sizeof(v_mangled_raw), "%s__%s", acc,
                                          method_name);
                                 char *v_mangled = merge_underscores(v_mangled_raw);
-                                zfree(acc);
-                                acc = v_mangled;
-                                strcpy(tmp, acc);
+
+                                if (!find_func(ctx, v_mangled))
+                                {
+                                    char *concrete_type =
+                                        find_method_owner_type_scoped(ctx, acc, method_name);
+                                    if (concrete_type)
+                                    {
+                                        char concrete_raw[MAX_MANGLED_NAME_LEN];
+                                        snprintf(concrete_raw, sizeof(concrete_raw), "%s__%s",
+                                                 concrete_type, method_name);
+                                        char *concrete = merge_underscores(concrete_raw);
+                                        if (find_func(ctx, concrete))
+                                        {
+                                            zfree(acc);
+                                            acc = concrete;
+                                            strcpy(tmp, acc);
+                                            zfree(v_mangled);
+                                            zfree(concrete_type);
+                                            break;
+                                        }
+                                        zfree(concrete);
+                                        zfree(concrete_type);
+                                    }
+                                }
+                                if (v_mangled)
+                                {
+                                    zfree(acc);
+                                    acc = v_mangled;
+                                    strcpy(tmp, acc);
+                                }
                             }
                             else
                             {
@@ -711,6 +744,27 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                                 }
                                 else
                                 {
+                                    char *concrete_type =
+                                        find_method_owner_type_scoped(ctx, acc, method_name);
+                                    if (concrete_type)
+                                    {
+                                        char concrete_raw[MAX_MANGLED_NAME_LEN];
+                                        snprintf(concrete_raw, sizeof(concrete_raw), "%s__%s",
+                                                 concrete_type, method_name);
+                                        char *concrete = merge_underscores(concrete_raw);
+                                        if (find_func(ctx, concrete))
+                                        {
+                                            zfree(acc);
+                                            acc = concrete;
+                                            strcpy(tmp, acc);
+                                            zfree(method_name);
+                                            zfree(concrete_type);
+                                            break;
+                                        }
+                                        zfree(concrete);
+                                        zfree(concrete_type);
+                                    }
+
                                     // Fallback: check for trait implementations
                                     StructRef *ref = ctx->parsed_impls_list;
                                     int found_trait = 0;
@@ -841,14 +895,76 @@ ASTNode *parse_primary_impl(ParserContext *ctx, Lexer *l)
                                                 char tmp_raw[MAX_MANGLED_NAME_LEN];
                                                 snprintf(tmp_raw, sizeof(tmp_raw), "%s__%.*s", acc,
                                                          (int)suffix.len, suffix.start);
-                                                tmp = merge_underscores(tmp_raw);
+                                                char *direct = merge_underscores(tmp_raw);
+                                                if (!find_func(ctx, direct))
+                                                {
+                                                    char mbuf[128];
+                                                    if (suffix.len < (int)sizeof(mbuf))
+                                                    {
+                                                        strncpy(mbuf, suffix.start, suffix.len);
+                                                        mbuf[suffix.len] = 0;
+                                                    }
+                                                    else
+                                                        mbuf[0] = 0;
+                                                    char *concrete_type =
+                                                        find_method_owner_type_scoped(ctx, acc, mbuf);
+                                                    if (concrete_type)
+                                                    {
+                                                        char cr[MAX_MANGLED_NAME_LEN];
+                                                        snprintf(cr, sizeof(cr), "%s__%s", concrete_type, mbuf);
+                                                        char *concrete = merge_underscores(cr);
+                                                        if (find_func(ctx, concrete))
+                                                        {
+                                                            tmp = concrete;
+                                                            zfree(direct);
+                                                            zfree(concrete_type);
+                                                            handled_as_generic = 1;
+                                                            break;
+                                                        }
+                                                        zfree(concrete);
+                                                        zfree(concrete_type);
+                                                    }
+                                                }
+                                                if (!handled_as_generic)
+                                                    tmp = direct;
                                             }
                                             else
                                             {
                                                 char tmp_raw[MAX_MANGLED_NAME_LEN];
                                                 snprintf(tmp_raw, sizeof(tmp_raw), "%s__%.*s", acc,
                                                          (int)suffix.len, suffix.start);
-                                                tmp = merge_underscores(tmp_raw);
+                                                char *direct = merge_underscores(tmp_raw);
+                                                if (!find_func(ctx, direct))
+                                                {
+                                                    char mbuf[128];
+                                                    if (suffix.len < (int)sizeof(mbuf))
+                                                    {
+                                                        strncpy(mbuf, suffix.start, suffix.len);
+                                                        mbuf[suffix.len] = 0;
+                                                    }
+                                                    else
+                                                        mbuf[0] = 0;
+                                                    char *concrete_type =
+                                                        find_method_owner_type_scoped(ctx, acc, mbuf);
+                                                    if (concrete_type)
+                                                    {
+                                                        char cr[MAX_MANGLED_NAME_LEN];
+                                                        snprintf(cr, sizeof(cr), "%s__%s", concrete_type, mbuf);
+                                                        char *concrete = merge_underscores(cr);
+                                                        if (find_func(ctx, concrete))
+                                                        {
+                                                            tmp = concrete;
+                                                            zfree(direct);
+                                                            zfree(concrete_type);
+                                                            handled_as_generic = 1;
+                                                            break;
+                                                        }
+                                                        zfree(concrete);
+                                                        zfree(concrete_type);
+                                                    }
+                                                }
+                                                if (!handled_as_generic)
+                                                    tmp = direct;
                                             }
                                             handled_as_generic = 1;
                                             break;
