@@ -43,7 +43,7 @@ void emit_source_mapping(ParserContext *ctx, ASTNode *node)
 
     if (allow_duplicate_source_mapping <= 0)
     {
-        if (node->token.line == last_source_mapping_line && node->type == last_source_mapping_type)
+        if (node->token.line == last_source_mapping_line)
         {
             return;
         }
